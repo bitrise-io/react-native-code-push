@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 React Native CodePush is a native module that enables over-the-air updates for React Native apps. It consists of native implementations for iOS (Objective-C), Android (Java), and Windows (C++), unified through a JavaScript bridge layer.
@@ -46,31 +44,20 @@ React Native CodePush is a native module that enables over-the-air updates for R
 
 ### Testing Framework
 - **Custom Test Runner**: TypeScript-based test framework in `test/`
-- **Emulator Management**: Automated setup and teardown of test environments
 - **Real App Testing**: Creates actual React Native apps for integration testing
 - **Scenario Testing**: Update, rollback, and error scenarios
+- **Templates**: `test/template/` holds native files (Podfile, AppDelegate, Android app files) and JS scenarios copied over top of a freshly generated RN/Expo app during test setup, overwriting its defaults — edit files here, not the generated project, for changes to persist
+- **`test:ios` vs `test:setup:ios` vs `test:fast:ios`**: `test:ios` is just `test:setup:ios` followed by `test:fast:ios` — the two are meant to be split apart for local iteration.
+  - `test:setup:ios` (mocha `--ios --setup`) boots the simulator and provisions the test app once: copies templates, runs `pod install`, patches Info.plist/AppDelegate. It never builds or runs any test scenario.
+  - `test:fast:ios` (mocha `--ios`) skips provisioning and goes straight to the actual test scenarios: its `before()` hook calls `RNIOS.buildApp` (`xcodebuild` against the already-provisioned `.xcworkspace`) and installs the binary, then runs the update/rollback/error scenarios.
+  - For the fast local loop: run `test:setup:ios` once per template/dependency change, then re-run `test:fast:ios` repeatedly while iterating on test/scenario code — this skips `pod install` and re-provisioning on every iteration.
+  - There's still no "just build, no tests" npm script — for a raw build only, lift the `xcodebuild` invocation out of `RNIOS.buildApp` in `test/test.ts` and run it by hand against the provisioned `TestCodePush.xcworkspace`.
+- When debugging a CI failure, don't trust the first plausible-looking theory from log noise — reproduce the exact failing command locally on matching hardware/toolchain before writing up a root cause. This is faster than iterating against multi-hour CI runs and catches wrong hypotheses early.
+- Before running `npm run test:setup:ios`, shut down all booted simulators (`xcrun simctl shutdown all`) — the test framework's simulator picker hangs silently (no error) if simulators are already booted outside it.
+- `npm run test:setup:ios` provisions a full test app outside the repo (under a system temp/`test-run` dir), not inside `test/` — expect to search for it rather than finding it checked into the repo tree.
+- The provisioned test app's `node_modules/@code-push-next/react-native-code-push` is a real copy, not a symlink — editing `ios/` (or `android/`) native source in the repo has zero effect on `test:fast:ios` runs until you re-copy those files into that `node_modules` path (or rerun `test:setup:ios`).
 
 ### Build Integration
 - **Android Gradle Plugin**: Automatically generates bundle hashes and processes assets
 - **iOS CocoaPods**: Manages native dependencies and build configuration
 - **Bundle Processing**: Automated zip creation and hash calculation for OTA updates
-
-## Development Workflow
-
-1. **Making Changes**: Edit native code or JavaScript bridge
-2. **Testing**: Run platform-specific tests with real emulators
-3. **Integration**: Test with actual React Native apps via test framework
-4. **Validation**: Ensure compatibility with both RN architectures
-
-## Key Files
-- `CodePush.js` - Main JavaScript API
-- `test/TestRunner.ts` - Test framework entry point
-- `android/build.gradle` - Android build configuration
-- `ios/CodePush.podspec` - iOS CocoaPods specification
-- `plugin.xml` - Cordova plugin configuration
-
-## Special Considerations
-- Native module requires platform-specific knowledge (iOS/Android/Windows)
-- Testing requires emulator setup and can be time-intensive
-- Updates must be backward compatible with existing app installations
-- Bundle hash calculation is critical for update integrity
