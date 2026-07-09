@@ -195,3 +195,5 @@ Examples/testapp_rn
 
 #CodePushExpoDemoApp
 *.rm
+
+.claude/settings.local.json
