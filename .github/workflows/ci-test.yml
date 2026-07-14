@@ -2,47 +2,60 @@ name: CI Tests
 
 on:
   pull_request:
-    types: [opened, edited]
   workflow_dispatch:
 
 jobs:
-  android-new-arch-test:
-    runs-on: self-hosted
+  lint:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint and type-check
+        run: npm run build:tests
+
+  android-test:
+    needs: lint
+    runs-on: bitrise-react-native-code-push-linux-runner
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Run Android Tests
-        run: |
-          npm install
-          npm run test:android
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          # Tests need `emulator` to be in $PATH.
+          PATH: /usr/local/lib/android/sdk/emulator:/usr/local/lib/android/sdk/platform-tools:${{ env.PATH }}
+        with:
+          api-level: 27
+          target: google_apis
+          arch: x86
+          disable-animations: true
+          script: npm run test:android
 
-
-  ios-new-arch-test:
-    runs-on: self-hosted
+  ios-test:
+    needs: lint
+    runs-on: bitrise-react-native-code-push-macos-runner
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
 
       - name: Run iOS Tests
         run: |
           npm install
           npm run test:ios
-
-  android-old-arch-test:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run Android Tests
-        run: |
-          npm install
-          npm run test:oldArch:android
-
-  ios-old-arch-test:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run iOS Tests
-        run: |
-          npm install
-          npm run test:oldArch:ios

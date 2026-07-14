@@ -31,5 +31,38 @@ target 'TestCodePush' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Workaround: fmt 11.0.2 (pinned transitively via RCT-Folly) fails to compile on
+    # Xcode 26.4+ due to a compiler compatibility bug. Fixed upstream in fmt 12.1.0.
+    # See https://github.com/facebook/react-native/issues/55601
+    #
+    # REMOVE THIS once the React Native version used here bundles fmt >= 12.1.0
+    # (i.e. after upgrading React Native past 0.82.x).
+    installer.pods_project.targets.each do |target|
+      if target.name == 'fmt'
+        target.build_configurations.each do |config|
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        end
+      end
+    end
+
+    # Skip the x86_64 simulator slice. Test runs only ever target an arm64
+    # simulator (Apple Silicon), so building x86_64 as well just doubles
+    # compile/link time for a slice that never runs, and adds unnecessary
+    # failure surface (e.g. codegen sources that don't compile cleanly for it).
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
+      end
+    end
+
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.user_project.native_targets.each do |target|
+        target.build_configurations.each do |config|
+          config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'x86_64'
+        end
+      end
+      aggregate_target.user_project.save
+    end
   end
 end
