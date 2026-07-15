@@ -1,5 +1,5 @@
 var CodePushWrapper = require("../codePushWrapper.js");
-import CodePush from "@code-push-next/react-native-code-push";
+import CodePush from "@bitrise/code-push-sdk";
 
 module.exports = {
     startTest: function (testApp) {

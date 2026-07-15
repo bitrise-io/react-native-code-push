@@ -88,7 +88,7 @@ _Note: CodePush only works with Video components when using `require` in the sou
 Once you've followed the general-purpose ["getting started"](https://docs.microsoft.com/en-us/appcenter/distribution/codepush/index) instructions for setting up your CodePush account, you can start CodePush-ifying your React Native app by running the following command from within your app's root directory:
 
 ```shell
-yarn add @code-push-next/react-native-code-push
+yarn add @bitrise/code-push-sdk
 ```
 
 As with all other React Native plugins, the integration experience is different for iOS and Android, so perform the following setup steps depending on which platform(s) you are targeting. Note, if you are targeting both platforms it is recommended to create separate CodePush applications for each platform.
@@ -118,7 +118,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   - For class component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@bitrise/code-push-sdk";
 
     class MyApp extends Component {}
 
@@ -128,7 +128,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   - For functional component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@bitrise/code-push-sdk";
 
     let MyApp: () => React$Node = () => {};
 
@@ -142,7 +142,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   - For class component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@bitrise/code-push-sdk";
 
     @codePush
     class MyApp extends Component {}
@@ -151,7 +151,7 @@ The simplest way to do this is to "CodePush-ify" your app's root component. To d
   - For functional component
 
     ```javascript
-    import codePush from "@code-push-next/react-native-code-push";
+    import codePush from "@bitrise/code-push-sdk";
 
     const MyApp: () => React$Node = () => {};
 
@@ -225,7 +225,7 @@ _NOTE: If you are using [Redux](http://redux.js.org) and [Redux Saga](https://re
         // ...
         "plugins": [
       [
-        "@code-push-next/react-native-code-push/expo",
+        "@bitrise/code-push-sdk/expo",
         {
           "ios": {
             "CodePushDeploymentKey": "deployment key",

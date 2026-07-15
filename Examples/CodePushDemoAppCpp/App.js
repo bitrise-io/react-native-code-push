@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-import CodePush from "@code-push-next/react-native-code-push";
+import CodePush from "@bitrise/code-push-sdk";
 
 class App extends Component<{}> {
   constructor() {
