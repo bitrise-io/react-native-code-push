@@ -15,7 +15,7 @@
     },
     "plugins": [
       [
-        "@code-push-next/react-native-code-push/expo",
+        "@bitrise/code-push-sdk/expo",
         {
           "ios": {
             "CodePushDeploymentKey": "mock-ios-deployment-key",

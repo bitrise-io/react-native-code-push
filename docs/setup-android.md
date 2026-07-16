@@ -13,7 +13,7 @@ In order to integrate CodePush into your Android project, please perform the fol
 
     ```gradle
     ...
-    apply from: "../../node_modules/@code-push-next/react-native-code-push/android/codepush.gradle"
+    apply from: "../../node_modules/@bitrise/code-push-sdk/android/codepush.gradle"
     ...
     ```
 

@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import codePush from '@code-push-next/react-native-code-push';
+import codePush from '@bitrise/code-push-sdk';
 
 function App() {
   // Log current package information on app start

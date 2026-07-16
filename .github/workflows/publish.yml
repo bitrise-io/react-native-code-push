@@ -1,0 +1,36 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets GitHub issue a short-lived OIDC identity token for this job, which npm
+      # verifies against the package's registered "Trusted Publisher" instead of a
+      # long-lived NPM_TOKEN secret. See https://docs.npmjs.com/trusted-publishers
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint and type-check
+        run: npm run build:tests
+
+      - name: Set version from tag
+        run: npm pkg set version="${GITHUB_REF_NAME#v}"
+
+      # No auth token here on purpose: npm publish authenticates via the OIDC
+      # token from `id-token: write` above. --provenance attaches a signed
+      # attestation (built from this exact commit/workflow) to the published
+      # package, visible on the npm listing as a supply-chain transparency check.
+      - name: Publish to npm
+        run: npm publish --access public --provenance

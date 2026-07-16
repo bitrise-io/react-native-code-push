@@ -1,4 +1,4 @@
-import CodePush from "@code-push-next/react-native-code-push";
+import CodePush from "@bitrise/code-push-sdk";
 
 // This module wraps CodePush API calls to add test message callbacks to every function for simpler test code.
 

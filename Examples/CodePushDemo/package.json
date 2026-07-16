@@ -14,7 +14,7 @@
     "react-native": "0.82.1",
     "@react-native/new-app-screen": "0.82.1",
     "react-native-safe-area-context": "^5.5.2",
-    "@code-push-next/react-native-code-push": "file:../.."
+    "@bitrise/code-push-sdk": "file:../.."
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

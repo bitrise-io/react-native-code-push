@@ -242,7 +242,7 @@ const withAndroidGradle = (config) => {
       let content = modConfig.modResults.contents;
       
       // This part adds the codepush.gradle apply line and is correct.
-      const codePushApplyLine = 'apply from: "../../node_modules/@code-push-next/react-native-code-push/android/codepush.gradle"';
+      const codePushApplyLine = 'apply from: "../../node_modules/@bitrise/code-push-sdk/android/codepush.gradle"';
       if (!content.includes(codePushApplyLine)) {
         content += `\n${codePushApplyLine}\n`;
       }
