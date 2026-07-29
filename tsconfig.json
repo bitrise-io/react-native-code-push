@@ -1,3 +1,9 @@
+// Compiles test/ -> bin/ for the mocha-based integration test suite (see package.json's
+// build:tests/test:* scripts). Deliberately excludes src/ - that's a separate compilation unit
+// with its own config, see tsconfig.build.json for why.
+//
+// TODO: once the rest of this repo's runtime JS (CodePush.js, etc.) is migrated to TypeScript,
+// this and tsconfig.build.json should be unified into a single project.
 {
     "compilerOptions": {
         "target": "ES5",
@@ -12,6 +18,7 @@
         "removeComments": true
     },
     "exclude": [
-        "Examples"
+        "Examples",
+        "src"
     ]
 }

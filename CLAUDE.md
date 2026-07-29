@@ -16,6 +16,8 @@ React Native CodePush is a native module that enables over-the-air updates for R
 ### Build
 - `npm run build` - Build TypeScript tests to bin/ directory
 - `npm run tsc` - TypeScript compilation
+- `npm run build:ts` - Compiles `src/` (currently just the vendored `acquisition-sdk`) to `lib/`, which is what ships to consumers instead of raw `.ts`. Wired into `setup` (so local dev/tests have `lib/` available) and `prepare` (so `npm publish`/`npm pack` always ship a freshly built `lib/`).
+  - This split (a separate `tsconfig.build.json` and `tsconfig.json` for `test/` -> `bin/`) is temporary. Once `CodePush.js` and the rest of this repo's runtime JS are migrated to TypeScript, these should be unified into a single build, and adopting `react-native-builder-bob` (or some other common tool) is worth considering at that point instead of hand-rolled `tsc` + npm script wiring.
 
 ### Platform Testing
 - Tests run on actual emulators/simulators with real React Native apps
@@ -28,7 +30,7 @@ React Native CodePush is a native module that enables over-the-air updates for R
 - **JavaScript Bridge** (`CodePush.js`): Main API layer exposing update methods
 - **Native Modules**: Platform-specific implementations handling file operations, bundle management
 - **Update Manager**: Handles download, installation, and rollback logic
-- **Acquisition SDK**: Manages server communication and update metadata
+- **Acquisition SDK** (`src/acquisition-sdk/`): Manages server communication and update metadata
 
 ### Platform Structure
 - **iOS**: `ios/` - Objective-C implementation with CocoaPods integration
@@ -46,6 +48,7 @@ React Native CodePush is a native module that enables over-the-air updates for R
 - **Custom Test Runner**: TypeScript-based test framework in `test/`
 - **Real App Testing**: Creates actual React Native apps for integration testing
 - **Scenario Testing**: Update, rollback, and error scenarios
+- **No unit test infra yet**: this repo only has the mocha-based integration suite above. `src/acquisition-sdk/__tests__/` contains tests ported from upstream `microsoft/code-push`, kept for future reference - they are deliberately not wired into `npm test` or any runner. Don't assume they're dead/forgotten code, and don't wire them in without setting up real unit test infra first.
 - **Templates**: `test/template/` holds native files (Podfile, AppDelegate, Android app files) and JS scenarios copied over top of a freshly generated RN/Expo app during test setup, overwriting its defaults — edit files here, not the generated project, for changes to persist
 - **`test:ios` vs `test:setup:ios` vs `test:fast:ios`**: `test:ios` is just `test:setup:ios` followed by `test:fast:ios` — the two are meant to be split apart for local iteration.
   - `test:setup:ios` (mocha `--ios --setup`) boots the simulator and provisions the test app once: copies templates, runs `pod install`, patches Info.plist/AppDelegate. It never builds or runs any test scenario.
@@ -61,3 +64,4 @@ React Native CodePush is a native module that enables over-the-air updates for R
 - **Android Gradle Plugin**: Automatically generates bundle hashes and processes assets
 - **iOS CocoaPods**: Manages native dependencies and build configuration
 - **Bundle Processing**: Automated zip creation and hash calculation for OTA updates
+- **`.npmignore` is a blocklist, not an allowlist**: `package.json` has no `files` field, so any new top-level file/dir ships to npm by default unless explicitly excluded. When adding new repo tooling/config, check whether it needs a `.npmignore` entry. Verify with `npm pack --dry-run`.
