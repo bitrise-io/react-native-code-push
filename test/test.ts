@@ -181,27 +181,15 @@ class RNAndroid extends Platform.Android implements RNPlatform {
         return TestUtil.getProcessOutput("adb install -r " + this.getBinaryPath(projectDirectory), { cwd: androidDirectory }).then(() => { return null; });
     }
 
-    /** 
-     * Build function of the test application, the command depends on the OS 
-    */
-    buildFunction(androidDirectory: string): Q.Promise<void> {
-        const gradlewCommand = process.platform === "darwin" || process.platform === "linux" ? "./gradlew" : "gradlew";
-        return TestUtil.getProcessOutput(`${gradlewCommand} assembleRelease`, { noLogStdOut: true, cwd: androidDirectory })
-            .then(() => { return null; });
-    }
-
     /**
      * Builds the binary of the project on this platform.
      */
     buildApp(projectDirectory: string): Q.Promise<void> {
         // In order to run on Android without the package manager, we must create a release APK and then sign it with the debug certificate.
         const androidDirectory: string = path.join(projectDirectory, TestConfig.TestAppName, "android");
-        // If the build fails for the first time, try  rebuild app again
-        try {
-            return this.buildFunction(androidDirectory);
-        } catch {
-            return this.buildFunction(androidDirectory);
-        }
+        const gradlewCommand = process.platform === "darwin" || process.platform === "linux" ? "./gradlew" : "gradlew";
+        return TestUtil.getProcessOutput(`${gradlewCommand} assembleRelease`, { noLogStdOut: true, cwd: androidDirectory })
+            .then(() => { return null; });
     }
 }
 
@@ -281,19 +269,6 @@ class RNIOS extends Platform.IOS implements RNPlatform {
     }
 
     /**
-     * Maps project directories to whether or not they have built an IOS project before.
-     * 
-     * The first build of an IOS project does not always succeed, so we always try again when it fails.
-     *
-     *  EXAMPLE:
-     *  {
-     *      "TEMP_DIR/test-run": true,
-     *      "TEMP_DIR/updates": false
-     *  }
-     */
-    private static iosFirstBuild: any = {};
-
-    /**
      * Maps project directories to whether or not a real `xcodebuild` has completed for them yet.
      * Once true, subsequent scenario switches only need their JS bundle re-packaged, not a full
      * native rebuild, since the native code/Podfile don't change between scenarios.
@@ -310,15 +285,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
         }
         return this.realBuildApp(projectDirectory)
             .then(() => {
-                // realBuildApp can resolve even after a failed build (it swallows a failed
-                // retry into a resolved null - pre-existing behavior, unchanged here). Only
-                // mark this project as built if the .app it's supposed to have produced
-                // actually exists, so a swallowed failure doesn't cause every subsequent
-                // scenario switch to bundleOnly against a missing/stale binary - the next
-                // buildApp call will instead retry a real xcodebuild.
-                if (fs.existsSync(this.getBinaryPath(projectDirectory))) {
-                    RNIOS.hasBuiltOnce[projectDirectory] = true;
-                }
+                RNIOS.hasBuiltOnce[projectDirectory] = true;
             });
     }
 
@@ -363,22 +330,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
                 return TestUtil.getProcessOutput("xcodebuild -workspace " + path.join(iOSProject, TestConfig.TestAppName) + ".xcworkspace -scheme " + TestConfig.TestAppName +
                     " -configuration Release -destination \"platform=iOS Simulator,id=" + targetEmulator + "\" -derivedDataPath build", { cwd: iOSProject, timeout: 10 * 60 * 1000, maxBuffer: 1024 * 1024 * 5000, noLogStdOut: true });
             })
-            .then<void>(
-                () => { return null; },
-                (error: any) => {
-                    console.info(error);
-                    // The first time an iOS project is built, it fails because it does not finish building libReact.a before it builds the test app.
-                    // Simply build again to fix the issue.
-                    if (!RNIOS.iosFirstBuild[projectDirectory]) {
-                        const iosBuildFolder = path.join(iOSProject, "build");
-                        if (fs.existsSync(iosBuildFolder)) {
-                            del.sync([iosBuildFolder], { force: true });
-                        }
-                        RNIOS.iosFirstBuild[projectDirectory] = true;
-                        return this.realBuildApp(projectDirectory);
-                    }
-                    return null;
-                });
+            .then<void>(() => { return null; });
     }
 }
 
