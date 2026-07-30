@@ -1,5 +1,28 @@
 # React Native Module for CodePush
 
+> [!NOTE]
+>
+> Bitrise maintains its own fork of the [discontinued CodePush React Native SDK](https://github.com/microsoft/react-native-code-push) and invests into its long-term future.
+>
+> More details are coming soon, but in the meantime, here's what you can expect:
+>
+> - Published as `@bitrise/code-push-sdk` on [npm](https://www.npmjs.com/package/@bitrise/code-push-sdk)
+> - Public API remains compatible with other SDK forks, we plan to only extend the existing API surface, and not remove or change existing APIs.
+> - Getting started guide is available [within the main Bitrise docs](https://docs.bitrise.io/en/release-management/codepush/about-codepush), while API reference is in this repo's [docs folder](https://github.com/bitrise-io/react-native-code-push/tree/master/docs)
+>
+> Overview of forks:
+>
+> [microsoft/react-native-code-push](https://github.com/microsoft/react-native-code-push): Shut down and archived March 31, 2025
+>
+> └─ [CodePushNext/react-native-code-push](https://github.com/CodePushNext/react-native-code-push): later transferred to [CodeMagic's stewardship](https://github.com/codemagic-ci-cd/react-native-code-push/issues/49)
+>
+> &nbsp;&nbsp;&nbsp;&nbsp;└─ [bitrise/react-native-code-push](https://github.com/bitrise-io/react-native-code-push): forked at [v10.4.1](https://github.com/bitrise-io/react-native-code-push/commit/a3a602bf70102fc830917b7ffc94cdacb0cce420)
+
+Original README below:
+
+---
+
+
 This plugin provides client-side integration for the [CodePush service](https://microsoft.github.io/code-push/), allowing you to easily add a dynamic update experience to your React Native app(s).
 
 <!-- React Native Catalog -->
