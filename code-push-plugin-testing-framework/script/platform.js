@@ -409,8 +409,13 @@ var IOSEmulatorManager = (function () {
     /**
      * Ends a running application given its app id.
      */
-    IOSEmulatorManager.prototype.endRunningApplication = function (appId) {
-        return testUtil_1.TestUtil.getProcessOutput("xcrun simctl terminate booted " + appId, undefined).then(function () { return null; })
+    IOSEmulatorManager.prototype.endRunningApplication = async function (appId) {
+        const isAppRunning = await isAppRunningOnIOS(appId);
+        if (!isAppRunning) {
+            return null;
+        }
+        await testUtil_1.TestUtil.getProcessOutput("xcrun simctl terminate booted " + appId, undefined);
+        return null;
     };
     /**
      * Restarts an already installed application by app id.
@@ -460,6 +465,18 @@ var IOSEmulatorManager = (function () {
     return IOSEmulatorManager;
 }());
 exports.IOSEmulatorManager = IOSEmulatorManager;
+
+/**
+ * Returns whether the app is currently running on the booted simulator.
+ *
+ * "xcrun simctl terminate" fails when the app is not running, and it reports that the same way it reports
+ * a genuinely broken simulator, so the running state has to be established up front instead. Running apps
+ * appear in launchctl's job list as "UIKitApplication:<bundle id>[...]" with a live pid.
+ */
+async function isAppRunningOnIOS(appId) {
+    const output = await testUtil_1.TestUtil.getProcessOutput("xcrun simctl spawn booted launchctl list", { noLogCommand: true, noLogStdOut: true, noLogStdErr: true });
+    return output.includes(appId);
+}
 
 function commandWithCheckAppExistence(command, appId) {
     return testUtil_1.TestUtil.getProcessOutput("adb shell pm list packages", { noLogCommand: true, noLogStdOut: true, noLogStdErr: true })
