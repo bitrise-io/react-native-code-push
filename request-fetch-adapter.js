@@ -12,7 +12,6 @@ module.exports = {
       "Content-Type": "application/json",
       "X-CodePush-Plugin-Name": packageJson.name,
       "X-CodePush-Plugin-Version": packageJson.version,
-      "X-CodePush-SDK-Version": packageJson.dependencies["code-push"]
     };
 
     if (requestBody && typeof requestBody === "object") {
@@ -37,7 +36,7 @@ module.exports = {
 
 function getHttpMethodName(verb) {
   // Note: This should stay in sync with the enum definition in
-  // https://github.com/microsoft/code-push/blob/master/sdk/script/acquisition-sdk.ts#L6
+  // src/acquisition-sdk/acquisition-sdk.ts
   return [
     "GET",
     "HEAD",

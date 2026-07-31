@@ -34,6 +34,11 @@ Recipes/
 bin/
 test/
 
+# Don't publish TypeScript source, only the compiled lib/ output (built via `npm run build:ts`
+# as part of `prepare`) ships
+# Anchored to repo root (leading slash): an unanchored `src/` would also match `android/app/src/`.
+/src/
+
 # Remove after this framework is published on NPM
 code-push-plugin-testing-framework/
 
@@ -101,3 +106,9 @@ packages/
 
 .watchmanconfig
 
+# Dev tooling, not relevant to consumers
+.claude/
+CLAUDE.md
+mise.toml
+tsconfig.json
+tsconfig.build.json

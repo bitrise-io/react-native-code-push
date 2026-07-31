@@ -1,0 +1,24 @@
+// Compiles src/ -> lib/: the actual runtime code this package ships to consumers. Run via `npm run build:ts`.
+
+// This is a separate config from tsconfig.json because that one's rootDir/outDir (test -> bin)
+// and target audience (the mocha test suite) are unrelated to what we publish to consumers.
+//
+// TODO: once the rest of this repo's runtime JS (CodePush.js, etc.) is migrated to TypeScript,
+// this and tsconfig.json should be unified into a single project.
+{
+    "compilerOptions": {
+        "target": "ES5",
+        "module": "commonjs",
+        "lib": ["es6"],
+        "declaration": true,
+        "noImplicitAny": true,
+        "noEmitOnError": true,
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "rootDir": "src",
+        "outDir": "lib",
+        "removeComments": false
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/__tests__/**"]
+}
