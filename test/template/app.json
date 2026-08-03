@@ -26,14 +26,6 @@
             "CodePushServerURL": "http://10.0.2.2:3001"
           }
         }
-      ],
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "15.5"
-          }
-        }
       ]
     ]
   }

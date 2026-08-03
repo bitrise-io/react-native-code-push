@@ -442,12 +442,11 @@ class RNProjectManager extends ProjectManager {
         mkdirp.sync(projectDirectory);
 
         if (TestConfig.isExpoApp) {
-            return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-55`, { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
+            return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-57`, { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx expo init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
                 .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo install expo-build-properties", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 // create-expo-app's blank template ships without a metro.config.js. react-native-xcode.sh's
                 // bundling step (used both for the initial build and for fast-path scenario-switch rebuilds)
                 // shells out to react-native's cli.js, which throws "No Metro config found" without one.
