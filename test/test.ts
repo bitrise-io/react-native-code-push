@@ -379,7 +379,7 @@ class RNProjectManager extends ProjectManager {
                 })
                 .then(() => { return null; });
         } else {
-            return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.82.1 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+            return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.86.2 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
                 .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
                 .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))

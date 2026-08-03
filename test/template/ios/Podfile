@@ -32,20 +32,6 @@ target 'TestCodePush' do
       # :ccache_enabled => true
     )
 
-    # Workaround: fmt 11.0.2 (pinned transitively via RCT-Folly) fails to compile on
-    # Xcode 26.4+ due to a compiler compatibility bug. Fixed upstream in fmt 12.1.0.
-    # See https://github.com/facebook/react-native/issues/55601
-    #
-    # REMOVE THIS once the React Native version used here bundles fmt >= 12.1.0
-    # (i.e. after upgrading React Native past 0.82.x).
-    installer.pods_project.targets.each do |target|
-      if target.name == 'fmt'
-        target.build_configurations.each do |config|
-          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-        end
-      end
-    end
-
     # Skip the x86_64 simulator slice. Test runs only ever target an arm64
     # simulator (Apple Silicon), so building x86_64 as well just doubles
     # compile/link time for a slice that never runs, and adds unnecessary
