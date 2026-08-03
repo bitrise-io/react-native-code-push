@@ -18,6 +18,9 @@ jobs:
       - name: Lint and type-check
         run: npm run build:tests
 
+      - name: Check public API compatibility
+        run: npm run check:api-compat
+
   android-test:
     needs: lint
     runs-on: bitrise-react-native-code-push-linux-runner
