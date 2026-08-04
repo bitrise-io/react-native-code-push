@@ -37,6 +37,14 @@ jobs:
 
       - uses: jdx/mise-action@v4
 
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
       - name: Install dependencies
         run: npm install
 
@@ -76,7 +84,32 @@ jobs:
 
       - uses: jdx/mise-action@v4
 
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cocoapods
+            ~/Library/Caches/CocoaPods
+          key: ${{ runner.os }}-cocoapods-${{ hashFiles('test/test.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-cocoapods-
+
       - name: Run iOS Tests
         run: |
           npm install
           npm run ${{ matrix.test-command }}
+
+      - name: Debug CocoaPods cache size after test run
+        if: always()
+        run: |
+          du -sh ~/.cocoapods 2>&1 || true
+          du -sh ~/Library/Caches/CocoaPods 2>&1 || true
+          find ~/Library/Caches/CocoaPods -type f 2>/dev/null | xargs du -sh 2>/dev/null | sort -rh | head -100 || true

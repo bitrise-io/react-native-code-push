@@ -34,6 +34,19 @@ function ensureAndroidCleartextTraffic(androidManifestPath: string): void {
     }
 }
 
+/**
+ * Returns a " --platform <ios|android>" flag for `expo prebuild` when exactly one platform is
+ * under test in this mocha run, so prebuild only regenerates that platform's native project
+ * instead of defaulting to "all". Falls back to no flag (i.e. "all") if both/neither are active.
+ */
+function getExpoPrebuildPlatformFlag(): string {
+    const ios = TestUtil.readMochaCommandLineFlag("--ios");
+    const android = TestUtil.readMochaCommandLineFlag("--android");
+    if (ios && !android) return " --platform ios";
+    if (android && !ios) return " --platform android";
+    return "";
+}
+
 function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
     const packageJsonPath = path.join(projectPath, "package.json");
     const packageJsonContents = fs.readFileSync(packageJsonPath, "utf8");
@@ -44,9 +57,12 @@ function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
         throw new Error(`Could not determine react-native version from ${packageJsonPath}`);
     }
 
+    // Expo doesn't depend on @react-native-community/cli itself, but react-native-xcode.sh's
+    // bundling step shells out to react-native's own cli.js, which requires it to be present
+    // as a devDependency (used later both for the fast-path iOS rebuild and for update bundling).
     return TestUtil.getProcessOutput(
-        `npm install --save-dev @react-native/metro-config@${reactNativeVersion}`,
-        { cwd: projectPath }
+        `npm install --save-dev @react-native/metro-config@${reactNativeVersion} @react-native-community/cli`,
+        { cwd: projectPath, noLogStdOut: true }
     ).then(() => { return null; });
 }
 
@@ -231,7 +247,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
         } else {
             // Install the Podfile
             return TestUtil.copyFile(path.join(TestConfig.templatePath, "ios", "Podfile"), podfilePath, true)
-                .then(() => TestUtil.getProcessOutput(`pod install`, { cwd: iOSProject }))
+                .then(() => TestUtil.getProcessOutput(`pod install`, { cwd: iOSProject, noLogStdOut: true }))
                 // Put the IOS deployment key in the Info.plist
                 .then(TestUtil.replaceString.bind(undefined, infoPlistPath,
                     "</dict>\n</plist>",
@@ -276,9 +292,58 @@ class RNIOS extends Platform.IOS implements RNPlatform {
     private static iosFirstBuild: any = {};
 
     /**
-     * Builds the binary of the project on this platform.
+     * Maps project directories to whether or not a real `xcodebuild` has completed for them yet.
+     * Once true, subsequent scenario switches only need their JS bundle re-packaged, not a full
+     * native rebuild, since the native code/Podfile don't change between scenarios.
+     */
+    private static hasBuiltOnce: any = {};
+
+    /**
+     * Builds the binary of the project on this platform. Only performs a real `xcodebuild` the
+     * first time; subsequent calls for the same project just re-bundle the JS (see `bundleOnly`).
      */
     buildApp(projectDirectory: string): Q.Promise<void> {
+        if (RNIOS.hasBuiltOnce[projectDirectory]) {
+            return this.bundleOnly(projectDirectory);
+        }
+        return this.realBuildApp(projectDirectory)
+            .then(() => { RNIOS.hasBuiltOnce[projectDirectory] = true; });
+    }
+
+    /**
+     * Re-packages the JS bundle (and copies assets) into the already-built `.app`, by invoking
+     * `react-native-xcode.sh` directly instead of going through a full `xcodebuild`. This is the
+     * same script Xcode's "Bundle React Native code and images" build phase runs; the native code
+     * doesn't change between scenarios, so re-running the whole build graph is unnecessary.
+     */
+    private bundleOnly(projectDirectory: string): Q.Promise<void> {
+        const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
+        const configurationBuildDir = path.dirname(this.getBinaryPath(projectDirectory));
+        const wrapperName = `${TestConfig.TestAppName}.app`;
+        const scriptPath = path.join(projectDirectory, TestConfig.TestAppName, "node_modules", "react-native", "scripts", "react-native-xcode.sh");
+
+        const env = Object.assign({}, process.env, {
+            CONFIGURATION: "Release",
+            PLATFORM_NAME: "iphonesimulator",
+            CONFIGURATION_BUILD_DIR: configurationBuildDir,
+            TARGET_BUILD_DIR: configurationBuildDir,
+            BUILT_PRODUCTS_DIR: configurationBuildDir,
+            UNLOCALIZED_RESOURCES_FOLDER_PATH: wrapperName,
+            WRAPPER_NAME: wrapperName,
+            PROJECT_DIR: iOSProject,
+            SRCROOT: iOSProject,
+            SOURCE_ROOT: iOSProject,
+            PODS_ROOT: path.join(iOSProject, "Pods"),
+        });
+
+        return TestUtil.getProcessOutput(`"${scriptPath}"`, { cwd: iOSProject, env, timeout: 2 * 60 * 1000, noLogStdOut: true, noLogStdErr: true })
+            .then(() => { return null; });
+    }
+
+    /**
+     * Performs a full `xcodebuild` of the project on this platform.
+     */
+    private realBuildApp(projectDirectory: string): Q.Promise<void> {
         const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
 
         return this.getEmulatorManager().getTargetEmulator()
@@ -298,7 +363,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
                             del.sync([iosBuildFolder], { force: true });
                         }
                         RNIOS.iosFirstBuild[projectDirectory] = true;
-                        return this.buildApp(projectDirectory);
+                        return this.realBuildApp(projectDirectory);
                     }
                     return null;
                 });
@@ -366,23 +431,33 @@ class RNProjectManager extends ProjectManager {
         mkdirp.sync(projectDirectory);
 
         if (TestConfig.isExpoApp) {
-            return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-55`, { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+            return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-55`, { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx expo init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo install expo-build-properties", { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean`, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo install expo-build-properties", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                // create-expo-app's blank template ships without a metro.config.js. react-native-xcode.sh's
+                // bundling step (used both for the initial build and for fast-path scenario-switch rebuilds)
+                // shells out to react-native's cli.js, which throws "No Metro config found" without one.
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                // Only generate the native project(s) for the platform(s) actually under test in this
+                // run - prebuild defaults to "all", which wastes ~10s regenerating the unused platform.
+                .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean${getExpoPrebuildPlatformFlag()}`, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(() => {
-                    ensureAndroidCleartextTraffic(path.join(projectDirectory, TestConfig.TestAppName, "android", "app", "src", "main", "AndroidManifest.xml"));
+                    // Skipped entirely on iOS-only runs, where prebuild no longer generates the android/ folder.
+                    const androidManifestPath = path.join(projectDirectory, TestConfig.TestAppName, "android", "app", "src", "main", "AndroidManifest.xml");
+                    if (fs.existsSync(androidManifestPath)) {
+                        ensureAndroidCleartextTraffic(androidManifestPath);
+                    }
                     return null;
                 })
                 .then(() => { return null; });
         } else {
-            return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.86.2 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+            return TestUtil.getProcessOutputWithPhaseTiming("npx @react-native-community/cli init " + appName + " --version 0.86.2 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(() => { return null; })
                 .catch((error) => {
                     console.log(`"npx @react-native-community/cli init ${appName} failed". cwd=${projectDirectory}`, error);
@@ -440,6 +515,7 @@ class RNProjectManager extends ProjectManager {
      * Creates a CodePush update package zip for a project.
      */
     public createUpdateArchive(projectDirectory: string, targetPlatform: Platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
+        const __t0 = Date.now();
         const bundleFolder: string = path.join(projectDirectory, TestConfig.TestAppName, "CodePush/");
         const bundleName: string = (<RNPlatform><any>targetPlatform).getBundleName();
         const bundlePath: string = path.join(bundleFolder, bundleName);
@@ -453,19 +529,21 @@ class RNProjectManager extends ProjectManager {
         if (TestConfig.isExpoApp) {
             // Using react-native bundle instead of expo export because code-push-cli uses react-native-cli to build the app.
             return deferred.promise
-                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo prebuild --clean", { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then(TestUtil.getProcessOutput.bind(undefined, "npm install @react-native-community/cli",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                // No --clean: this project's native tree is already a clean Expo-managed one from
+                // setupProject, app.json never changes between these repeated calls, and nothing ever
+                // builds this project's native code (only `react-native bundle` reads from it) - a full
+                // wipe-and-regenerate here is pure wasted cost, incremental reconciliation is a no-op.
+                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo prebuild --platform " + targetPlatform.getName(), { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff));
+                    { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
+                .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - __t0}ms`); return result; });
         } else {
             return deferred.promise
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff));
+                    { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
+                .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - __t0}ms`); return result; });
         }
     }
 
@@ -523,23 +601,34 @@ class RNProjectManager extends ProjectManager {
      */
     public runApplication(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
         console.log("Running project in " + projectDirectory + " on " + targetPlatform.getName());
+        const __runAppStart = Date.now();
+        const willBuild = !RNProjectManager.currentScenarioHasBuilt[projectDirectory];
 
         return Q<void>(null)
             .then(() => {
                 // Build if this scenario has not yet been built.
                 if (!RNProjectManager.currentScenarioHasBuilt[projectDirectory]) {
                     RNProjectManager.currentScenarioHasBuilt[projectDirectory] = true;
-                    return (<RNPlatform><any>targetPlatform).buildApp(projectDirectory);
+                    const __buildStart = Date.now();
+                    return (<RNPlatform><any>targetPlatform).buildApp(projectDirectory)
+                        .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} buildApp(${projectDirectory}) took ${Date.now() - __buildStart}ms`); });
                 }
             })
             .then(() => {
                 // Uninstall the app so that the installation is clean and no files are left around for each test.
-                return targetPlatform.getEmulatorManager().uninstallApplication(TestConfig.TestNamespace);
+                const __uninstallStart = Date.now();
+                return targetPlatform.getEmulatorManager().uninstallApplication(TestConfig.TestNamespace)
+                    .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} uninstallApplication took ${Date.now() - __uninstallStart}ms`); });
             })
             .then(() => {
                 // Install and launch the app.
+                const __installStart = Date.now();
                 return (<RNPlatform><any>targetPlatform).installApp(projectDirectory)
-                    .then<void>(targetPlatform.getEmulatorManager().launchInstalledApplication.bind(undefined, TestConfig.TestNamespace));
+                    .then<void>(targetPlatform.getEmulatorManager().launchInstalledApplication.bind(undefined, TestConfig.TestNamespace))
+                    .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} installApp+launch took ${Date.now() - __installStart}ms`); });
+            })
+            .then(() => {
+                console.log(`[TIMING] ${targetPlatform.getName()} runApplication total (built=${willBuild}) took ${Date.now() - __runAppStart}ms`);
             });
     }
 }

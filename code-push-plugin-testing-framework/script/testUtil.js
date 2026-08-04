@@ -50,10 +50,18 @@ var TestUtil = (function () {
             options.timeout = 10 * 60 * 1000;
         if (!options.noLogCommand)
             console.log("Running command: " + command);
+        var __timingStart = Date.now();
+        var __timingLabel = command.length > 80 ? command.slice(0, 80) + "..." : command;
         var execProcess = child_process.exec(command, options, function (error, stdout, stderr) {
+            console.log("[TIMING] exec \"" + __timingLabel + "\" took " + (Date.now() - __timingStart) + "ms");
             if (error) {
-                if (!options.noLogStdErr)
-                    console.error("" + error);
+                // Always surface full output on failure, even if noLogStdOut/noLogStdErr
+                // silenced it on the success path above - otherwise failures are undiagnosable.
+                console.error("" + error);
+                if (stdout)
+                    console.error("stdout:\n" + stdout);
+                if (stderr)
+                    console.error("stderr:\n" + stderr);
                 deferred.reject(error);
             }
             else {
@@ -65,9 +73,84 @@ var TestUtil = (function () {
         if (!options.noLogStdErr)
             execProcess.stderr.pipe(process.stderr);
         execProcess.on('error', function (error) {
-            if (!options.noLogStdErr)
-                console.error("" + error);
+            console.error("" + error);
             deferred.reject(error);
+        });
+        return deferred.promise;
+    };
+    /**
+     * Like getProcessOutput, but additionally logs a [TIMING] line for each "✔ <phase>"
+     * progress marker the child process prints to stdout (e.g. the phases printed by
+     * `@react-native-community/cli init`), so long opaque commands can be broken down
+     * into their constituent phases without changing their behavior.
+     */
+    TestUtil.getProcessOutputWithPhaseTiming = function (command, options) {
+        var deferred = Q.defer();
+        options = options || {};
+        if (options.timeout === undefined)
+            options.timeout = 10 * 60 * 1000;
+        if (!options.noLogCommand)
+            console.log("Running command: " + command);
+        var __timingStart = Date.now();
+        var __lastMarker = __timingStart;
+        var __label = command.length > 80 ? command.slice(0, 80) + "..." : command;
+        var child = child_process.spawn(command, [], { cwd: options.cwd, env: options.env, shell: true });
+        var stdoutBuf = "";
+        var stderrBuf = "";
+        var pendingStdoutLine = "";
+        var pendingStderrLine = "";
+        function handleLine(line) {
+            var trimmed = line.trim();
+            if (trimmed.indexOf("✔") === 0) {
+                var now = Date.now();
+                var phaseName = trimmed.replace(/^✔\s*/, "");
+                console.log("[TIMING] phase \"" + phaseName + "\" took " + (now - __lastMarker) + "ms (cumulative " + (now - __timingStart) + "ms)");
+                __lastMarker = now;
+            }
+        }
+        child.stdout.on("data", function (chunk) {
+            stdoutBuf += chunk;
+            pendingStdoutLine += chunk.toString();
+            var lines = pendingStdoutLine.split("\n");
+            pendingStdoutLine = lines.pop();
+            lines.forEach(handleLine);
+            if (!options.noLogStdOut)
+                process.stdout.write(chunk);
+        });
+        child.stderr.on("data", function (chunk) {
+            stderrBuf += chunk;
+            pendingStderrLine += chunk.toString();
+            var stderrLines = pendingStderrLine.split("\n");
+            pendingStderrLine = stderrLines.pop();
+            stderrLines.forEach(handleLine);
+            if (!options.noLogStdErr)
+                process.stderr.write(chunk);
+        });
+        var timeoutHandle = setTimeout(function () {
+            child.kill();
+        }, options.timeout);
+        child.on("error", function (error) {
+            clearTimeout(timeoutHandle);
+            console.error("" + error);
+            deferred.reject(error);
+        });
+        child.on("close", function (code) {
+            clearTimeout(timeoutHandle);
+            console.log("[TIMING] exec \"" + __label + "\" took " + (Date.now() - __timingStart) + "ms");
+            if (code !== 0) {
+                var error = new Error(command + " exited with code " + code);
+                // Always surface full output on failure, even if noLogStdOut/noLogStdErr
+                // silenced it on the success path above - otherwise failures are undiagnosable.
+                console.error("" + error);
+                if (stdoutBuf)
+                    console.error("stdout:\n" + stdoutBuf);
+                if (stderrBuf)
+                    console.error("stderr:\n" + stderrBuf);
+                deferred.reject(error);
+            }
+            else {
+                deferred.resolve(stdoutBuf.toString());
+            }
         });
         return deferred.promise;
     };

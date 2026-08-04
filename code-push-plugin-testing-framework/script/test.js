@@ -46,19 +46,30 @@ function initializeTests(projectManager, supportedTargetPlatforms, describeTests
      */
     function setupTests() {
         it("sets up tests correctly", function (done) {
+            var __setupStart = Date.now();
             var promises = [];
             targetPlatforms.forEach(function (platform) {
                 promises.push(platform.getEmulatorManager().bootEmulator(TestConfig.restartEmulators));
             });
             console.log("Building test project.");
+            var __testProjectStart = Date.now();
             // create the test project
             promises.push(createTestProject(TestConfig.testRunDirectory)
                 .then(function () {
+                    console.log("[TIMING] createTestProject(testRunDirectory) took " + (Date.now() - __testProjectStart) + "ms");
                     console.log("Building update project.");
+                    var __updateProjectStart = Date.now();
                     // create the update project
-                    return createTestProject(TestConfig.updatesDirectory);
+                    return createTestProject(TestConfig.updatesDirectory)
+                        .then(function (result) {
+                            console.log("[TIMING] createTestProject(updatesDirectory) took " + (Date.now() - __updateProjectStart) + "ms");
+                            return result;
+                        });
                 }).then(function () { return null; }));
-            Q.all(promises).then(function () { done(); }, function (error) { done(error); });
+            Q.all(promises).then(function () {
+                console.log("[TIMING] setupTests total took " + (Date.now() - __setupStart) + "ms");
+                done();
+            }, function (error) { done(error); });
         });
     }
     /**
@@ -73,10 +84,15 @@ function initializeTests(projectManager, supportedTargetPlatforms, describeTests
     function createAndRunTests(targetPlatform) {
         describe("CodePush", function () {
             before(function () {
+                var __beforeStart = Date.now();
                 ServerUtil.setupServer(targetPlatform);
                 return targetPlatform.getEmulatorManager().uninstallApplication(TestConfig.TestNamespace)
                     .then(projectManager.preparePlatform.bind(projectManager, TestConfig.testRunDirectory, targetPlatform))
-                    .then(projectManager.preparePlatform.bind(projectManager, TestConfig.updatesDirectory, targetPlatform));
+                    .then(projectManager.preparePlatform.bind(projectManager, TestConfig.updatesDirectory, targetPlatform))
+                    .then(function (result) {
+                        console.log("[TIMING] " + targetPlatform.getName() + " suite before() (uninstall + preparePlatform x2) took " + (Date.now() - __beforeStart) + "ms");
+                        return result;
+                    });
             });
             after(function () {
                 ServerUtil.cleanupServer();

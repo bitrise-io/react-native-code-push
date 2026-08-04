@@ -452,6 +452,19 @@ declare module 'code-push-plugin-testing-framework/script/testUtil' {
 	        noLogStdErr?: boolean;
 	    }): Q.Promise<string>;
 	    /**
+	     * Like getProcessOutput, but additionally logs a [TIMING] line for each "✔ <phase>"
+	     * progress marker the child process prints to stdout, so long opaque commands can be
+	     * broken down into their constituent phases.
+	     */
+	    static getProcessOutputWithPhaseTiming(command: string, options?: {
+	    	cwd?: string;
+	    	env?: any;
+	    	timeout?: number;
+	    	noLogCommand?: boolean;
+	    	noLogStdOut?: boolean;
+	    	noLogStdErr?: boolean;
+	    }): Q.Promise<string>;
+	    /**
 	     * Returns the name of the plugin that is being tested.
 	     */
 	    static getPluginName(): string;
