@@ -24,6 +24,14 @@ jobs:
   android-test:
     needs: lint
     runs-on: bitrise-react-native-code-push-linux-runner
+    strategy:
+      matrix:
+        variant: [bare, expo]
+        include:
+          - variant: bare
+            test-command: test:android
+          - variant: expo
+            test-command: test:expo:android
     steps:
       - uses: actions/checkout@v7
 
@@ -50,11 +58,19 @@ jobs:
           target: google_apis
           arch: x86
           disable-animations: true
-          script: npm run test:android
+          script: npm run ${{ matrix.test-command }}
 
   ios-test:
     needs: lint
     runs-on: bitrise-react-native-code-push-macos-runner
+    strategy:
+      matrix:
+        variant: [bare, expo]
+        include:
+          - variant: bare
+            test-command: test:ios
+          - variant: expo
+            test-command: test:expo:ios
     steps:
       - uses: actions/checkout@v7
 
@@ -63,4 +79,4 @@ jobs:
       - name: Run iOS Tests
         run: |
           npm install
-          npm run test:ios
+          npm run ${{ matrix.test-command }}
