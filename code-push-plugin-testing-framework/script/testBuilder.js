@@ -39,7 +39,12 @@ function describeInternal(func, description, spec, scenarioPath) {
         });
         if (scenarioPath) {
             before(function () {
-                return TestContext.projectManager.setupScenario(TestConfig.testRunDirectory, TestConfig.TestNamespace, TestConfig.templatePath, scenarioPath, TestContext.targetPlatform);
+                var t0 = Date.now();
+                return TestContext.projectManager.setupScenario(TestConfig.testRunDirectory, TestConfig.TestNamespace, TestConfig.templatePath, scenarioPath, TestContext.targetPlatform)
+                    .then(function (result) {
+                        console.log("[TIMING] setupScenario(" + scenarioPath + ") for \"" + description + "\" took " + (Date.now() - t0) + "ms");
+                        return result;
+                    });
             });
         }
         spec();

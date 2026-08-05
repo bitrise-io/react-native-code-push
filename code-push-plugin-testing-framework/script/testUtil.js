@@ -50,7 +50,10 @@ var TestUtil = (function () {
             options.timeout = 10 * 60 * 1000;
         if (!options.noLogCommand)
             console.log("Running command: " + command);
+        var timingStart = Date.now();
+        var timingLabel = command.length > 80 ? command.slice(0, 80) + "..." : command;
         var execProcess = child_process.exec(command, options, function (error, stdout, stderr) {
+            console.log("[TIMING] exec \"" + timingLabel + "\" took " + (Date.now() - timingStart) + "ms");
             if (error) {
                 if (!options.noLogStdErr)
                     console.error("" + error);
