@@ -1,4 +1,5 @@
 "use strict";
+var child_process = require("child_process");
 var Q = require("q");
 var testUtil_1 = require("./testUtil");
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -97,6 +98,41 @@ exports.IOS = IOS;
 // bootEmulatorInternal constants
 var emulatorMaxReadyAttempts = 50;
 var emulatorReadyCheckDelayMs = 5 * 1000;
+
+/**
+ * Checks whether an Android app is currently running via "pidof". Exit code 1 means the
+ * process wasn't found, which is the expected (non-error) outcome most of the time while
+ * polling for teardown - any other failure (e.g. adb/device unavailable) is a genuine
+ * problem and must not be silently treated as "the app stopped". Calls child_process
+ * directly instead of going through TestUtil.getProcessOutput, since that helper treats
+ * every non-zero exit as an error and logs it - which would spam the console with an
+ * "error" on every single poll where the app has (expectedly) already stopped.
+ */
+function isAndroidAppRunning(appId) {
+    return new Promise(function (resolve, reject) {
+        child_process.exec("adb shell pidof " + appId, function (error) {
+            if (!error) {
+                resolve(true);
+            } else if (error.code === 1) {
+                resolve(false);
+            } else {
+                reject(error);
+            }
+        });
+    });
+}
+
+async function waitForAndroidAppToStop(appId, maxWaitMs) {
+    var pollIntervalMs = 200;
+    var start = Date.now();
+    while (true) {
+        var isRunning = await isAndroidAppRunning(appId);
+        if (!isRunning || Date.now() - start >= maxWaitMs) {
+            return;
+        }
+        await new Promise(function (resolve) { setTimeout(resolve, pollIntervalMs); });
+    }
+}
 /**
  * Helper function for EmulatorManager implementations to use to boot an emulator with a given platformName and check, start, and kill methods.
  */
@@ -241,7 +277,7 @@ var AndroidEmulatorManager = (function () {
         var t0 = Date.now();
         return testUtil_1.TestUtil.getProcessOutput("adb shell am force-stop " + appId).then(function () {
             var waitStart = Date.now();
-            return Q.delay(10000).then(function () {
+            return waitForAndroidAppToStop(appId, 10000).then(function () {
                 console.log("[TIMING] android endRunningApplication: force-stop took " + (Date.now() - t0) + "ms, teardown wait took " + (Date.now() - waitStart) + "ms");
             });
         });
