@@ -440,6 +440,7 @@ class RNProjectManager extends ProjectManager {
      * Creates a CodePush update package zip for a project.
      */
     public createUpdateArchive(projectDirectory: string, targetPlatform: Platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
+        const t0 = Date.now();
         const bundleFolder: string = path.join(projectDirectory, TestConfig.TestAppName, "CodePush/");
         const bundleName: string = (<RNPlatform><any>targetPlatform).getBundleName();
         const bundlePath: string = path.join(bundleFolder, bundleName);
@@ -460,12 +461,14 @@ class RNProjectManager extends ProjectManager {
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff));
+                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
+                .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         } else {
             return deferred.promise
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff));
+                .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
+                .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         }
     }
 
@@ -523,23 +526,34 @@ class RNProjectManager extends ProjectManager {
      */
     public runApplication(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<void> {
         console.log("Running project in " + projectDirectory + " on " + targetPlatform.getName());
+        const runAppStart = Date.now();
+        const willBuild = !RNProjectManager.currentScenarioHasBuilt[projectDirectory];
 
         return Q<void>(null)
             .then(() => {
                 // Build if this scenario has not yet been built.
                 if (!RNProjectManager.currentScenarioHasBuilt[projectDirectory]) {
                     RNProjectManager.currentScenarioHasBuilt[projectDirectory] = true;
-                    return (<RNPlatform><any>targetPlatform).buildApp(projectDirectory);
+                    const buildStart = Date.now();
+                    return (<RNPlatform><any>targetPlatform).buildApp(projectDirectory)
+                        .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} buildApp(${projectDirectory}) took ${Date.now() - buildStart}ms`); });
                 }
             })
             .then(() => {
                 // Uninstall the app so that the installation is clean and no files are left around for each test.
-                return targetPlatform.getEmulatorManager().uninstallApplication(TestConfig.TestNamespace);
+                const uninstallStart = Date.now();
+                return targetPlatform.getEmulatorManager().uninstallApplication(TestConfig.TestNamespace)
+                    .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} uninstallApplication took ${Date.now() - uninstallStart}ms`); });
             })
             .then(() => {
                 // Install and launch the app.
+                const installStart = Date.now();
                 return (<RNPlatform><any>targetPlatform).installApp(projectDirectory)
-                    .then<void>(targetPlatform.getEmulatorManager().launchInstalledApplication.bind(undefined, TestConfig.TestNamespace));
+                    .then<void>(targetPlatform.getEmulatorManager().launchInstalledApplication.bind(undefined, TestConfig.TestNamespace))
+                    .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} installApp+launch took ${Date.now() - installStart}ms`); });
+            })
+            .then(() => {
+                console.log(`[TIMING] ${targetPlatform.getName()} runApplication total (built=${willBuild}) took ${Date.now() - runAppStart}ms`);
             });
     }
 }

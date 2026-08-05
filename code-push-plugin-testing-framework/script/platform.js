@@ -102,6 +102,12 @@ var emulatorReadyCheckDelayMs = 5 * 1000;
  */
 function bootEmulatorInternal(platformName, restartEmulators, targetEmulator, checkEmulator, startEmulator, killEmulator) {
     var deferred = Q.defer();
+    var bootStart = Date.now();
+    deferred.promise.then(function () {
+        console.log("[TIMING] " + platformName + " bootEmulator took " + (Date.now() - bootStart) + "ms");
+    }, function () {
+        console.log("[TIMING] " + platformName + " bootEmulator FAILED after " + (Date.now() - bootStart) + "ms");
+    });
     console.log("Setting up " + platformName + " emulator.");
     function onEmulatorReady() {
         console.log(platformName + " emulator is ready!");
@@ -232,13 +238,20 @@ var AndroidEmulatorManager = (function () {
      * Ends a running application given its app id.
      */
     AndroidEmulatorManager.prototype.endRunningApplication = function (appId) {
-        return testUtil_1.TestUtil.getProcessOutput("adb shell am force-stop " + appId).then(function () { return Q.delay(10000); });
+        var t0 = Date.now();
+        return testUtil_1.TestUtil.getProcessOutput("adb shell am force-stop " + appId).then(function () {
+            var waitStart = Date.now();
+            return Q.delay(10000).then(function () {
+                console.log("[TIMING] android endRunningApplication: force-stop took " + (Date.now() - t0) + "ms, teardown wait took " + (Date.now() - waitStart) + "ms");
+            });
+        });
     };
     /**
      * Restarts an already installed application by app id.
      */
     AndroidEmulatorManager.prototype.restartApplication = function (appId) {
         var _this = this;
+        var t0 = Date.now();
         return this.endRunningApplication(appId)
             .then(function () {
                 // Wait for a 1 second before restarting.
@@ -246,6 +259,10 @@ var AndroidEmulatorManager = (function () {
             })
             .then(function () {
                 return _this.launchInstalledApplication(appId);
+            })
+            .then(function (result) {
+                console.log("[TIMING] android restartApplication total took " + (Date.now() - t0) + "ms");
+                return result;
             });
     };
     /**
@@ -269,9 +286,14 @@ var AndroidEmulatorManager = (function () {
      * Prepares the emulator for a test.
      */
     AndroidEmulatorManager.prototype.prepareEmulatorForTest = function (appId) {
+        var t0 = Date.now();
         return this.endRunningApplication(appId)
             .then(function () {
                 return commandWithCheckAppExistence("adb shell pm clear", appId);
+            })
+            .then(function (result) {
+                console.log("[TIMING] android prepareEmulatorForTest total took " + (Date.now() - t0) + "ms");
+                return result;
             });
     };
     /**
@@ -387,7 +409,11 @@ var IOSEmulatorManager = (function () {
      * Prepares the emulator for a test.
      */
     IOSEmulatorManager.prototype.prepareEmulatorForTest = function (appId) {
-        return this.endRunningApplication(appId);
+        var t0 = Date.now();
+        return this.endRunningApplication(appId).then(function (result) {
+            console.log("[TIMING] ios prepareEmulatorForTest total took " + (Date.now() - t0) + "ms");
+            return result;
+        });
     };
     /**
      * Uninstalls the app from the emulator.
