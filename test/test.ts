@@ -34,6 +34,19 @@ function ensureAndroidCleartextTraffic(androidManifestPath: string): void {
     }
 }
 
+/**
+ * Returns a " --platform <ios|android>" flag for `expo prebuild` when exactly one platform is
+ * under test in this mocha run, so prebuild only regenerates that platform's native project
+ * instead of defaulting to "all". Falls back to no flag (i.e. "all") if both/neither are active.
+ */
+function getExpoPrebuildPlatformFlag(): string {
+    const ios = TestUtil.readMochaCommandLineFlag("--ios");
+    const android = TestUtil.readMochaCommandLineFlag("--android");
+    if (ios && !android) return " --platform ios";
+    if (android && !ios) return " --platform android";
+    return "";
+}
+
 function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
     const packageJsonPath = path.join(projectPath, "package.json");
     const packageJsonContents = fs.readFileSync(packageJsonPath, "utf8");
@@ -44,8 +57,11 @@ function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
         throw new Error(`Could not determine react-native version from ${packageJsonPath}`);
     }
 
+    // Expo doesn't depend on @react-native-community/cli itself, but react-native-xcode.sh's
+    // bundling step shells out to react-native's own cli.js, which requires it to be present
+    // as a devDependency (used later both for the fast-path iOS rebuild and for update bundling).
     return TestUtil.getProcessOutput(
-        `npm install --save-dev @react-native/metro-config@${reactNativeVersion}`,
+        `npm install --save-dev @react-native/metro-config@${reactNativeVersion} @react-native-community/cli`,
         { cwd: projectPath, noLogStdOut: true }
     ).then(() => { return null; });
 }
@@ -372,9 +388,17 @@ class RNProjectManager extends ProjectManager {
                 .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
                 .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo install expo-build-properties", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
-                .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean`, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                // create-expo-app's blank template ships without a metro.config.js. react-native-xcode.sh's
+                // bundling step (used both for the initial build and for fast-path scenario-switch rebuilds)
+                // shells out to react-native's cli.js, which throws "No Metro config found" without one.
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean${getExpoPrebuildPlatformFlag()}`, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(() => {
-                    ensureAndroidCleartextTraffic(path.join(projectDirectory, TestConfig.TestAppName, "android", "app", "src", "main", "AndroidManifest.xml"));
+                    // Skipped entirely on iOS-only runs, where prebuild no longer generates the android/ folder.
+                    const androidManifestPath = path.join(projectDirectory, TestConfig.TestAppName, "android", "app", "src", "main", "AndroidManifest.xml");
+                    if (fs.existsSync(androidManifestPath)) {
+                        ensureAndroidCleartextTraffic(androidManifestPath);
+                    }
                     return null;
                 })
                 .then(() => { return null; });
@@ -454,13 +478,13 @@ class RNProjectManager extends ProjectManager {
         if (TestConfig.isExpoApp) {
             // Using react-native bundle instead of expo export because code-push-cli uses react-native-cli to build the app.
             return deferred.promise
-                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo prebuild --clean", { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then(TestUtil.getProcessOutput.bind(undefined, "npm install @react-native-community/cli",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                // No `prebuild --clean`: this project's native tree is already a clean Expo-managed one from
+                // setupProject, app.json never changes between these repeated calls, and nothing ever
+                // builds this project's native code (only `react-native bundle` reads from it) - a full
+                // wipe-and-regenerate here is pure wasted cost, incremental reconciliation is a no-op.
+                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo prebuild --platform " + targetPlatform.getName(), { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                    { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
                 .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         } else {
