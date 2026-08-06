@@ -98,3 +98,11 @@ jobs:
         run: |
           npm install
           npm run ${{ matrix.test-command }}
+
+      - name: Upload iOS Simulator crash reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-crash-logs-${{ matrix.variant }}
+          path: test/crash-logs/
+          if-no-files-found: ignore

@@ -3,6 +3,7 @@
 import assert = require("assert");
 import fs = require("fs");
 import mkdirp = require("mkdirp");
+import os = require("os");
 import path = require("path");
 import slash = require("slash");
 
@@ -675,6 +676,36 @@ const UpdateNotifyApplicationReady = "updateNotifyApplicationReady.js";
 const UpdateSync = "updateSync.js";
 const UpdateSync2x = "updateSync2x.js";
 const UpdateNotifyApplicationReadyConditional = "updateNARConditional.js";
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Collect iOS Simulator crash reports for failed tests (e.g. the app under test crashed and
+// the harness just idled until the test timeout), so they can be uploaded as CI artifacts.
+
+const crashReportsDir = path.join(os.homedir(), "Library/Logs/DiagnosticReports");
+const crashLogsOutputDir = path.join(process.cwd(), "test", "crash-logs");
+let seenCrashReports: Set<string>;
+
+before(function () {
+    seenCrashReports = new Set(fs.existsSync(crashReportsDir) ? fs.readdirSync(crashReportsDir) : []);
+});
+
+afterEach(function () {
+    if (!this.currentTest || this.currentTest.state !== "failed" || !fs.existsSync(crashReportsDir)) {
+        return;
+    }
+
+    const newCrashReports = fs.readdirSync(crashReportsDir).filter((fileName) => !seenCrashReports.has(fileName));
+    if (newCrashReports.length === 0) {
+        return;
+    }
+
+    mkdirp.sync(crashLogsOutputDir);
+    newCrashReports.forEach((fileName) => {
+        fs.copyFileSync(path.join(crashReportsDir, fileName), path.join(crashLogsOutputDir, fileName));
+        seenCrashReports.add(fileName);
+        console.log(`[CRASH] Copied crash report for failed test "${this.currentTest.title}" to test/crash-logs/${fileName}`);
+    });
+});
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Initialize the tests.

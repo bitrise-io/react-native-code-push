@@ -196,6 +196,9 @@ Examples/testapp_rn
 # Android debug build files (conflict ignoring #Visual Studio files)
 !android/app/src/debug/
 
+# iOS Simulator crash reports swept up from failed test runs (see test/test.ts)
+test/crash-logs/
+
 #CodePushExpoDemoApp
 *.rm
 
