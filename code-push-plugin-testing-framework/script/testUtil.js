@@ -55,8 +55,14 @@ var TestUtil = (function () {
         var execProcess = child_process.exec(command, options, function (error, stdout, stderr) {
             console.log("[TIMING] exec \"" + timingLabel + "\" took " + (Date.now() - timingStart) + "ms");
             if (error) {
-                if (!options.noLogStdErr)
-                    console.error("" + error);
+                console.error("" + error);
+                // Only dump the buffered output here if it was silenced on the success path
+                // above - otherwise it was already live-piped to the console as it streamed,
+                // and re-printing it here would just duplicate (and potentially reorder) it.
+                if (options.noLogStdOut && stdout)
+                    console.error("\n----- stdout -----\n" + stdout);
+                if (options.noLogStdErr && stderr)
+                    console.error("\n----- stderr -----\n" + stderr);
                 deferred.reject(error);
             }
             else {
@@ -68,8 +74,7 @@ var TestUtil = (function () {
         if (!options.noLogStdErr)
             execProcess.stderr.pipe(process.stderr);
         execProcess.on('error', function (error) {
-            if (!options.noLogStdErr)
-                console.error("" + error);
+            console.error("" + error);
             deferred.reject(error);
         });
         return deferred.promise;

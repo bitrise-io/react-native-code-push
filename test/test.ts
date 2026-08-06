@@ -46,7 +46,7 @@ function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
 
     return TestUtil.getProcessOutput(
         `npm install --save-dev @react-native/metro-config@${reactNativeVersion}`,
-        { cwd: projectPath }
+        { cwd: projectPath, noLogStdOut: true }
     ).then(() => { return null; });
 }
 
@@ -231,7 +231,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
         } else {
             // Install the Podfile
             return TestUtil.copyFile(path.join(TestConfig.templatePath, "ios", "Podfile"), podfilePath, true)
-                .then(() => TestUtil.getProcessOutput(`pod install`, { cwd: iOSProject }))
+                .then(() => TestUtil.getProcessOutput(`pod install`, { cwd: iOSProject, noLogStdOut: true }))
                 // Put the IOS deployment key in the Info.plist
                 .then(TestUtil.replaceString.bind(undefined, infoPlistPath,
                     "</dict>\n</plist>",
@@ -366,23 +366,23 @@ class RNProjectManager extends ProjectManager {
         mkdirp.sync(projectDirectory);
 
         if (TestConfig.isExpoApp) {
-            return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-55`, { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+            return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-55`, { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx expo init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo install expo-build-properties", { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
-                .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean`, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo install expo-build-properties", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean`, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(() => {
                     ensureAndroidCleartextTraffic(path.join(projectDirectory, TestConfig.TestAppName, "android", "app", "src", "main", "AndroidManifest.xml"));
                     return null;
                 })
                 .then(() => { return null; });
         } else {
-            return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.86.2 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000 })
+            return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.86.2 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(() => { return null; })
                 .catch((error) => {
                     console.log(`"npx @react-native-community/cli init ${appName} failed". cwd=${projectDirectory}`, error);
@@ -466,7 +466,7 @@ class RNProjectManager extends ProjectManager {
         } else {
             return deferred.promise
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
-                    { cwd: path.join(projectDirectory, TestConfig.TestAppName) }))
+                    { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
                 .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         }
