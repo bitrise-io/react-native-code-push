@@ -292,9 +292,68 @@ class RNIOS extends Platform.IOS implements RNPlatform {
     private static iosFirstBuild: any = {};
 
     /**
-     * Builds the binary of the project on this platform.
+     * Maps project directories to whether or not a real `xcodebuild` has completed for them yet.
+     * Once true, subsequent scenario switches only need their JS bundle re-packaged, not a full
+     * native rebuild, since the native code/Podfile don't change between scenarios.
+     */
+    private static hasBuiltOnce: { [projectDirectory: string]: boolean } = {};
+
+    /**
+     * Builds the binary of the project on this platform. Only performs a real `xcodebuild` the
+     * first time; subsequent calls for the same project just re-bundle the JS (see `bundleOnly`).
      */
     buildApp(projectDirectory: string): Q.Promise<void> {
+        if (RNIOS.hasBuiltOnce[projectDirectory]) {
+            return this.bundleOnly(projectDirectory);
+        }
+        return this.realBuildApp(projectDirectory)
+            .then(() => {
+                // realBuildApp can resolve even after a failed build (it swallows a failed
+                // retry into a resolved null - pre-existing behavior, unchanged here). Only
+                // mark this project as built if the .app it's supposed to have produced
+                // actually exists, so a swallowed failure doesn't cause every subsequent
+                // scenario switch to bundleOnly against a missing/stale binary - the next
+                // buildApp call will instead retry a real xcodebuild.
+                if (fs.existsSync(this.getBinaryPath(projectDirectory))) {
+                    RNIOS.hasBuiltOnce[projectDirectory] = true;
+                }
+            });
+    }
+
+    /**
+     * Re-packages the JS bundle (and copies assets) into the already-built `.app`, by invoking
+     * `react-native-xcode.sh` directly instead of going through a full `xcodebuild`. This is the
+     * same script Xcode's "Bundle React Native code and images" build phase runs; the native code
+     * doesn't change between scenarios, so re-running the whole build graph is unnecessary.
+     */
+    private bundleOnly(projectDirectory: string): Q.Promise<void> {
+        const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
+        const configurationBuildDir = path.dirname(this.getBinaryPath(projectDirectory));
+        const wrapperName = `${TestConfig.TestAppName}.app`;
+        const scriptPath = path.join(projectDirectory, TestConfig.TestAppName, "node_modules", "react-native", "scripts", "react-native-xcode.sh");
+
+        const env = Object.assign({}, process.env, {
+            CONFIGURATION: "Release",
+            PLATFORM_NAME: "iphonesimulator",
+            CONFIGURATION_BUILD_DIR: configurationBuildDir,
+            TARGET_BUILD_DIR: configurationBuildDir,
+            BUILT_PRODUCTS_DIR: configurationBuildDir,
+            UNLOCALIZED_RESOURCES_FOLDER_PATH: wrapperName,
+            WRAPPER_NAME: wrapperName,
+            PROJECT_DIR: iOSProject,
+            SRCROOT: iOSProject,
+            SOURCE_ROOT: iOSProject,
+            PODS_ROOT: path.join(iOSProject, "Pods"),
+        });
+
+        return TestUtil.getProcessOutput(`"${scriptPath}"`, { cwd: iOSProject, env, timeout: 2 * 60 * 1000, noLogStdOut: true, noLogStdErr: true })
+            .then(() => { return null; });
+    }
+
+    /**
+     * Performs a full `xcodebuild` of the project on this platform.
+     */
+    private realBuildApp(projectDirectory: string): Q.Promise<void> {
         const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, "ios");
 
         return this.getEmulatorManager().getTargetEmulator()
@@ -314,7 +373,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
                             del.sync([iosBuildFolder], { force: true });
                         }
                         RNIOS.iosFirstBuild[projectDirectory] = true;
-                        return this.buildApp(projectDirectory);
+                        return this.realBuildApp(projectDirectory);
                     }
                     return null;
                 });
