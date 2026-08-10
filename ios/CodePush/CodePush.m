@@ -183,6 +183,24 @@ static NSString *const LatestRollbackCountKey = @"count";
     NSString *packageAppVersion = [currentPackageMetadata objectForKey:AppVersionKey];
 
     if ([[CodePushUpdateUtils modifiedDateStringOfFileAtURL:binaryBundleURL] isEqualToString:packageDate] && ([CodePush isUsingTestConfiguration] ||[binaryAppVersion isEqualToString:packageAppVersion])) {
+        // The binary hasn't changed since this package was installed, so it's safe to
+        // check for (and roll back) a pending update that never finished loading here.
+        // If the binary HAS changed (the `else` branch below), clearUpdates already
+        // discards any pending/failed update state, so there's nothing to roll back to
+        // begin with. This mirrors Android's hasBinaryVersionChanged guard in
+        // initializeUpdateAfterRestart.
+        NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+        NSDictionary *pendingUpdate = [preferences objectForKey:PendingUpdateKey];
+        if (pendingUpdate && [pendingUpdate[PendingUpdateIsLoadingKey] boolValue]) {
+            CPLog(@"Update did not finish loading the last time, rolling back to a previous version.");
+            [self discardStuckPendingUpdate];
+            // Re-derive the URL now that the rollback has changed the current package.
+            return [self bundleURLForResource:resourceName
+                                 withExtension:resourceExtension
+                                  subdirectory:resourceSubdirectory
+                                        bundle:resourceBundle];
+        }
+
         // Return package file because it is newer than the app store binary's JS bundle
         NSURL *packageUrl = [[NSURL alloc] initFileURLWithPath:packageFile];
         CPLog(logMessageFormat, packageUrl);
@@ -400,20 +418,16 @@ static NSString *const LatestRollbackCountKey = @"count";
     NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
     NSDictionary *pendingUpdate = [preferences objectForKey:PendingUpdateKey];
     if (pendingUpdate) {
+        // A stuck (isLoading == YES) pending update is rolled back earlier, in
+        // +bundleURLForResource:..., before this method ever runs. So by this point,
+        // any pending update here is one that's ready to be tried out.
+        // By not hot-reloading the bundle here in the init path, we avoid all sorts of
+        // RN lifecycle issues and crashes.
         _isFirstRunAfterUpdate = YES;
-        BOOL updateIsLoading = [pendingUpdate[PendingUpdateIsLoadingKey] boolValue];
-        if (updateIsLoading) {
-            // Pending update was initialized, but notifyApplicationReady was not called.
-            // Therefore, deduce that it is a broken update and rollback.
-            CPLog(@"Update did not finish loading the last time, rolling back to a previous version.");
-            needToReportRollback = YES;
-            [self rollbackPackage];
-        } else {
-            // Mark that we tried to initialize the new update, so that if it crashes,
-            // we will know that we need to rollback when the app next starts.
-            [self savePendingUpdate:pendingUpdate[PendingUpdateHashKey]
-                          isLoading:YES];
-        }
+        // Mark that we tried to initialize the new update, so that if it crashes,
+        // we will know that we need to rollback when the app next starts.
+        [self savePendingUpdate:pendingUpdate[PendingUpdateHashKey]
+                      isLoading:YES];
     }
 }
 
@@ -546,13 +560,12 @@ static NSString *const LatestRollbackCountKey = @"count";
 }
 
 /*
- * This method is used when an update has failed installation
- * and the app needs to be rolled back to the previous bundle.
- * This method is automatically called when the rollback timer
- * expires without the app indicating whether the update succeeded,
- * and therefore, it shouldn't be called directly.
+ * This method is used when a pending update never finished loading (i.e. it
+ * crashed before calling notifyApplicationReady) and needs to be rolled back
+ * to the previous bundle. It's called from +bundleURLForResource:..., before
+ * any JS/Fabric exists, so there's no live bridge to reload.
  */
-- (void)rollbackPackage
++ (void)discardStuckPendingUpdate
 {
     NSError *error;
     NSDictionary *failedPackage = [CodePushPackage getCurrentPackage:&error];
@@ -569,8 +582,8 @@ static NSString *const LatestRollbackCountKey = @"count";
 
     // Rollback to the previous version and de-register the new update
     [CodePushPackage rollbackPackage];
-    [CodePush removePendingUpdate];
-    [self loadBundle];
+    [self removePendingUpdate];
+    needToReportRollback = YES;
 }
 
 /*
@@ -578,9 +591,9 @@ static NSString *const LatestRollbackCountKey = @"count";
  * to store its hash so that it can be ignored on future
  * attempts to check the server for an update.
  */
-- (void)saveFailedUpdate:(NSDictionary *)failedPackage
++ (void)saveFailedUpdate:(NSDictionary *)failedPackage
 {
-    if ([[self class] isFailedHash:[failedPackage objectForKey:PackageHashKey]]) {
+    if ([self isFailedHash:[failedPackage objectForKey:PackageHashKey]]) {
         return;
     }
     
@@ -760,7 +773,7 @@ RCT_EXPORT_METHOD(downloadUpdate:(NSDictionary*)updatePackage
         // The download failed
         failCallback:^(NSError *err) {
             if ([CodePushErrorUtils isCodePushError:err]) {
-                [self saveFailedUpdate:mutableUpdatePackage];
+                [[self class] saveFailedUpdate:mutableUpdatePackage];
             }
 
             // Stop observing frame updates if the download fails.
