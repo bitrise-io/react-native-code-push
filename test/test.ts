@@ -1,6 +1,7 @@
 "use strict";
 
 import assert = require("assert");
+import childProcess = require("child_process");
 import fs = require("fs");
 import mkdirp = require("mkdirp");
 import os = require("os");
@@ -675,6 +676,89 @@ const UpdateNotifyApplicationReady = "updateNotifyApplicationReady.js";
 const UpdateSync = "updateSync.js";
 const UpdateSync2x = "updateSync2x.js";
 const UpdateNotifyApplicationReadyConditional = "updateNARConditional.js";
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Forward the app's native log into this run's output. By default a run log contains nothing
+// whatsoever from the native module, and there's no way to tell from a CI log which native
+// path a test took.
+
+let nativeLogProcess: childProcess.ChildProcess = null;
+let nativeLogBuffer = "";
+
+function readIOSLogEvent(line: string): string {
+    try {
+        // `log stream` opens with a human-readable banner before the ndjson starts, so
+        // anything unparseable is expected and simply skipped. CPLog also prefixes its
+        // format string with a newline.
+        return (JSON.parse(line).eventMessage || "").trim() || null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function startNativeLogForwarding(): void {
+    const isIOS = TestUtil.readMochaCommandLineFlag("--ios");
+    const isAndroid = TestUtil.readMochaCommandLineFlag("--android");
+    if (nativeLogProcess || (!isIOS && !isAndroid)) {
+        return;
+    }
+
+    // The two platforms filter differently. iOS filters on CodePush's own message prefix in
+    // the log command itself, and emits one JSON object per line. Android filters by log tag:
+    // "ReactNative" is shared with React Native's own logging, but a release build barely uses
+    // it, so it's good enough. "-T 1" starts at the tail rather than replaying earlier runs'
+    // output, without mutating device state the way "logcat -c" would.
+    const commandArgs = isIOS
+        ? ["simctl", "spawn", "booted", "log", "stream", "--style", "ndjson", "--predicate", "eventMessage CONTAINS \"[CodePush]\""]
+        : ["logcat", "-v", "brief", "-T", "1", "ReactNative:D", "*:S"];
+
+    const logProcess = childProcess.spawn(isIOS ? "xcrun" : "adb", commandArgs, { stdio: ["ignore", "pipe", "ignore"] });
+
+    logProcess.stdout.setEncoding("utf8");
+    logProcess.stdout.on("data", (chunk: string) => {
+        nativeLogBuffer += chunk;
+        const lines = nativeLogBuffer.split("\n");
+        // The last element is either empty or a partial line still being written.
+        nativeLogBuffer = lines.pop() || "";
+
+        lines.forEach((line) => {
+            const message = isIOS ? readIOSLogEvent(line) : line.trim();
+            if (message) {
+                console.log(`[NATIVE] ${message}`);
+            }
+        });
+    });
+
+    // Failing to stream logs must never fail the run, this is diagnostics only. The handler
+    // is also required: an unhandled "error" event on a child process throws.
+    logProcess.on("error", (error: Error) => {
+        console.log(`[NATIVE] Could not stream native logs: ${error.message}`);
+    });
+
+    // A process that spawns fine but later dies (e.g. simulator not booted yet) emits
+    // "close", not "error". Reset state so the next beforeEach can restart streaming,
+    // instead of leaving nativeLogProcess set and silently losing logs for the rest of the run.
+    logProcess.on("close", (code: number) => {
+        if (nativeLogProcess === logProcess) {
+            console.log(`[NATIVE] Native log stream exited (code ${code}), will retry`);
+            nativeLogProcess = null;
+            nativeLogBuffer = "";
+        }
+    });
+
+    nativeLogProcess = logProcess;
+}
+
+beforeEach(function () {
+    startNativeLogForwarding();
+});
+
+after(function () {
+    if (nativeLogProcess) {
+        nativeLogProcess.kill();
+        nativeLogProcess = null;
+    }
+});
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Collect iOS Simulator crash reports for failed tests (e.g. the app under test crashed and
