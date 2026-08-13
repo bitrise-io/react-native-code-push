@@ -36,6 +36,11 @@
     BOOL _allowed;
     BOOL _restartInProgress;
     NSMutableArray *_restartQueue;
+
+    // Reload readiness tracking. See -registerSettleObserver for details.
+    BOOL _instanceSettled;
+    // YES exactly while a reload is parked waiting for the instance to settle.
+    BOOL _reloadPending;
 }
 
 RCT_EXPORT_MODULE()
@@ -44,6 +49,11 @@ RCT_EXPORT_MODULE()
 
 // These constants represent emitted events
 static NSString *const DownloadProgressEvent = @"CodePushDownloadProgress";
+
+// How long a parked reload waits for a settle signal before reloading anyway.
+// See -registerSettleObserver for why this exists and why the exact value is
+// not critical.
+static const NSTimeInterval SettleTimeout = 5.0;
 
 // These constants represent valid deployment statuses
 static NSString *const DeploymentFailed = @"DeploymentFailed";
@@ -395,13 +405,102 @@ static NSString *const LatestRollbackCountKey = @"count";
     _allowed = YES;
     _restartInProgress = NO;
     _restartQueue = [NSMutableArray arrayWithCapacity:1];
-    
+
     self = [super init];
     if (self) {
+        [self registerSettleObserver];
         [self initializeUpdateAfterRestart];
     }
 
     return self;
+}
+
+#pragma mark - Immediate update + reload readiness tracking
+
+/*
+ * In case of an immediate bundle update, we need to tear down the current
+ * RCTInstance at the right time.
+ *
+ * Right after bundle evaluation, RN enqueues -[RCTFabricSurface start] on a
+ * background queue for that same instance. Tearing the instance down while
+ * that block is in flight crashes inside RN's mounting layer. This module is
+ * initialized *during* bundle evaluation, so in case of immediate update
+ * mode, -loadBundle needs to park the reload until we see the surface get
+ * past its startup.
+ *
+ * The signal we wait for is RCTContentDidAppearNotification. Fabric posts it
+ * from RCTRootComponentView on the first child mount. That needs a JS render
+ * and commit, so by that time the surface startup is done.
+ *
+ * Note: the signal is not guaranteed, so we also need a fallback timeout. If
+ * the first render returns nil and mounts no child, RCTContentDidAppear
+ * never arrives. Think of a splash gate or a fonts/auth loader. That kind of
+ * app could run codepush.sync() with an IMMEDIATE install before it shows
+ * any UI.
+ *
+ * Running the teardown after the timeout fires is safe because the delay is
+ * large enough that the surface startup already completed by that time.
+ */
+- (void)registerSettleObserver
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(instanceDidSettle)
+                                                 name:RCTContentDidAppearNotification
+                                               object:nil];
+}
+
+- (void)instanceDidSettle
+{
+    // Note: A reload tears the instance down synchronously.
+    // Calling -releasePendingReload directly would destroy the surface partway through
+    // the mount that just notified us.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self->_instanceSettled = YES;
+
+        if (self->_reloadPending) {
+            CPLog(@"Instance settled.");
+            [self releasePendingReload];
+        }
+    });
+}
+
+/*
+ * Fires a parked reload, if one is still parked. Called by the settle signal, by
+ * the timeout in -loadBundle and by -allow, so whichever arrives first wins. Main queue only.
+ */
+- (void)releasePendingReload
+{
+    if (!_reloadPending) {
+        return;
+    }
+
+    if (!_allowed) {
+        CPLog(@"Restart stays parked because restarts are disallowed.");
+        return;
+    }
+
+    CPLog(@"Restarting app.");
+    _reloadPending = NO;
+    [self performBundleReload];
+}
+
+/*
+ * Cancels a parked reload, if one is parked.
+ * Main queue only.
+ */
+- (void)cancelPendingReload
+{
+    if (!_reloadPending) {
+        return;
+    }
+
+    CPLog(@"Cleared a parked restart.");
+    _reloadPending = NO;
+
+    // The restart that parked it still holds _restartInProgress, so we clear that too.
+    // Otherwise every later restart request would queue behind a restart that is
+    // never going to happen.
+    _restartInProgress = NO;
 }
 
 /*
@@ -547,16 +646,53 @@ static NSString *const LatestRollbackCountKey = @"count";
     // This needs to be async dispatched because the bridge is not set on init
     // when the app first starts, therefore rollbacks will not take effect.
     dispatch_async(dispatch_get_main_queue(), ^{
-        // If the current bundle URL is using http(s), then assume the dev
-        // is debugging and therefore, shouldn't be redirected to a local
-        // file (since Chrome wouldn't support it). Otherwise, update
-        // the current bundle URL to point at the latest update
-        if ([CodePush isUsingTestConfiguration] || ![super.bridge.bundleURL.scheme hasPrefix:@"http"]) {
-            [super.bridge setValue:[CodePush bundleURL] forKey:@"bundleURL"];
+        if (!self->_instanceSettled) {
+            CPLog(@"Restart deferred until the current instance has settled.");
+            self->_reloadPending = YES;
+
+            // Weak, so that a module outliving the teardown of its own instance (because of the timer)
+            // cannot reload against a bridge that no longer belongs to it.
+            __weak __typeof(self) weakSelf = self;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(SettleTimeout * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                __typeof(self) strongSelf = weakSelf;
+                if (!strongSelf) {
+                    return;
+                }
+
+                // The timeout is long enough that the surface startup has completed by now,
+                // whether or not the signal ever arrived. Treating the instance as settled
+                // from here on means a later restart doesn't park and wait all over again,
+                // which matters for an app that never posts the signal at all.
+                strongSelf->_instanceSettled = YES;
+
+                if (strongSelf->_reloadPending) {
+                    CPLog(@"Timed out waiting for the current instance to settle.");
+                    [strongSelf releasePendingReload];
+                }
+            });
+            return;
         }
 
-        RCTTriggerReloadCommandListeners(@"react-native-code-push: Restart");
+        [self performBundleReload];
     });
+}
+
+/*
+ * Performs the actual reload. Must be called on the main queue, and only once the
+ * current instance has settled or the wait for it timed out. See -loadBundle.
+ */
+- (void)performBundleReload
+{
+    // If the current bundle URL is using http(s), then assume the dev
+    // is debugging and therefore, shouldn't be redirected to a local
+    // file (since Chrome wouldn't support it). Otherwise, update
+    // the current bundle URL to point at the latest update
+    if ([CodePush isUsingTestConfiguration] || ![super.bridge.bundleURL.scheme hasPrefix:@"http"]) {
+        [super.bridge setValue:[CodePush bundleURL] forKey:@"bundleURL"];
+    }
+
+    RCTTriggerReloadCommandListeners(@"react-native-code-push: Restart");
 }
 
 /*
@@ -804,7 +940,7 @@ RCT_EXPORT_METHOD(downloadUpdate:(NSDictionary*)updatePackage
 
     _restartInProgress = NO;
     if ([_restartQueue count] > 0) {
-        BOOL buf = [_restartQueue valueForKey: @"@firstObject"];
+        BOOL buf = [[_restartQueue firstObject] boolValue];
         [_restartQueue removeObjectAtIndex:0];
         [self restartAppInternal:buf];
     }
@@ -1008,9 +1144,15 @@ RCT_EXPORT_METHOD(allow:(RCTPromiseResolveBlock)resolve
     CPLog(@"Re-allowing restarts.");
     _allowed = YES;
 
+    // A reload parked by -loadBundle never reached _restartQueue, so it needs
+    // its own release. See -releasePendingReload.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self releasePendingReload];
+    });
+
     if ([_restartQueue count] > 0) {
         CPLog(@"Executing pending restart.");
-        BOOL buf = [_restartQueue valueForKey: @"@firstObject"];
+        BOOL buf = [[_restartQueue firstObject] boolValue];
         [_restartQueue removeObjectAtIndex:0];
         [self restartAppInternal:buf];
     }
@@ -1022,6 +1164,11 @@ RCT_EXPORT_METHOD(clearPendingRestart:(RCTPromiseResolveBlock)resolve
                     rejecter:(RCTPromiseRejectBlock)reject)
 {
     [_restartQueue removeAllObjects];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self cancelPendingReload];
+    });
+
     resolve(nil);
 }
 
