@@ -1,6 +1,23 @@
 import { NativeEventEmitter } from "react-native";
 import log from "./logging";
 
+// Reporting this event is important, but avoid blocking install()/restartApp() indefinitely
+// on a stalled network request.
+const REPORT_STATUS_DOWNLOAD_TIMEOUT_MS = 5000;
+
+async function withTimeout(promise, timeoutMs) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // This function is used to augment remote and local
 // package objects with additional functionality/properties
 // beyond what is included in the metadata sent by the server.
@@ -31,10 +48,11 @@ module.exports = (NativeCodePush) => {
           const downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
 
           if (reportStatusDownload) {
-            reportStatusDownload(this)
-            .catch((err) => {
+            try {
+              await withTimeout(reportStatusDownload(this), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
+            } catch (err) {
               log(`Report download status failed: ${err}`);
-            });
+            }
           }
 
           return { ...downloadedPackage, ...local };

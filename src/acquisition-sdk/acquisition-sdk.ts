@@ -166,6 +166,7 @@ export class AcquisitionManager {
         });
     }
 
+    // Note: deployedPackage and status are null when reporting a "binary update" (i.e. the app was updated through the app store, not CodePush)
     public reportStatusDeploy(deployedPackage?: Package, status?: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string, callback?: Callback<void>): void {
         if (AcquisitionManager._apiCallsDisabled) {
             console.log(`[CodePush] Api calls are disabled, skipping API call`);
