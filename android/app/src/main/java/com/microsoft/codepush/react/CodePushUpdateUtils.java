@@ -199,8 +199,7 @@ public class CodePushUpdateUtils {
             }
             return null;
         } catch (Exception ex) {
-            CodePushUtils.log(ex.getMessage());
-            CodePushUtils.log(ex.getStackTrace().toString());
+            CodePushUtils.log(ex);
             return null;
         }
     }
@@ -218,8 +217,7 @@ public class CodePushUpdateUtils {
 
             return kf.generatePublic(X509Key);
         } catch (Exception e) {
-            CodePushUtils.log(e.getMessage());
-            CodePushUtils.log(e.getStackTrace().toString());
+            CodePushUtils.log(e);
             return null;
         }
     }
@@ -237,8 +235,7 @@ public class CodePushUpdateUtils {
         try {
             return FileUtils.readFileToString(signatureFilePath);
         } catch (IOException e) {
-            CodePushUtils.log(e.getMessage());
-            CodePushUtils.log(e.getStackTrace().toString());
+            CodePushUtils.log(e);
             return null;
         }
     }
