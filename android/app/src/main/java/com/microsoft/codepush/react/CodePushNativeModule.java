@@ -211,7 +211,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                 CodePushUtils.log(new Exception("ClassCastException trying to get/use ReactHostDelegate. Skipping reflection call to setJSBundle. This is expected for Expo.", cce));
             }catch (Exception e) {
                 // Catch any unexpected errors from the attempt to call setJSBundle, e.g., if getReactHostDelegate itself fails
-                CodePushUtils.log("Exception during the reflective setJSBundle block: " + e.getMessage());
+                CodePushUtils.log(new Exception("Exception during the reflective setJSBundle block", e));
             }
 
             // #3) Get the context creation method
@@ -226,7 +226,7 @@ public class CodePushNativeModule extends BaseJavaModule {
 
         } catch (Exception e) {
             // reflection logic failed somewhere so fall back to restarting the Activity (if it exists)
-            CodePushUtils.log("Failed to load the bundle, falling back to restarting the Activity (if it exists). " + e.getMessage());
+            CodePushUtils.log(new Exception("Failed to load the bundle, falling back to restarting the Activity (if it exists)", e));
             loadBundleLegacy();
         }
     }
@@ -486,7 +486,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                     }
                 } catch (CodePushMalformedDataException e) {
                     // We need to recover the app in case 'codepush.json' is corrupted
-                    CodePushUtils.log(e.getMessage());
+                    CodePushUtils.log(e);
                     clearUpdates();
                     promise.resolve(null);
                 } catch(CodePushUnknownException e) {
