@@ -219,7 +219,7 @@ public class CodePushUtils {
         try {
             json.put(key, value);
         } catch (JSONException e) {
-            throw new CodePushUnknownException("Unable to set value " + value + " for key " + key + " to JSONObject");
+            throw new CodePushUnknownException("Unable to set value " + value + " for key " + key + " to JSONObject", e);
         }
     }
 
