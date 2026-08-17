@@ -400,7 +400,13 @@ public class CodePushNativeModule extends BaseJavaModule {
                     CodePushUtils.log(e);
                     mSettingsManager.saveFailedUpdate(CodePushUtils.convertReadableToJsonObject(updatePackage));
                     promise.reject(e);
-                } catch (IOException | CodePushUnknownException e) {
+                } catch (IOException | CodePushUnknownException | CodePushMalformedDataException e) {
+                    CodePushUtils.log(e);
+                    promise.reject(e);
+                } catch (Exception e) {
+                    // Safety net: make sure a download failure always rejects the JS promise
+                    // instead of escaping this background task uncaught, which would leave
+                    // the promise hanging forever with no error and no log tying it to a cause.
                     CodePushUtils.log(e);
                     promise.reject(e);
                 }
@@ -492,6 +498,12 @@ public class CodePushNativeModule extends BaseJavaModule {
                 } catch(CodePushUnknownException e) {
                     CodePushUtils.log(e);
                     promise.reject(e);
+                } catch (Exception e) {
+                    // Safety net: make sure a failure always rejects the JS promise
+                    // instead of escaping this background task uncaught, which would leave
+                    // the promise hanging forever with no error and no log tying it to a cause.
+                    CodePushUtils.log(e);
+                    promise.reject(e);
                 }
 
                 return null;
@@ -548,6 +560,12 @@ public class CodePushNativeModule extends BaseJavaModule {
                     
                     promise.resolve("");
                 } catch(CodePushUnknownException e) {
+                    CodePushUtils.log(e);
+                    promise.reject(e);
+                } catch (Exception e) {
+                    // Safety net: make sure a failure always rejects the JS promise
+                    // instead of escaping this background task uncaught, which would leave
+                    // the promise hanging forever with no error and no log tying it to a cause.
                     CodePushUtils.log(e);
                     promise.reject(e);
                 }
@@ -634,7 +652,13 @@ public class CodePushNativeModule extends BaseJavaModule {
                     }
 
                     promise.resolve("");
-                } catch(CodePushUnknownException e) {
+                } catch (CodePushUnknownException | CodePushMalformedDataException e) {
+                    CodePushUtils.log(e);
+                    promise.reject(e);
+                } catch (Exception e) {
+                    // Safety net: make sure an install failure always rejects the JS promise
+                    // instead of escaping this background task uncaught, which would leave
+                    // the promise hanging forever with no error and no log tying it to a cause.
                     CodePushUtils.log(e);
                     promise.reject(e);
                 }
