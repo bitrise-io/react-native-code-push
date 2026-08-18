@@ -222,7 +222,7 @@ describe("Acquisition SDK", () => {
     it("reportStatusDownload(...) signals completion", (done: Mocha.Done): void => {
         var acquisition = new acquisitionSdk.AcquisitionManager(new mockApi.HttpRequester(), configuration);
 
-        acquisition.reportStatusDownload(templateCurrentPackage, ((error: Error, parameter: void): void => {
+        acquisition.reportStatusDownload({ ...templateCurrentPackage, status: acquisitionSdk.DownloadStatus.Succeeded }, ((error: Error, parameter: void): void => {
             if (error) {
                 throw error;
             }
@@ -261,7 +261,7 @@ describe("Acquisition SDK", () => {
             (acquisitionSdk.AcquisitionManager as any)._apiCallsDisabled = false;
         }));
 
-        acquisition.reportStatusDownload(templateCurrentPackage, ((error: Error, parameter: void): void => {
+        acquisition.reportStatusDownload({ ...templateCurrentPackage, status: acquisitionSdk.DownloadStatus.Succeeded }, ((error: Error, parameter: void): void => {
             assert.strictEqual((acquisitionSdk.AcquisitionManager as any)._apiCallsDisabled, true);
             acquisition = acquisition = new acquisitionSdk.AcquisitionManager(new mockApi.CustomResponseHttpRequester(invalidJsonResponse), configuration);
             (acquisitionSdk.AcquisitionManager as any)._apiCallsDisabled = false;
@@ -287,7 +287,7 @@ describe("Acquisition SDK", () => {
             assert.strictEqual((acquisitionSdk.AcquisitionManager as any)._apiCallsDisabled, false);
         }));
 
-        acquisition.reportStatusDownload(templateCurrentPackage, ((error: Error, parameter: void): void => {
+        acquisition.reportStatusDownload({ ...templateCurrentPackage, status: acquisitionSdk.DownloadStatus.Succeeded }, ((error: Error, parameter: void): void => {
             assert.strictEqual((acquisitionSdk.AcquisitionManager as any)._apiCallsDisabled, false);
         }));
 

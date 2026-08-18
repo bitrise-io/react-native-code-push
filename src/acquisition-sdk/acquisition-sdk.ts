@@ -1,6 +1,6 @@
 // Vendored from https://github.com/microsoft/code-push/blob/master/src/script/acquisition-sdk.ts (archived, MIT licensed)
 
-import { UpdateCheckResponse, UpdateCheckRequest, DeploymentStatusReport, DownloadReport } from "./types";
+import { UpdateCheckResponse, UpdateCheckRequest, DeploymentStatusReport, DownloadReport, DownloadStatusValue } from "./types";
 import { CodePushHttpError, CodePushDeployStatusError, CodePushPackageError } from "./code-push-error"
 
 export namespace Http {
@@ -35,6 +35,11 @@ export interface RemotePackage extends Package {
     downloadUrl: string;
 }
 
+export interface DownloadedPackage extends Package {
+    downloadDurationMs?: number;
+    status: DownloadStatusValue;
+}
+
 export interface NativeUpdateNotification {
     updateAppVersion: boolean;   // Always true
     appVersion: string;
@@ -57,6 +62,11 @@ export interface Configuration {
 export class AcquisitionStatus {
     public static DeploymentSucceeded = "DeploymentSucceeded";
     public static DeploymentFailed = "DeploymentFailed";
+}
+
+export class DownloadStatus {
+    public static Succeeded: DownloadStatusValue = "DownloadSucceeded";
+    public static Failed: DownloadStatusValue = "DownloadFailed";
 }
 
 export class AcquisitionManager {
@@ -235,7 +245,7 @@ export class AcquisitionManager {
         });
     }
 
-    public reportStatusDownload(downloadedPackage: Package, callback?: Callback<void>): void {
+    public reportStatusDownload(downloadedPackage: DownloadedPackage, callback?: Callback<void>): void {
         if (AcquisitionManager._apiCallsDisabled) {
             console.log(`[CodePush] Api calls are disabled, skipping API call`);
             callback(/*error*/ null, /*not used*/ null);
@@ -246,7 +256,11 @@ export class AcquisitionManager {
         var body: DownloadReport = {
             client_unique_id: this._clientUniqueId,
             deployment_key: this._deploymentKey,
-            label: downloadedPackage.label
+            label: downloadedPackage.label,
+            package_hash: downloadedPackage.packageHash,
+            package_size_bytes: downloadedPackage.packageSize,
+            download_duration_ms: downloadedPackage.downloadDurationMs,
+            status: downloadedPackage.status
         };
 
         this._httpRequester.request(Http.Verb.POST, url, JSON.stringify(body), (error: Error, response: Http.Response): void => {

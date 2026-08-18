@@ -1,5 +1,6 @@
 import { NativeEventEmitter } from "react-native";
 import log from "./logging";
+import { DownloadStatus } from "./lib/acquisition-sdk/acquisition-sdk";
 
 // Reporting this event is important, but avoid blocking install()/restartApp() indefinitely
 // on a stalled network request.
@@ -39,21 +40,34 @@ module.exports = (NativeCodePush) => {
           );
         }
 
+        const downloadStartTime = Date.now();
+        const reportDownloadStatus = async (status) => {
+          if (!reportStatusDownload) return;
+          // Only report a duration on success: on failure, this would be the time until
+          // the download broke rather than a completed download's duration, and could be misleading.
+          const downloadDurationMs = status === DownloadStatus.Succeeded ? Date.now() - downloadStartTime : undefined;
+          try {
+            await withTimeout(reportStatusDownload({ ...this, downloadDurationMs, status }), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
+          } catch (err) {
+            log(`Report download status failed: ${err}`);
+          }
+        };
+
         // Use the downloaded package info. Native code will save the package info
         // so that the client knows what the current package version is.
         try {
           const updatePackageCopy = Object.assign({}, this);
           Object.keys(updatePackageCopy).forEach((key) => (typeof updatePackageCopy[key] === 'function') && delete updatePackageCopy[key]);
 
-          const downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
-
-          if (reportStatusDownload) {
-            try {
-              await withTimeout(reportStatusDownload(this), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
-            } catch (err) {
-              log(`Report download status failed: ${err}`);
-            }
+          let downloadedPackage;
+          try {
+            downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
+          } catch (err) {
+            await reportDownloadStatus(DownloadStatus.Failed);
+            throw err;
           }
+
+          await reportDownloadStatus(DownloadStatus.Succeeded);
 
           return { ...downloadedPackage, ...local };
         } finally {

@@ -31,6 +31,11 @@ function setupServer(targetPlatform) {
         console.log("Application downloading the package.");
         res.download(exports.updatePackagePath);
     });
+    app.post("/v0.1/public/codepush/report_status/download", function (req, res) {
+        console.log("Application reported download status.");
+        console.log("Body: " + JSON.stringify(req.body));
+        res.sendStatus(200);
+    });
     app.post("/reportTestMessage", function (req, res) {
         console.log("Application reported a test message.");
         console.log("Body: " + JSON.stringify(req.body));
