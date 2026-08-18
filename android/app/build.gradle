@@ -1,4 +1,21 @@
-apply plugin: "com.android.library"
+// No versions specified: both plugins are expected to already be resolved on the root project's
+// buildscript classpath, which every RN app template declares (AGP for the app itself, Kotlin
+// because RN ships Kotlin internally).
+// Matches how other RN libraries (e.g. reanimated) apply these plugins.
+plugins {
+    id "com.android.library"
+    id "org.jetbrains.kotlin.android" apply false
+}
+
+// AGP 9 provides Kotlin support built in; applying the classic kotlin-android plugin on top of it
+// leads to a configuration-time failure. Below AGP 9, and on AGP 9+ when `android.builtInKotlin=false`
+// opts back out of built-in Kotlin, the classic plugin is still required.
+// See React Native RFC about ecosystem migration details: https://github.com/react-native-community/discussions-and-proposals/pull/1006
+def agpMajor = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')[0].toInteger()
+def builtInKotlinEnabled = agpMajor >= 9 && (!project.hasProperty("android.builtInKotlin") || Boolean.parseBoolean(project.property("android.builtInKotlin").toString()))
+if (!builtInKotlinEnabled) {
+    apply plugin: "org.jetbrains.kotlin.android"
+}
 
 def isNewArchitectureEnabled() {
     // To opt-in for the New Architecture, you can either:
@@ -10,15 +27,18 @@ def isNewArchitectureEnabled() {
 
 def IS_NEW_ARCHITECTURE_ENABLED = isNewArchitectureEnabled()
 
-def DEFAULT_COMPILE_SDK_VERSION = 26
-def DEFAULT_BUILD_TOOLS_VERSION = "26.0.3"
-def DEFAULT_TARGET_SDK_VERSION = 26
-def DEFAULT_MIN_SDK_VERSION = 16
+// These are fallbacks only. Keep them aligned with RN's current app template
+// so a consumer relying on the fallback still gets a build that actually works
+// with a current RN version.
+def DEFAULT_COMPILE_SDK_VERSION = 35
+def DEFAULT_BUILD_TOOLS_VERSION = "36.0.0"
+def DEFAULT_TARGET_SDK_VERSION = 35 
+def DEFAULT_MIN_SDK_VERSION = 24
 
 android {
     namespace "com.microsoft.codepush.react"
 
-    compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
+    compileSdk rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
     buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
 
     defaultConfig {
@@ -40,9 +60,25 @@ android {
     buildFeatures {
         buildConfig true
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Only set when we applied the classic kotlin-android plugin ourselves above: AGP 9's built-in
+// Kotlin integration doesn't expose this extension at all, per Android's own built-in
+// Kotlin migration guide: https://developer.android.com/build/migrate-to-built-in-kotlin
+if (!builtInKotlinEnabled) {
+    android.kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {
     implementation 'com.facebook.react:react-android:0.82.1'
     implementation 'com.nimbusds:nimbus-jose-jwt:9.37.3'
+
+    testImplementation 'junit:junit:4.13.2'
 }
