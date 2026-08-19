@@ -13,11 +13,17 @@ export interface DeploymentStatusReport {
     status?: string;
 }
 
+export type DownloadStatusValue = "DownloadSucceeded" | "DownloadFailed";
+
 /*in*/
 export interface DownloadReport {
     client_unique_id: string;
     deployment_key: string;
     label: string;
+    package_hash: string;
+    package_size_bytes: number;
+    download_duration_ms?: number;
+    status: DownloadStatusValue;
 }
 
 /*out*/
