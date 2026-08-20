@@ -103,7 +103,18 @@ jobs:
           target: google_apis
           arch: x86
           disable-animations: true
-          script: npm run ${{ matrix.test-command }}
+          # connectedAndroidTest is included here (rather than a separate job or step) to reuse
+          # this job's already-booted emulator, even though it means it runs once per matrix
+          # variant. The android-emulator-runner action has no post-cleanup step, so a second
+          # step would boot and tear down a second emulator; ::group:: markers keep the two
+          # test runs visually separated in the Actions log instead.
+          script: |
+            echo "::group::Instrumented tests"
+            (cd android && ./gradlew :app:connectedAndroidTest)
+            echo "::endgroup::"
+            echo "::group::E2E tests"
+            npm run ${{ matrix.test-command }}
+            echo "::endgroup::"
 
   ios-test:
     needs: lint

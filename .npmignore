@@ -42,8 +42,11 @@ test/
 # Remove after this framework is published on NPM
 code-push-plugin-testing-framework/
 
-# Android build artifacts and Android Studio bits
+# Android build artifacts, test sources and Android Studio bits
 android/app/build
+android/app/.cxx
+android/app/src/test
+android/app/src/androidTest
 android/local.properties
 android/.gradle
 android/**/*.iml
