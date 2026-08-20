@@ -1,21 +1,24 @@
 "use strict";
 
-import assert = require("assert");
-import childProcess = require("child_process");
-import fs = require("fs");
-import mkdirp = require("mkdirp");
-import os = require("os");
-import path = require("path");
-import slash = require("slash");
+import assert from "assert";
+import * as childProcess from "child_process";
+import * as fs from "fs";
+import * as mkdirp from "mkdirp";
+import * as os from "os";
+import * as path from "path";
+import slash from "slash";
 import { promisify } from "util";
 
 import { Platform, PluginTestingFramework, ProjectManager, setupTestRunScenario, setupUpdateScenario, ServerUtil, TestBuilder, TestConfig, TestUtil } from "code-push-plugin-testing-framework";
 
-import Q = require("q");
+import Q from "q";
 
-import del = require("del");
+import del from "del";
 
-import { codeSigningPublicKey, signAndRecordUpdateArchive, setupTamperedSignatureUpdateScenario } from "./codesign";
+// ESM requires the explicit `.mts` extension, which TS 4.9 rejects in import paths.
+// TODO: when upgrading to TS 5.x, enable `allowImportingTsExtensions` (and `erasableSyntaxOnly`) and remove this suppression.
+// @ts-expect-error TS2691
+import { codeSigningPublicKey, signAndRecordUpdateArchive, setupTamperedSignatureUpdateScenario } from "./codesign.mts";
 
 // Used in test/template/app.json to avoid duplicating the PEM fixture in two places (ios and android plugin config).
 const CODE_SIGNING_PUBLIC_KEY_PLACEHOLDER = "{{CODE_SIGNING_PUBLIC_KEY}}";
@@ -496,7 +499,7 @@ class RNProjectManager extends ProjectManager {
     public createUpdateArchive(projectDirectory: string, targetPlatform: Platform.IPlatform, isDiff?: boolean): Q.Promise<string> {
         const t0 = Date.now();
         const bundleFolder: string = path.join(projectDirectory, TestConfig.TestAppName, "CodePush/");
-        const bundleName: string = (<RNPlatform><any>targetPlatform).getBundleName();
+        const bundleName: string = (targetPlatform as any as RNPlatform).getBundleName();
         const bundlePath: string = path.join(bundleFolder, bundleName);
         const deferred = Q.defer<string>();
         fs.exists(bundleFolder, (exists) => {
@@ -565,7 +568,7 @@ class RNProjectManager extends ProjectManager {
 
         return deferred.promise
             .then<void>(() => {
-                return (<RNPlatform><any>targetPlatform).installPlatform(projectDirectory);
+                return (targetPlatform as any as RNPlatform).installPlatform(projectDirectory);
             }, (error: any) => { /* The platform is already installed! */ console.log(error); return null; });
     }
 
@@ -591,7 +594,7 @@ class RNProjectManager extends ProjectManager {
                 if (!RNProjectManager.currentScenarioHasBuilt[projectDirectory]) {
                     RNProjectManager.currentScenarioHasBuilt[projectDirectory] = true;
                     const buildStart = Date.now();
-                    return (<RNPlatform><any>targetPlatform).buildApp(projectDirectory)
+                    return (targetPlatform as any as RNPlatform).buildApp(projectDirectory)
                         .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} buildApp(${projectDirectory}) took ${Date.now() - buildStart}ms`); });
                 }
             })
@@ -604,7 +607,7 @@ class RNProjectManager extends ProjectManager {
             .then(() => {
                 // Install and launch the app.
                 const installStart = Date.now();
-                return (<RNPlatform><any>targetPlatform).installApp(projectDirectory)
+                return (targetPlatform as any as RNPlatform).installApp(projectDirectory)
                     .then<void>(targetPlatform.getEmulatorManager().launchInstalledApplication.bind(undefined, TestConfig.TestNamespace))
                     .then(() => { console.log(`[TIMING] ${targetPlatform.getName()} installApp+launch took ${Date.now() - installStart}ms`); });
             })
@@ -791,7 +794,7 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
 
                 TestBuilder.it("window.codePush.checkForUpdate.sendsBinaryHash", false,
                     (done: Mocha.Done) => {
-                        if (!(<RNPlatform><any>targetPlatform).isDiffsSupported()) {
+                        if (!(targetPlatform as any as RNPlatform).isDiffsSupported()) {
                             console.log(targetPlatform.getName() + " does not send a binary hash!");
                             done();
                             return;

@@ -1,5 +1,7 @@
-// Compiles test/ -> bin/ for the mocha-based integration test suite (see package.json's
-// build:tests/test:* scripts). Deliberately excludes src/ - that's a separate compilation unit
+// Type-checks test/ for the mocha-based integration test suite (see package.json's
+// typecheck:tests/test:* scripts). Mocha runs the .ts sources directly via Node's native
+// TypeScript type-stripping, which only strips syntax and doesn't type-check - this config's
+// job is purely `tsc --noEmit`. Deliberately excludes src/ - that's a separate compilation unit
 // with its own config, see tsconfig.build.json for why.
 //
 // TODO: once the rest of this repo's runtime JS (CodePush.js, etc.) is migrated to TypeScript,
@@ -7,15 +9,13 @@
 {
     "compilerOptions": {
         "target": "ES5",
-        "module": "commonjs",
+        "module": "nodenext",
         "lib": ["es6"],
         "noImplicitAny": true,
-        "noEmitOnError": true,
-        "moduleResolution": "node",
-        "sourceMap": true,
+        "moduleResolution": "nodenext",
+        "esModuleInterop": true,
         "rootDir": "test",
-        "outDir": "bin",
-        "removeComments": true
+        "noEmit": true
     },
     "exclude": [
         "Examples",

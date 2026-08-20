@@ -199,7 +199,7 @@ Examples/testapp_rn
 # CMake/NDK build cache for android/app/src/main/cpp
 android/app/.cxx
 
-# iOS Simulator crash reports swept up from failed test runs (see test/test.ts)
+# iOS Simulator crash reports swept up from failed test runs (see test/test.mts)
 test/crash-logs/
 
 #CodePushExpoDemoApp

@@ -1,9 +1,9 @@
 "use strict";
 
-import crypto = require("crypto");
-import fs = require("fs");
-import mkdirp = require("mkdirp");
-import path = require("path");
+import crypto from "crypto";
+import fs from "fs";
+import { mkdirp } from "mkdirp";
+import path from "path";
 
 import { Platform, ProjectManager, ServerUtil, setupUpdateScenario, TestConfig, TestUtil } from "code-push-plugin-testing-framework";
 
@@ -48,8 +48,8 @@ export function computeUpdateContentsHash(folderPath: string): string {
     return crypto.createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
 }
 
-const codeSigningPrivateKey = fs.readFileSync(path.join(__dirname, "../test/fixtures/codesigning/test-private-key.pem"), "utf8");
-export const codeSigningPublicKey = fs.readFileSync(path.join(__dirname, "../test/fixtures/codesigning/test-public-key.pem"), "utf8").trim();
+const codeSigningPrivateKey = fs.readFileSync(new URL("fixtures/codesigning/test-private-key.pem", import.meta.url), "utf8");
+export const codeSigningPublicKey = fs.readFileSync(new URL("fixtures/codesigning/test-public-key.pem", import.meta.url), "utf8").trim();
 
 function base64UrlEncode(input: Buffer): string {
     return input.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");

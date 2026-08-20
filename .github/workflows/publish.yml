@@ -23,7 +23,7 @@ jobs:
         run: npm install
 
       - name: Lint and type-check
-        run: npm run build:tests
+        run: npm run typecheck:tests
 
       - name: Set version from tag
         run: npm pkg set version="${GITHUB_REF_NAME#v}"

@@ -22,9 +22,9 @@ Prefer unit testing what's possible (even though, on iOS, this involves a simula
 - `npm run test:setup:ios` - Set up iOS simulator for testing
 
 ### Build
-- `npm run build:tests` - Build TypeScript tests to bin/ directory
+- `npm run typecheck:tests`. Mocha runs the `.mts` test sources directly via Node's native TypeScript type-stripping, so this is the only place type errors in `test/` get caught.
 - `npm run build:ts` - Compiles `src/` (currently just the vendored `acquisition-sdk`) to `lib/`, which is what ships to consumers instead of raw `.ts`. Wired into `setup` (so local dev/tests have `lib/` available) and `prepare` (so `npm publish`/`npm pack` always ship a freshly built `lib/`).
-  - This split (a separate `tsconfig.build.json` and `tsconfig.json` for `test/` -> `bin/`) is temporary. Once `CodePush.js` and the rest of this repo's runtime JS are migrated to TypeScript, these should be unified into a single build, and adopting `react-native-builder-bob` (or some other common tool) is worth considering at that point instead of hand-rolled `tsc` + npm script wiring.
+  - This split (a separate `tsconfig.build.json` for `src/` -> `lib/` and `tsconfig.json` for type-checking `test/`) is temporary. Once `CodePush.js` and the rest of this repo's runtime JS are migrated to TypeScript, these should be unified into a single build, and adopting `react-native-builder-bob` (or some other common tool) is worth considering at that point instead of hand-rolled `tsc` + npm script wiring.
 
 ### Platform Testing
 - Tests run on actual emulators/simulators with real React Native apps
@@ -61,7 +61,7 @@ Prefer unit testing what's possible (even though, on iOS, this involves a simula
   - `test:setup:ios` (mocha `--ios --setup`) boots the simulator and provisions the test app once: copies templates, runs `pod install`, patches Info.plist/AppDelegate. It never builds or runs any test scenario.
   - `test:fast:ios` (mocha `--ios`) skips provisioning and goes straight to the actual test scenarios: its `before()` hook calls `RNIOS.buildApp` (`xcodebuild` against the already-provisioned `.xcworkspace`) and installs the binary, then runs the update/rollback/error scenarios.
   - For the fast local loop: run `test:setup:ios` once per template/dependency change, then re-run `test:fast:ios` repeatedly while iterating on test/scenario code — this skips `pod install` and re-provisioning on every iteration.
-  - There's still no "just build, no tests" npm script — for a raw build only, lift the `xcodebuild` invocation out of `RNIOS.buildApp` in `test/test.ts` and run it by hand against the provisioned `TestCodePush.xcworkspace`.
+  - There's still no "just build, no tests" npm script — for a raw build only, lift the `xcodebuild` invocation out of `RNIOS.buildApp` in `test/test.mts` and run it by hand against the provisioned `TestCodePush.xcworkspace`.
 - When debugging a CI failure, don't trust the first plausible-looking theory from log noise — reproduce the exact failing command locally on matching hardware/toolchain before writing up a root cause. This is faster than iterating against multi-hour CI runs and catches wrong hypotheses early.
 - `npm run test:setup:ios` provisions a full test app outside the repo (under a system temp/`test-run` dir), not inside `test/` — expect to search for it rather than finding it checked into the repo tree.
 - The provisioned test app's `node_modules/@bitrise/code-push-sdk` is a real copy, not a symlink — editing `ios/` (or `android/`) native source in the repo has zero effect on `test:fast:ios` runs until you re-copy those files into that `node_modules` path (or rerun `test:setup:ios`).
