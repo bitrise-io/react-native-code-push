@@ -1,0 +1,19 @@
+function greet(name) {
+  console.log("Hello, " + name + "!");
+  return "Hello, " + name + "!";
+}
+
+function farewell(name) {
+  console.log("Goodbye, " + name + ".");
+  return "Goodbye, " + name + ".";
+}
+
+var VERSION = "1.0.0";
+var BUILD_NUMBER = 42;
+
+module.exports = {
+  greet: greet,
+  farewell: farewell,
+  VERSION: VERSION,
+  BUILD_NUMBER: BUILD_NUMBER,
+};

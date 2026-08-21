@@ -2,6 +2,11 @@ package com.microsoft.codepush.react;
 
 import android.os.Build;
 
+import com.microsoft.codepush.react.diffpatch.BinaryDiffPatcher;
+import com.microsoft.codepush.react.diffpatch.DiffManifest;
+import com.microsoft.codepush.react.diffpatch.DiffManifestKt;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -253,14 +258,36 @@ public class CodePushUpdateManager {
             String diffManifestFilePath = CodePushUtils.appendPathComponent(unzippedFolderPath,
                     CodePushConstants.DIFF_MANIFEST_FILE_NAME);
             boolean isDiffUpdate = FileUtils.fileAtPathExists(diffManifestFilePath);
+            DiffManifest diffManifest = null;
             if (isDiffUpdate) {
+                try {
+                    diffManifest = DiffManifestKt.parseDiffManifest(CodePushUtils.getJsonObjectFromFile(diffManifestFilePath));
+                } catch (JSONException e) {
+                    throw new CodePushMalformedDataException(diffManifestFilePath, e);
+                }
                 String currentPackageFolderPath = getCurrentPackageFolderPath();
-                CodePushUpdateUtils.copyNecessaryFilesFromCurrentPackage(diffManifestFilePath, currentPackageFolderPath, newUpdateFolderPath);
+                CodePushUpdateUtils.copyNecessaryFilesFromCurrentPackage(diffManifest, currentPackageFolderPath, newUpdateFolderPath);
                 File diffManifestFile = new File(diffManifestFilePath);
                 diffManifestFile.delete();
             }
 
             FileUtils.copyDirectoryContents(unzippedFolderPath, newUpdateFolderPath);
+
+            if (isDiffUpdate) {
+                // Run patching after copyNecessaryFilesFromCurrentPackage() so patched output overwrites
+                // bytes copied in from the old package at the same paths.
+                if (diffManifest.getVersion() == 2) {
+                    String currentPackageFolderPath = getCurrentPackageFolderPath();
+                    if (currentPackageFolderPath == null) {
+                        throw new CodePushInvalidUpdateException("Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported.");
+                    }
+                    BinaryDiffPatcher.applyBinaryDiffPatches(diffManifest, new File(currentPackageFolderPath), new File(unzippedFolderPath), new File(newUpdateFolderPath));
+                    FileUtils.deleteDirectoryAtPath(new File(newUpdateFolderPath, CodePushConstants.DIFF_PATCHES_FOLDER_NAME).getPath());
+                } else if (diffManifest.getVersion() > 2) {
+                    throw new IOException("Diff manifest version " + diffManifest.getVersion() + " is not supported by this SDK version.");
+                }
+            }
+
             FileUtils.deleteFileAtPathSilently(unzippedFolderPath);
 
             // For zip updates, we need to find the relative path to the jsBundle and save it in the

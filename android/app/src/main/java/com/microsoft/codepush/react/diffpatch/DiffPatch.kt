@@ -1,5 +1,19 @@
 package com.microsoft.codepush.react.diffpatch
 
+import java.io.File
+
+// Purposes of this interface:
+// 1. Allows unit testing the business logic by substituting a fake PatchApplier.
+// 2. Allows the SDK to support multiple patching algorithms in the future, if we ever need to.
+interface PatchApplier {
+    fun apply(oldFile: File, diffFile: File, newFile: File): DiffPatch.PatchResult
+}
+
+object NativeBsdiffPatchApplier : PatchApplier {
+    override fun apply(oldFile: File, diffFile: File, newFile: File) =
+        DiffPatch.applyPatch(oldFile.path, diffFile.path, newFile.path)
+}
+
 object DiffPatch {
 
     /**
