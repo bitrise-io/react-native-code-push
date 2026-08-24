@@ -38,6 +38,8 @@
     "test:fast:expo:ios": "mocha --recursive --bail bin/test --ios --expo",
     "test:debugger:android": "mocha --recursive --inspect-brk=0.0.0.0 bin/test --android",
     "test:debugger:ios": "mocha --recursive --inspect-brk=0.0.0.0 bin/test --ios",
+    "test:unit:android": "cd android && ./gradlew :app:test",
+    "test:unit:ios": "xcodebuild test -project ios/CodePush.xcodeproj -scheme CodePushTests -destination \"platform=iOS Simulator,id=$(xcrun simctl list devices available | grep -m1 iPhone | grep -oE '[0-9A-F-]{36}')\"",
     "tslint": "tslint -c tslint.json test/**/*.ts"
   },
   "repository": {
