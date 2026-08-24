@@ -15,6 +15,11 @@ Since `autolinking` uses `react-native.config.js` to link plugins, constructors 
   <string moduleConfig="true" name="CodePushServerUrl">https://yourcodepush.server.com</string>
   ```
 
+- **Enable Delta Updates** - switch for applying binary diff (bsdiff) patches during a diff update, off by default (at the moment). When disabled, only file-by-file diffing is applied (for example, skipping assets if only the main JS bundle changed, but that whole file is downloaded byte for byte). Add a `bool` resource named `CodePushEnableDeltaUpdates` to `strings.xml` to turn it on:
+  ```xml
+  <bool moduleConfig="true" name="CodePushEnableDeltaUpdates">true</bool>
+  ```
+
 The Java API is made available by importing the `com.microsoft.codepush.react.CodePush` class into your `MainActivity.java` file, and consists of a single public class named `CodePush`.
 
 ### Java API Reference (Android)
