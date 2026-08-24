@@ -1,0 +1,3 @@
+This is a completely unrelated old file, deliberately shaped so that
+applying fixtures/basic/patch.bsdiff against it does not match the old
+file bsdiff was actually built from.

@@ -37,7 +37,7 @@ object DiffPatch {
         UNKNOWN;
 
         companion object {
-            // Keep in sync with cpp/bspatch_bridge.h
+            // Keep in sync with shared/diffpatch/bspatch_bridge.h
             fun fromNativeCode(code: Int): PatchResult = when (code) {
                 0 -> OK
                 1 -> BAD_DIFF_HEADER

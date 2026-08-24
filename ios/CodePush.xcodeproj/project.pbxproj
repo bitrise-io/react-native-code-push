@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
+		08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
+		A75C1A7A555663186E25AA3D /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
+		D8C294C1D2625E79BC302CCC /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
+		78E9CECCB820DC4BA09BF09A /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
 		13BE3DEE1AC21097009241FE /* CodePush.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* CodePush.m */; };
 		1B23B9141BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */; };
 		1B762E901C9A5E9A006EF800 /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
@@ -77,10 +82,12 @@
 		3221E4902C8ABE1400268379 /* SSZipCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E44E2C8ABE1300268379 /* SSZipCommon.h */; };
 		3221E4912C8ABE1400268379 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3221E44F2C8ABE1300268379 /* SSZipArchive.m */; };
 		3221E4922C8ABE1400268379 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3221E44F2C8ABE1300268379 /* SSZipArchive.m */; };
+		47F66D5AF3C3185E1A3E3B15 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
 		540D20121C7684FE00D6EF41 /* CodePushUpdateUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */; };
 		5421FE311C58AD5A00986A55 /* CodePushTelemetryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */; };
 		5498D8F61D21F14100B5EB43 /* CodePushUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 5498D8F51D21F14100B5EB43 /* CodePushUtils.m */; };
 		54FFEDE01BF550630061DD23 /* CodePushDownloadHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */; };
+		5C6B00FACE8707503D366F7C /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = E74D80ECD8DD03C4C0772B7B /* Fixtures */; };
 		6463C82D1EBA0CFB0095B8CD /* CodePushUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 5498D8F51D21F14100B5EB43 /* CodePushUtils.m */; };
 		6463C82E1EBA0CFB0095B8CD /* CodePush.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* CodePush.m */; };
 		6463C82F1EBA0CFB0095B8CD /* CodePushConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 81D51F391B6181C2000DA084 /* CodePushConfig.m */; };
@@ -97,6 +104,9 @@
 		81D51F3A1B6181C2000DA084 /* CodePushConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 81D51F391B6181C2000DA084 /* CodePushConfig.m */; };
 		8482F84C1E24C58300F793DB /* CodePush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
 		8482F84E1E24C66300F793DB /* CodePush.h in Headers */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
+		A88F11124A2120A8373A8B61 /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
+		B5B50F91FAAF80444988E284 /* BSPatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */; };
+		DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
 		F85736761F4F03BF00C9C00A /* MF_Base64Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = F85736731F4F03BF00C9C00A /* MF_Base64Additions.h */; };
 		F85736771F4F03BF00C9C00A /* MF_Base64Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = F85736741F4F03BF00C9C00A /* MF_Base64Additions.m */; };
 		F886644D1F4AD1EE0036D01B /* JWTAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664151F4AD1EE0036D01B /* JWTAlgorithm.h */; };
@@ -171,6 +181,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0BF68F85125CF81D7EB65ABB /* bspatch_bridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = bspatch_bridge.h; sourceTree = "<group>"; };
+		0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = bsdiff_wrapper/bspatch_wrapper.c; sourceTree = "<group>"; };
 		134814201AA4EA6300B7C361 /* libCodePush.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCodePush.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		13BE3DEC1AC21097009241FE /* CodePush.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePush.h; path = CodePush/CodePush.h; sourceTree = "<group>"; };
 		13BE3DED1AC21097009241FE /* CodePush.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePush.m; path = CodePush/CodePush.m; sourceTree = "<group>"; };
@@ -214,12 +226,19 @@
 		3221E44E2C8ABE1300268379 /* SSZipCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSZipCommon.h; sourceTree = "<group>"; };
 		3221E44F2C8ABE1300268379 /* SSZipArchive.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSZipArchive.m; sourceTree = "<group>"; };
 		3221E4502C8ABE1300268379 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4AB96C756000A7E833CBA8B7 /* CodePushTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CodePushTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushUpdateUtils.m; path = CodePush/CodePushUpdateUtils.m; sourceTree = "<group>"; };
 		5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushTelemetryManager.m; path = CodePush/CodePushTelemetryManager.m; sourceTree = "<group>"; };
 		5498D8F51D21F14100B5EB43 /* CodePushUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushUtils.m; path = CodePush/CodePushUtils.m; sourceTree = "<group>"; };
 		54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushDownloadHandler.m; path = CodePush/CodePushDownloadHandler.m; sourceTree = "<group>"; };
+		70779807AB59EA4711737F4E /* file_for_patch.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = file_for_patch.c; sourceTree = "<group>"; };
 		810D4E6C1B96935000B397E9 /* CodePushPackage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushPackage.m; path = CodePush/CodePushPackage.m; sourceTree = "<group>"; };
 		81D51F391B6181C2000DA084 /* CodePushConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushConfig.m; path = CodePush/CodePushConfig.m; sourceTree = "<group>"; };
+		827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = libHDiffPatch/HPatch/patch.c; sourceTree = "<group>"; };
+		95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BSPatchTests.swift; sourceTree = "<group>"; };
+		A430CBE260F09A3233110E28 /* bspatch_bridge.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = bspatch_bridge.c; sourceTree = "<group>"; };
+		E74D80ECD8DD03C4C0772B7B /* Fixtures */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = Fixtures; sourceTree = "<group>"; };
+		E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "CodePushTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		F85736731F4F03BF00C9C00A /* MF_Base64Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MF_Base64Additions.h; sourceTree = "<group>"; };
 		F85736741F4F03BF00C9C00A /* MF_Base64Additions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MF_Base64Additions.m; sourceTree = "<group>"; };
 		F85736751F4F03BF00C9C00A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -291,6 +310,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		92F210124F3F87350E684641 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -298,8 +324,19 @@
 			isa = PBXGroup;
 			children = (
 				134814201AA4EA6300B7C361 /* libCodePush.a */,
+				4AB96C756000A7E833CBA8B7 /* CodePushTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2EB4092D590839720984EE01 /* RepoRoot */ = {
+			isa = PBXGroup;
+			children = (
+				66FDDF29DBB202771A6A06DD /* shared-diffpatch */,
+				41A7D02DA375C6871A90065B /* third_party-hdiffpatch */,
+			);
+			name = RepoRoot;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		3221E4282C8ABE1300268379 /* SSZipArchive */ = {
@@ -371,6 +408,17 @@
 			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		41A7D02DA375C6871A90065B /* third_party-hdiffpatch */ = {
+			isa = PBXGroup;
+			children = (
+				827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */,
+				0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */,
+				70779807AB59EA4711737F4E /* file_for_patch.c */,
+			);
+			name = "third_party-hdiffpatch";
+			path = shared/third_party/hdiffpatch;
+			sourceTree = "<group>";
+		};
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
@@ -392,7 +440,29 @@
 				134814211AA4EA7D00B7C361 /* Products */,
 				C31BB4D5018A48D5288C5137 /* Frameworks */,
 				F886647B1F4ADB500036D01B /* libCodePush.a */,
+				2EB4092D590839720984EE01 /* RepoRoot */,
+				C283376E6F60830C5CB41994 /* CodePushTests */,
 			);
+			sourceTree = "<group>";
+		};
+		66FDDF29DBB202771A6A06DD /* shared-diffpatch */ = {
+			isa = PBXGroup;
+			children = (
+				A430CBE260F09A3233110E28 /* bspatch_bridge.c */,
+				0BF68F85125CF81D7EB65ABB /* bspatch_bridge.h */,
+			);
+			name = "shared-diffpatch";
+			path = shared/diffpatch;
+			sourceTree = "<group>";
+		};
+		C283376E6F60830C5CB41994 /* CodePushTests */ = {
+			isa = PBXGroup;
+			children = (
+				95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */,
+				E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */,
+				E74D80ECD8DD03C4C0772B7B /* Fixtures */,
+			);
+			path = CodePushTests;
 			sourceTree = "<group>";
 		};
 		C31BB4D5018A48D5288C5137 /* Frameworks */ = {
@@ -692,6 +762,23 @@
 			productReference = F886647B1F4ADB500036D01B /* libCodePush.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		9750B3DE460E834FF67380BD /* CodePushTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A11B0911B46B588F8C213676 /* Build configuration list for PBXNativeTarget "CodePushTests" */;
+			buildPhases = (
+				7F757C5E9DC4CC7D30C29506 /* Sources */,
+				92F210124F3F87350E684641 /* Frameworks */,
+				C50E6815B9794CFCD65A8F0C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CodePushTests;
+			productName = CodePushTests;
+			productReference = 4AB96C756000A7E833CBA8B7 /* CodePushTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -706,6 +793,9 @@
 					};
 					6463C8231EBA0CB60095B8CD = {
 						CreatedOnToolsVersion = 8.3.2;
+						ProvisioningStyle = Automatic;
+					};
+					9750B3DE460E834FF67380BD = {
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -725,15 +815,31 @@
 			targets = (
 				58B511DA1A9E6C8500147676 /* CodePush */,
 				6463C8231EBA0CB60095B8CD /* CodePush-tvOS */,
+				9750B3DE460E834FF67380BD /* CodePushTests */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C50E6815B9794CFCD65A8F0C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C6B00FACE8707503D366F7C /* Fixtures in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		58B511D71A9E6C8500147676 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */,
+				A75C1A7A555663186E25AA3D /* libHDiffPatch/HPatch/patch.c in Sources */,
+				D8C294C1D2625E79BC302CCC /* bsdiff_wrapper/bspatch_wrapper.c in Sources */,
+				78E9CECCB820DC4BA09BF09A /* file_for_patch.c in Sources */,
 				3221E47D2C8ABE1400268379 /* mz_os_posix.c in Sources */,
 				3221E4792C8ABE1300268379 /* mz_os.c in Sources */,
 				F88664621F4AD1EE0036D01B /* JWTCryptoSecurity.m in Sources */,
@@ -818,9 +924,52 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7F757C5E9DC4CC7D30C29506 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B5B50F91FAAF80444988E284 /* BSPatchTests.swift in Sources */,
+				47F66D5AF3C3185E1A3E3B15 /* bspatch_bridge.c in Sources */,
+				DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */,
+				A88F11124A2120A8373A8B61 /* bsdiff_wrapper/bspatch_wrapper.c in Sources */,
+				0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		4E5D9A15C8BA6CEA802EA38B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"_IS_NEED_BLOCK_DEV=0",
+					"_IS_USED_MULTITHREAD=0",
+					"_IS_NEED_DIR_DIFF_PATCH=0",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared",
+					"$(SRCROOT)/../shared/diffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lbz2",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.codepush.CodePushTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "CodePushTests/CodePushTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
 		58B511ED1A9E6C8500147676 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -931,18 +1080,26 @@
 					HAVE_WZAES,
 					HAVE_ZLIB,
 					ZLIB_COMPAT,
+					"_IS_NEED_BLOCK_DEV=0",
+					"_IS_USED_MULTITHREAD=0",
+					"_IS_NEED_DIR_DIFF_PATCH=0",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRC_ROOT)/JWT/**",
+					"$(SRCROOT)/../shared",
+					"$(SRCROOT)/../shared/diffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-lz",
+					"-lbz2",
 				);
 				PRODUCT_NAME = CodePush;
 				SKIP_INSTALL = YES;
@@ -960,18 +1117,26 @@
 					HAVE_WZAES,
 					HAVE_ZLIB,
 					ZLIB_COMPAT,
+					"_IS_NEED_BLOCK_DEV=0",
+					"_IS_USED_MULTITHREAD=0",
+					"_IS_NEED_DIR_DIFF_PATCH=0",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../react-native/React/**",
 					"$(SRC_ROOT)/JWT/**",
+					"$(SRCROOT)/../shared",
+					"$(SRCROOT)/../shared/diffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-lz",
+					"-lbz2",
 				);
 				PRODUCT_NAME = CodePush;
 				SKIP_INSTALL = YES;
@@ -1016,6 +1181,38 @@
 			};
 			name = Release;
 		};
+		D41A1215D79D9643EC63FA1F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"_IS_NEED_BLOCK_DEV=0",
+					"_IS_USED_MULTITHREAD=0",
+					"_IS_NEED_DIR_DIFF_PATCH=0",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared",
+					"$(SRCROOT)/../shared/diffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch",
+					"$(SRCROOT)/../shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lbz2",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.microsoft.codepush.CodePushTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "CodePushTests/CodePushTests-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1042,6 +1239,15 @@
 			buildConfigurations = (
 				6463C82A1EBA0CB60095B8CD /* Debug */,
 				6463C82B1EBA0CB60095B8CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A11B0911B46B588F8C213676 /* Build configuration list for PBXNativeTarget "CodePushTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D41A1215D79D9643EC63FA1F /* Release */,
+				4E5D9A15C8BA6CEA802EA38B /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

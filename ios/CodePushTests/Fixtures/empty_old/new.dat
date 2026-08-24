@@ -1,0 +1,3 @@
+Everything in this file is new: the old side is a zero-byte file, so
+the whole patch body is a literal insert with no copy-from-old control
+entries at all.

@@ -1,0 +1,4 @@
+This file is byte-for-byte identical on both sides of the patch.
+It exercises the zero-delta path: a real BSDIFF40 patch whose only
+control entry is a single full-length copy from the old file, with
+no literal bytes and no seek. Nothing to add or skip.
