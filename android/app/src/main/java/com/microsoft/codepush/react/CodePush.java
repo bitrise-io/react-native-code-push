@@ -70,7 +70,8 @@ public class CodePush implements ReactPackage {
     private CodePush(String deploymentKey, Context context, boolean isDebugMode) {
         mContext = context.getApplicationContext();
 
-        mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath());
+        boolean enableDeltaUpdates = getBooleanCustomPropertyFromStringsIfExist("EnableDeltaUpdates", false);
+        mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath(), enableDeltaUpdates);
         mTelemetryManager = new CodePushTelemetryManager(mContext);
         mDeploymentKey = deploymentKey;
         mIsDebugMode = isDebugMode;
@@ -154,6 +155,17 @@ public class CodePush implements ReactPackage {
         }
 
         return null;
+    }
+
+    private boolean getBooleanCustomPropertyFromStringsIfExist(String propertyName, boolean defaultValue) {
+        String packageName = mContext.getPackageName();
+        int resId = mContext.getResources().getIdentifier("CodePush" + propertyName, "bool", packageName);
+
+        if (resId != 0) {
+            return mContext.getResources().getBoolean(resId);
+        }
+
+        return defaultValue;
     }
 
     public void clearDebugCacheIfNeeded(boolean isLiveReloadEnabled) {
