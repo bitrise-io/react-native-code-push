@@ -36,8 +36,8 @@ class CodePushUpdateManagerTest {
         logMock.close()
     }
 
-    private fun manager() =
-        CodePushUpdateManager(tempFolder.newFolder("documents").absolutePath)
+    private fun manager(enableDeltaUpdates: Boolean = false) =
+        CodePushUpdateManager(tempFolder.newFolder("documents").absolutePath, enableDeltaUpdates)
 
     private fun updatePackage(hash: String) = JSONObject().apply {
         put(CodePushConstants.PACKAGE_HASH_KEY, hash)
@@ -236,9 +236,27 @@ class CodePushUpdateManagerTest {
     }
 
     @Test
+    fun installDownloadedUpdate_binaryDiffUpdateWhenDisabledOnClient_throwsIOException() {
+        // Given
+        val update = manager(enableDeltaUpdates = false)
+        val downloadFile = zipOf(CodePushConstants.DIFF_MANIFEST_FILE_NAME to """{"version":2,"deletedFiles":[],"patchedFiles":{}}""")
+        val pkg = updatePackage("hash9")
+        val newUpdateFolderPath = update.getPackageFolderPath("hash9")
+        val newUpdateMetadataPath = CodePushUtils.appendPathComponent(newUpdateFolderPath, CodePushConstants.PACKAGE_FILE_NAME)
+
+        // When / Then
+        try {
+            update.installDownloadedUpdate(pkg, "index.android.bundle", null, downloadFile, true, newUpdateFolderPath, newUpdateMetadataPath)
+            fail("expected IOException")
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Received a binary diff update, but delta updates are not enabled on this client."))
+        }
+    }
+
+    @Test
     fun installDownloadedUpdate_binaryDiffUpdateWithNoCurrentPackageInstalled_throwsInvalidUpdateException() {
         // Given
-        val update = manager()
+        val update = manager(enableDeltaUpdates = true)
         val downloadFile = zipOf(CodePushConstants.DIFF_MANIFEST_FILE_NAME to """{"version":2,"deletedFiles":[],"patchedFiles":{}}""")
         val pkg = updatePackage("hash10")
         val newUpdateFolderPath = update.getPackageFolderPath("hash10")
