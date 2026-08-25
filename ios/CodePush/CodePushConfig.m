@@ -36,7 +36,8 @@ static NSString * const PublicKeyKey = @"publicKey";
     NSString *deploymentKey = [infoDictionary objectForKey:@"CodePushDeploymentKey"];
     NSString *serverURL = [infoDictionary objectForKey:@"CodePushServerURL"];
     NSString *publicKey = [infoDictionary objectForKey:@"CodePushPublicKey"];
-    
+    _enableDeltaUpdates = [[infoDictionary objectForKey:@"CodePushEnableDeltaUpdates"] boolValue];
+
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSString *clientUniqueId = [userDefaults stringForKey:ClientUniqueIDConfigKey];
     if (clientUniqueId == nil) {
