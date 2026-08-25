@@ -136,3 +136,19 @@ MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANkWYydPuyOumR/sn2agNBVDnzyRpM16NAUpYPGxNgjSEp0e
 </plist>
 ```
 
+### Enable Delta Updates
+
+Switch for applying binary diff (bsdiff) patches during a diff update, off by default (at the moment). When disabled, only file-by-file diffing is applied (for example, skipping assets if only the main JS bundle changed, but that whole file is downloaded byte for byte). Add a `CodePushEnableDeltaUpdates` boolean record to `Info.plist` to turn it on:
+
+```xml
+<plist version="1.0">
+  <dict>
+    <!-- ...other configs... -->
+
+    <key>CodePushEnableDeltaUpdates</key>
+    <true/>
+
+    <!-- ...other configs... -->
+  </dict>
+</plist>
+```

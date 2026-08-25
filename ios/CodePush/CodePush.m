@@ -875,11 +875,13 @@ RCT_EXPORT_METHOD(downloadUpdate:(NSDictionary*)updatePackage
     }
 
     NSString * publicKey = [[CodePushConfig current] publicKey];
+    BOOL enableDeltaUpdates = [[CodePushConfig current] enableDeltaUpdates];
 
     [CodePushPackage
         downloadPackage:mutableUpdatePackage
         expectedBundleFileName:[bundleResourceName stringByAppendingPathExtension:bundleResourceExtension]
         publicKey:publicKey
+        enableDeltaUpdates:enableDeltaUpdates
         operationQueue:_methodQueue
         // The download is progressing forward
         progressCallback:^(long long expectedContentLength, long long receivedContentLength) {
