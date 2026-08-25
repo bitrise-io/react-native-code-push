@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
 		BBC7F97A68E454FB38953FC4 /* CodePushDiffManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */; };
+		3643F3729205426163367671 /* CodePushBinaryDiffPatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F42FA68BF21AED765F55E71A /* CodePushBinaryDiffPatcherTests.swift */; };
 		CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
 		CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
 		0E9314F338AC505D2E33C1A3 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
@@ -105,6 +106,7 @@
 		6463C82F1EBA0CFB0095B8CD /* CodePushConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 81D51F391B6181C2000DA084 /* CodePushConfig.m */; };
 		6463C8301EBA0CFB0095B8CD /* CodePushDownloadHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */; };
 		6463C8311EBA0CFB0095B8CD /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
+		00A00849F4B5F1A112703E70 /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
 		6463C8321EBA0CFB0095B8CD /* CodePushPackage.m in Sources */ = {isa = PBXBuildFile; fileRef = 810D4E6C1B96935000B397E9 /* CodePushPackage.m */; };
 		6463C8331EBA0CFB0095B8CD /* CodePushTelemetryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */; };
 		6463C8341EBA0CFB0095B8CD /* CodePushUpdateUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */; };
@@ -199,6 +201,7 @@
 
 /* Begin PBXFileReference section */
 		9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushDiffManifestTests.swift; sourceTree = "<group>"; };
+		F42FA68BF21AED765F55E71A /* CodePushBinaryDiffPatcherTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushBinaryDiffPatcherTests.swift; sourceTree = "<group>"; };
 		2A092598DCE51279CA317823 /* CodePushDiffManifest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushDiffManifest.h; path = CodePush/CodePushDiffManifest.h; sourceTree = "<group>"; };
 		49166671F067D5F6429B262B /* CodePushDiffManifest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushDiffManifest.m; path = CodePush/CodePushDiffManifest.m; sourceTree = "<group>"; };
 		F42FA68BF21AED765F55E71A /* CodePushBinaryDiffPatcherTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushBinaryDiffPatcherTests.swift; sourceTree = "<group>"; };
