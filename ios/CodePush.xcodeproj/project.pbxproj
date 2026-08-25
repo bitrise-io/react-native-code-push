@@ -7,11 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
 		08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
-		A75C1A7A555663186E25AA3D /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
-		D8C294C1D2625E79BC302CCC /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
-		78E9CECCB820DC4BA09BF09A /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
+		0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
+		0EC08441DDDD08C96DDE851C /* CodePushSha256Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */; };
 		13BE3DEE1AC21097009241FE /* CodePush.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* CodePush.m */; };
 		1B23B9141BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */; };
 		1B762E901C9A5E9A006EF800 /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
@@ -83,6 +81,7 @@
 		3221E4912C8ABE1400268379 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3221E44F2C8ABE1300268379 /* SSZipArchive.m */; };
 		3221E4922C8ABE1400268379 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3221E44F2C8ABE1300268379 /* SSZipArchive.m */; };
 		47F66D5AF3C3185E1A3E3B15 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
+		537831E09276DCD4475752F3 /* CodePushSha256.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F67DC39D49BF136E1C7F041 /* CodePushSha256.m */; };
 		540D20121C7684FE00D6EF41 /* CodePushUpdateUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */; };
 		5421FE311C58AD5A00986A55 /* CodePushTelemetryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */; };
 		5498D8F61D21F14100B5EB43 /* CodePushUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 5498D8F51D21F14100B5EB43 /* CodePushUtils.m */; };
@@ -100,13 +99,17 @@
 		6463C8361EBA0CFB0095B8CD /* RCTConvert+CodePushUpdateState.m in Sources */ = {isa = PBXBuildFile; fileRef = 1BCC09A61CC19EB700DDC0DD /* RCTConvert+CodePushUpdateState.m */; };
 		6463C8451EBA0D1F0095B8CD /* CodePush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
 		6463C8471EBA0D290095B8CD /* CodePush.h in Headers */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
+		78E9CECCB820DC4BA09BF09A /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
 		810D4E6D1B96935000B397E9 /* CodePushPackage.m in Sources */ = {isa = PBXBuildFile; fileRef = 810D4E6C1B96935000B397E9 /* CodePushPackage.m */; };
 		81D51F3A1B6181C2000DA084 /* CodePushConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 81D51F391B6181C2000DA084 /* CodePushConfig.m */; };
 		8482F84C1E24C58300F793DB /* CodePush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
 		8482F84E1E24C66300F793DB /* CodePush.h in Headers */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
+		A75C1A7A555663186E25AA3D /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
 		A88F11124A2120A8373A8B61 /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
 		B5B50F91FAAF80444988E284 /* BSPatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */; };
+		D8C294C1D2625E79BC302CCC /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
 		DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
+		F0CE653CAB93F38FC0C0CAF8 /* CodePushSha256.h in Headers */ = {isa = PBXBuildFile; fileRef = 73A9DD75BE69E8E3A8C3548A /* CodePushSha256.h */; };
 		F85736761F4F03BF00C9C00A /* MF_Base64Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = F85736731F4F03BF00C9C00A /* MF_Base64Additions.h */; };
 		F85736771F4F03BF00C9C00A /* MF_Base64Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = F85736741F4F03BF00C9C00A /* MF_Base64Additions.m */; };
 		F886644D1F4AD1EE0036D01B /* JWTAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664151F4AD1EE0036D01B /* JWTAlgorithm.h */; };
@@ -155,6 +158,7 @@
 		F88664781F4AD1EE0036D01B /* JWTDeprecations.h in Headers */ = {isa = PBXBuildFile; fileRef = F886644A1F4AD1EE0036D01B /* JWTDeprecations.h */; };
 		F88664791F4AD1EE0036D01B /* JWTErrorDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = F886644B1F4AD1EE0036D01B /* JWTErrorDescription.h */; };
 		F886647A1F4AD1EF0036D01B /* JWTErrorDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = F886644C1F4AD1EE0036D01B /* JWTErrorDescription.m */; };
+		FD00FBDD4A5916948AAC735D /* CodePushSha256.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F67DC39D49BF136E1C7F041 /* CodePushSha256.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -231,12 +235,15 @@
 		5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushTelemetryManager.m; path = CodePush/CodePushTelemetryManager.m; sourceTree = "<group>"; };
 		5498D8F51D21F14100B5EB43 /* CodePushUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushUtils.m; path = CodePush/CodePushUtils.m; sourceTree = "<group>"; };
 		54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushDownloadHandler.m; path = CodePush/CodePushDownloadHandler.m; sourceTree = "<group>"; };
+		6F67DC39D49BF136E1C7F041 /* CodePushSha256.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = CodePushSha256.m; path = CodePush/CodePushSha256.m; sourceTree = "<group>"; };
 		70779807AB59EA4711737F4E /* file_for_patch.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = file_for_patch.c; sourceTree = "<group>"; };
+		73A9DD75BE69E8E3A8C3548A /* CodePushSha256.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = CodePushSha256.h; path = CodePush/CodePushSha256.h; sourceTree = "<group>"; };
 		810D4E6C1B96935000B397E9 /* CodePushPackage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushPackage.m; path = CodePush/CodePushPackage.m; sourceTree = "<group>"; };
 		81D51F391B6181C2000DA084 /* CodePushConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushConfig.m; path = CodePush/CodePushConfig.m; sourceTree = "<group>"; };
 		827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = libHDiffPatch/HPatch/patch.c; sourceTree = "<group>"; };
 		95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BSPatchTests.swift; sourceTree = "<group>"; };
 		A430CBE260F09A3233110E28 /* bspatch_bridge.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = bspatch_bridge.c; sourceTree = "<group>"; };
+		D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushSha256Tests.swift; sourceTree = "<group>"; };
 		E74D80ECD8DD03C4C0772B7B /* Fixtures */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = Fixtures; sourceTree = "<group>"; };
 		E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "CodePushTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		F85736731F4F03BF00C9C00A /* MF_Base64Additions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MF_Base64Additions.h; sourceTree = "<group>"; };
@@ -442,6 +449,8 @@
 				F886647B1F4ADB500036D01B /* libCodePush.a */,
 				2EB4092D590839720984EE01 /* RepoRoot */,
 				C283376E6F60830C5CB41994 /* CodePushTests */,
+				73A9DD75BE69E8E3A8C3548A /* CodePushSha256.h */,
+				6F67DC39D49BF136E1C7F041 /* CodePushSha256.m */,
 			);
 			sourceTree = "<group>";
 		};
@@ -461,6 +470,7 @@
 				95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */,
 				E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */,
 				E74D80ECD8DD03C4C0772B7B /* Fixtures */,
+				D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */,
 			);
 			path = CodePushTests;
 			sourceTree = "<group>";
@@ -720,6 +730,7 @@
 				F886646B1F4AD1EE0036D01B /* JWTCoding+ResultTypes.h in Headers */,
 				3221E4652C8ABE1300268379 /* mz_strm_buf.h in Headers */,
 				3221E47B2C8ABE1400268379 /* mz_zip.h in Headers */,
+				F0CE653CAB93F38FC0C0CAF8 /* CodePushSha256.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -888,6 +899,7 @@
 				F88664531F4AD1EE0036D01B /* JWTAlgorithmESBase.m in Sources */,
 				3221E4532C8ABE1300268379 /* mz_strm_os_posix.c in Sources */,
 				F88664721F4AD1EE0036D01B /* JWTCoding+VersionTwo.m in Sources */,
+				537831E09276DCD4475752F3 /* CodePushSha256.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -933,6 +945,8 @@
 				DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */,
 				A88F11124A2120A8373A8B61 /* bsdiff_wrapper/bspatch_wrapper.c in Sources */,
 				0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */,
+				FD00FBDD4A5916948AAC735D /* CodePushSha256.m in Sources */,
+				0EC08441DDDD08C96DDE851C /* CodePushSha256Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
