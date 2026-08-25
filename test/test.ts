@@ -616,6 +616,7 @@ const ScenarioSyncResumeDelay = "scenarioSyncResumeDelay.js";
 const ScenarioSyncRestartDelay = "scenarioSyncRestartDelay.js";
 const ScenarioSyncSuspendDelay = "scenarioSyncSuspendDelay.js";
 const ScenarioSync2x = "scenarioSync2x.js";
+const ScenarioSyncRestart2x = "scenarioSyncRestart2x.js";
 const ScenarioRestart = "scenarioRestart.js";
 const ScenarioRestart2x = "scenarioRestart2x.js";
 const ScenarioSyncMandatoryDefault = "scenarioSyncMandatoryDefault.js";
@@ -1537,6 +1538,31 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                             });
                     }, ScenarioSync2x);
             });
+
+        TestBuilder.describe("#window.codePush.sync restart 2x",
+            () => {
+                // Regression test: a sync() called again while a previous ON_NEXT_RESTART install is
+                // still pending (i.e. no actual restart happened in between) must report UPDATE_INSTALLED,
+                // not UP_TO_DATE. getCurrentPackage().isPending must reflect that pending state.
+                TestBuilder.it("window.codePush.sync.restart2x.stillpending", false,
+                    (done: Mocha.Done) => {
+                        ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
+
+                        setupUpdateScenario(projectManager, targetPlatform, UpdateDeviceReady, "Update 1 (good update)")
+                            .then<void>((updatePath: string) => {
+                                ServerUtil.updatePackagePath = updatePath;
+                                projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
+                                return ServerUtil.expectTestMessages([
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.PENDING_PACKAGE, [null]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.CURRENT_PACKAGE, [null]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UPDATE_INSTALLED]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.PENDING_PACKAGE, [ServerUtil.updateResponse.update_info.package_hash]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.CURRENT_PACKAGE, [null]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UPDATE_INSTALLED])]);
+                            })
+                            .done(() => { done(); }, (e) => { done(e); });
+                    });
+            }, ScenarioSyncRestart2x);
 
         TestBuilder.describe("#window.codePush.sync minimum background duration tests",
             () => {
