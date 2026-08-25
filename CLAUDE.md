@@ -56,7 +56,6 @@ React Native CodePush is a native module that enables over-the-air updates for R
   - For the fast local loop: run `test:setup:ios` once per template/dependency change, then re-run `test:fast:ios` repeatedly while iterating on test/scenario code — this skips `pod install` and re-provisioning on every iteration.
   - There's still no "just build, no tests" npm script — for a raw build only, lift the `xcodebuild` invocation out of `RNIOS.buildApp` in `test/test.ts` and run it by hand against the provisioned `TestCodePush.xcworkspace`.
 - When debugging a CI failure, don't trust the first plausible-looking theory from log noise — reproduce the exact failing command locally on matching hardware/toolchain before writing up a root cause. This is faster than iterating against multi-hour CI runs and catches wrong hypotheses early.
-- Before running `npm run test:setup:ios`, shut down all booted simulators (`xcrun simctl shutdown all`) — the test framework's simulator picker hangs silently (no error) if simulators are already booted outside it.
 - `npm run test:setup:ios` provisions a full test app outside the repo (under a system temp/`test-run` dir), not inside `test/` — expect to search for it rather than finding it checked into the repo tree.
 - The provisioned test app's `node_modules/@bitrise/code-push-sdk` is a real copy, not a symlink — editing `ios/` (or `android/`) native source in the repo has zero effect on `test:fast:ios` runs until you re-copy those files into that `node_modules` path (or rerun `test:setup:ios`).
 
