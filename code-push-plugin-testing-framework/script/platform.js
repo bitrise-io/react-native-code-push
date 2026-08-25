@@ -347,36 +347,27 @@ var IOSEmulatorManager = (function () {
     /**
      * Returns the target emulator, which is specified through the command line.
      */
-    IOSEmulatorManager.prototype.getTargetEmulator = function () {
-        let _this = this;
-        if (this.targetEmulator)
-            return Q(this.targetEmulator);
-        else {
-            let deferred = Q.defer();
-            let targetIOSEmulator = process.env.IOS_EMU;
-            if (!targetIOSEmulator) {
-                // If no iOS simulator is specified, get the most recent iOS simulator to run tests on.
-                testUtil_1.TestUtil.getProcessOutput("xcrun simctl list", { noLogCommand: true, noLogStdOut: true, noLogStdErr: true })
-                    .then((listOfDevicesWithDevicePairs) => {
-                        let listOfDevices = listOfDevicesWithDevicePairs.slice(listOfDevicesWithDevicePairs.indexOf("-- iOS"), listOfDevicesWithDevicePairs.indexOf("-- tvOS"));
-                        let phoneDevice = /iPhone\ \S*\ ?.*?\(([0-9A-Z-]*)\)/g;
-                        let match = phoneDevice.exec(listOfDevices);
-                        deferred.resolve(match[1]);
-                    }, (error) => {
-                        deferred.reject(error);
-                    });
-            }
-            else {
-                // Use the simulator specified on the command line.
-                deferred.resolve(targetIOSEmulator);
-            }
-            return deferred.promise
-                .then((targetEmulator) => {
-                    _this.targetEmulator = targetEmulator;
-                    console.log("Using iOS simulator named " + _this.targetEmulator);
-                    return _this.targetEmulator;
-                });
+    IOSEmulatorManager.prototype.getTargetEmulator = async function () {
+        if (this.targetEmulator) {
+            return this.targetEmulator;
         }
+        let targetEmulator = process.env.IOS_EMU;
+        if (!targetEmulator) {
+            try {
+                const bootedUdid = await testUtil_1.TestUtil.getProcessOutput("xcrun simctl getenv booted SIMULATOR_UDID", { noLogCommand: true, noLogStdOut: true, noLogStdErr: true });
+                targetEmulator = bootedUdid.trim();
+            } catch {
+                // No simulator is currently booted - fall back to the most recent iOS simulator.
+                const listOfDevicesWithDevicePairs = await testUtil_1.TestUtil.getProcessOutput("xcrun simctl list", { noLogCommand: true, noLogStdOut: true, noLogStdErr: true });
+                const listOfDevices = listOfDevicesWithDevicePairs.slice(listOfDevicesWithDevicePairs.indexOf("-- iOS"), listOfDevicesWithDevicePairs.indexOf("-- tvOS"));
+                const phoneDevice = /iPhone\ \S*\ ?.*?\(([0-9A-Z-]*)\)/g;
+                const match = phoneDevice.exec(listOfDevices);
+                targetEmulator = match[1];
+            }
+        }
+        this.targetEmulator = targetEmulator;
+        console.log("Using iOS simulator named " + this.targetEmulator);
+        return this.targetEmulator;
     };
     /**
      * Boots the target emulator.
