@@ -21,8 +21,34 @@ jobs:
       - name: Check public API compatibility
         run: npm run check:api-compat
 
-  android-test:
+  android-unit-test:
     needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+
+      - name: Cache npm packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Android unit tests
+        working-directory: android
+        run: ./gradlew :app:test
+
+  android-test:
+    needs: [lint, android-unit-test]
     runs-on: bitrise-react-native-code-push-linux-runner
     strategy:
       matrix:
@@ -48,6 +74,16 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          # This job's Gradle build lives in a test app generated at runtime by the test harness,
+          # not a project checked into this repo, so there's nothing meaningful for it to
+          # contribute back to the cache. Read-only avoids each matrix variant (bare/expo) writing
+          # its own redundant entry; it still reuses whatever android-unit-test wrote, since
+          # setup-gradle shares its cache across jobs in the same workflow run.
+          cache-read-only: true
 
       - name: Enable KVM
         run: |

@@ -7,7 +7,13 @@ React Native CodePush is a native module that enables over-the-air updates for R
 ## Development Commands
 
 ### Testing
-- `npm test` - Run all tests with TypeScript compilation
+
+#### Unit tests
+
+- `cd android && ./gradlew :app:test`
+- iOS: no unit tests yet.
+
+#### E2E Tests
 - `npm run test:android` - Run Android-specific tests
 - `npm run test:ios` - Run iOS-specific tests  
 - `npm run test:setup-android` - Set up Android emulator for testing
@@ -34,7 +40,7 @@ React Native CodePush is a native module that enables over-the-air updates for R
 
 ### Platform Structure
 - **iOS**: `ios/` - Objective-C implementation with CocoaPods integration
-- **Android**: `android/` - Java implementation with Gradle plugin
+- **Android**: `android/` - Java/Kotlin implementation with Gradle plugin
 - **Windows**: `windows/` - C++ implementation for Windows React Native
 - **JavaScript**: Root level - TypeScript definitions and bridge code
 
@@ -48,7 +54,7 @@ React Native CodePush is a native module that enables over-the-air updates for R
 - **Custom Test Runner**: TypeScript-based test framework in `test/`
 - **Real App Testing**: Creates actual React Native apps for integration testing
 - **Scenario Testing**: Update, rollback, and error scenarios
-- **No unit test infra yet**: this repo only has the mocha-based integration suite above. `src/acquisition-sdk/__tests__/` contains tests ported from upstream `microsoft/code-push`, kept for future reference - they are deliberately not wired into `npm test` or any runner. Don't assume they're dead/forgotten code, and don't wire them in without setting up real unit test infra first.
+- **No unit test infra for JS/iOS yet**: JS/iOS only have the mocha-based integration suite above. `src/acquisition-sdk/__tests__/` contains tests ported from upstream `microsoft/code-push`, kept for future reference - they are deliberately not wired into `npm test` or any runner. Don't assume they're dead/forgotten code, and don't wire them in without setting up real unit test infra first.
 - **Templates**: `test/template/` holds native files (Podfile, AppDelegate, Android app files) and JS scenarios copied over top of a freshly generated RN/Expo app during test setup, overwriting its defaults — edit files here, not the generated project, for changes to persist
 - **`test:ios` vs `test:setup:ios` vs `test:fast:ios`**: `test:ios` is just `test:setup:ios` followed by `test:fast:ios` — the two are meant to be split apart for local iteration.
   - `test:setup:ios` (mocha `--ios --setup`) boots the simulator and provisions the test app once: copies templates, runs `pod install`, patches Info.plist/AppDelegate. It never builds or runs any test scenario.

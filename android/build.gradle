@@ -6,7 +6,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.12.0")
+        // Must match (or exceed) the AGP version RN's own @react-native/gradle-plugin declares: that plugin is
+        // included as a composite build below and its own AGP dependency wins Gradle's classpath
+        // conflict resolution regardless of what's pinned here, so an out-of-date pin here is
+        // silently overridden rather than actually enforced. Bump this in lockstep with RN's own
+        // gradle-plugin version whenever bumping the react-native devDependency.
+        classpath("com.android.tools.build:gradle:9.2.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
 
         // NOTE: Do not place your application dependencies here; they belong
