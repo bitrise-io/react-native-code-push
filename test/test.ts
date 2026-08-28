@@ -2,6 +2,7 @@
 
 import assert = require("assert");
 import childProcess = require("child_process");
+import crypto = require("crypto");
 import fs = require("fs");
 import mkdirp = require("mkdirp");
 import os = require("os");
@@ -66,6 +67,47 @@ function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
         `npm install --save-dev @react-native/metro-config@${reactNativeVersion} @react-native-community/cli`,
         { cwd: projectPath, noLogStdOut: true }
     ).then(() => { return null; });
+}
+
+const CODEPUSH_METADATA_FILE_NAME = ".codepushrelease";
+
+function isHashIgnored(relativePath: string): boolean {
+    return relativePath.startsWith("__MACOSX/")
+        || relativePath === ".DS_Store"
+        || relativePath.endsWith("/.DS_Store")
+        || relativePath === CODEPUSH_METADATA_FILE_NAME
+        || relativePath.endsWith(`/${CODEPUSH_METADATA_FILE_NAME}`);
+}
+
+/**
+ * Computes the same content hash that the native SDKs compute over an installed update folder, so the mock server
+ * can hand back a package_hash that will actually match what the client expects.
+ */
+function computeUpdateContentsHash(folderPath: string): string {
+    const manifest: string[] = [];
+
+    const walk = (currentPath: string, relativePrefix: string) => {
+        for (const entryName of fs.readdirSync(currentPath)) {
+            const entryPath = path.join(currentPath, entryName);
+            const relativePath = relativePrefix ? `${relativePrefix}/${entryName}` : entryName;
+
+            if (isHashIgnored(relativePath)) {
+                continue;
+            }
+
+            if (fs.statSync(entryPath).isDirectory()) {
+                walk(entryPath, relativePath);
+            } else {
+                const fileHash = crypto.createHash("sha256").update(fs.readFileSync(entryPath)).digest("hex");
+                manifest.push(`${relativePath}:${fileHash}`);
+            }
+        }
+    };
+
+    walk(folderPath, "");
+    manifest.sort();
+
+    return crypto.createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -498,14 +540,25 @@ class RNProjectManager extends ProjectManager {
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
+                .then<string>(this.updateMockPackageHash.bind(this, bundleFolder, isDiff))
                 .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         } else {
             return deferred.promise
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
+                .then<string>(this.updateMockPackageHash.bind(this, bundleFolder, isDiff))
                 .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         }
+    }
+
+    // Records the real hash of bundleFolder of an archive, so the mock server can hand back a
+    // package_hash that matches what the client's verifyFolderHash integrity check will compute.
+    private updateMockPackageHash(bundleFolder: string, isDiff: boolean, archivePath: string): string {
+        if (!isDiff) {
+            ServerUtil.setPackageHashForPath(archivePath, computeUpdateContentsHash(bundleFolder));
+        }
+        return archivePath;
     }
 
     /** JSON file containing the platforms the plugin is currently installed for.
@@ -1013,16 +1066,9 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                                     ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
                             })
                             .then<void>(() => {
-                                /* restart the app to ensure it was reverted and send it another update */
-                                ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
-                                targetPlatform.getEmulatorManager().restartApplication(TestConfig.TestNamespace);
-                                return ServerUtil.expectTestMessages([
-                                    ServerUtil.TestMessage.CHECK_UPDATE_AVAILABLE,
-                                    ServerUtil.TestMessage.DOWNLOAD_SUCCEEDED,
-                                    ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
-                            })
-                            .then<void>(() => {
-                                /* restart the app again to ensure it was reverted again and send the same update and expect it to reject it */
+                                /* restart the app to ensure it was reverted; the native rollback path marks
+                                   the failed update's hash as failed immediately, so the same update should
+                                   now be rejected outright rather than being re-downloaded and retried */
                                 targetPlatform.getEmulatorManager().restartApplication(TestConfig.TestNamespace);
                                 return ServerUtil.expectTestMessages([ServerUtil.TestMessage.UPDATE_FAILED_PREVIOUSLY]);
                             })

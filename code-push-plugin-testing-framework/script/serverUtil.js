@@ -22,6 +22,7 @@ function setupServer(targetPlatform) {
     });
     app.get("/v0.1/public/codepush/update_check", function (req, res) {
         exports.updateCheckCallback && exports.updateCheckCallback(req);
+        applyKnownPackageHash();
         res.send(exports.updateResponse);
         console.log("Update check called from the app.");
         console.log("Request: " + JSON.stringify(req.query));
@@ -53,6 +54,36 @@ function setupServer(targetPlatform) {
     exports.server = app.listen(+targetPlatform.getServerUrl().match(serverPortRegEx)[1]);
 }
 exports.setupServer = setupServer;
+/**
+ * The real content hash of each update archive built during this run, keyed by archive path.
+ * Populated by setPackageHashForPath and applied to exports.updateResponse.
+ */
+var packageHashesByPath = {};
+var _updatePackagePath;
+Object.defineProperty(exports, "updatePackagePath", {
+    enumerable: true,
+    configurable: true,
+    get: function () { return _updatePackagePath; },
+    set: function (value) {
+        _updatePackagePath = value;
+        applyKnownPackageHash();
+    }
+});
+/**
+ * Records the real content hash for an update archive, so that any update_check response
+ * pointing exports.updatePackagePath at this archive gets the matching package_hash instead
+ * of the one filled in by default.
+ */
+function setPackageHashForPath(archivePath, packageHash) {
+    packageHashesByPath[archivePath] = packageHash;
+}
+exports.setPackageHashForPath = setPackageHashForPath;
+function applyKnownPackageHash() {
+    var knownHash = _updatePackagePath && packageHashesByPath[_updatePackagePath];
+    if (knownHash && exports.updateResponse && exports.updateResponse.update_info) {
+        exports.updateResponse.update_info.package_hash = knownHash;
+    }
+}
 /**
  * Closes the server.
  */
