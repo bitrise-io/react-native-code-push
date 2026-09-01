@@ -34,6 +34,11 @@ Recipes/
 bin/
 test/
 
+ios/CodePushCore/Tests/
+ios/CodePushCore/Package.swift
+.build/
+.swiftpm/
+
 # Don't publish TypeScript source, only the compiled lib/ output (built via `npm run build:ts`
 # as part of `prepare`) ships
 # Anchored to repo root (leading slash): an unanchored `src/` would also match `android/app/src/`.

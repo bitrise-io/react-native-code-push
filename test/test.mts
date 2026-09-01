@@ -365,6 +365,18 @@ class RNIOS extends Platform.IOS implements RNPlatform {
               `PRODUCT_BUNDLE_IDENTIFIER = "${TestConfig.TestNamespace}"`,
             ),
           )
+          // Match the app target's deployment target to the Podfile's `platform :ios` (and
+          // CodePush.podspec's own deployment target). CodePush ships Swift sources, which
+          // require the app's deployment target to be at least as high as the pod's; the
+          // generated project's default falls below that.
+          .then(
+            TestUtil.replaceString.bind(
+              undefined,
+              path.join(iOSProject, `${TestConfig.TestAppName}.xcodeproj`, 'project.pbxproj'),
+              'IPHONEOS_DEPLOYMENT_TARGET = [^;]*',
+              'IPHONEOS_DEPLOYMENT_TARGET = 15.5',
+            ),
+          )
           .then(
             TestUtil.copyFile.bind(
               undefined,

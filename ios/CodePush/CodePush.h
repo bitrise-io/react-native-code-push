@@ -204,9 +204,6 @@ failCallback:(void (^)(NSError *err))failCallback;
                    expectedHash:(NSString *)expectedHash
                           error:(NSError **)error;
 
-// remove BEGIN / END tags and line breaks from public key string
-+ (NSString *)getKeyValueFromPublicKeyString:(NSString *)publicKeyString;
-
 + (NSString *)getSignatureFilePath:(NSString *)updateFolderPath;
 
 + (NSDictionary *) verifyAndDecodeJWT:(NSString *) jwt

@@ -1,7 +1,14 @@
 #import "CodePush.h"
 #import "CodePushErrorUtils.h"
 #import "CodePushSha256.h"
-#import "JWT.h"
+
+// Cocoapods static library vs framework interop: the generated header lives at a different
+// path depending on whether the pod is built as a static library or as a framework.
+#if __has_include(<CodePush/CodePush-Swift.h>)
+#import <CodePush/CodePush-Swift.h>
+#else
+#import "CodePush-Swift.h"
+#endif
 
 @implementation CodePushUpdateUtils
 
@@ -303,19 +310,6 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
     return YES;
 }
 
-// remove BEGIN / END tags and line breaks from public key string
-+ (NSString *)getKeyValueFromPublicKeyString:(NSString *)publicKeyString
-{
-    publicKeyString = [publicKeyString stringByReplacingOccurrencesOfString:@"-----BEGIN PUBLIC KEY-----\n"
-                                                                 withString:@""];
-    publicKeyString = [publicKeyString stringByReplacingOccurrencesOfString:@"-----END PUBLIC KEY-----"
-                                                                 withString:@""];
-    publicKeyString = [publicKeyString stringByReplacingOccurrencesOfString:@"\n"
-                                                                 withString:@""];
-
-    return publicKeyString;
-}
-
 + (NSString *)getSignatureFilePath:(NSString *)updateFolderPath
 {
     return [NSString stringWithFormat:@"%@/%@/%@", updateFolderPath, ManifestFolderPrefix, BundleJWTFile];
@@ -337,26 +331,28 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
      withPublicKey:(NSString *)publicKey
              error:(NSError **)error
 {
-    id <JWTAlgorithmDataHolderProtocol> verifyDataHolder = [JWTAlgorithmRSFamilyDataHolder new].keyExtractorType([JWTCryptoKeyExtractor publicKeyWithPEMBase64].type).algorithmName(@"RS256").secret(publicKey);
-    
-    JWTCodingBuilder *verifyBuilder = [JWTDecodingBuilder decodeMessage:jwt].addHolder(verifyDataHolder);
-    JWTCodingResultType *verifyResult = verifyBuilder.result;
-    if (verifyResult.successResult) {
-        return verifyResult.successResult.payload;
-    }
-    else {
-        *error = verifyResult.errorResult.error;
+    NSError *verificationError;
+    NSDictionary *payload = [CPJWTVerifier verifyAndDecodeJWT:jwt
+                                                    publicKey:publicKey
+                                                        error:&verificationError];
+    if (!payload) {
+        if (error) {
+            // Re-wrap in the CodePush error domain so +[CodePushErrorUtils isCodePushError:]
+            // recognizes a signature failure as a CodePush error, which permanently blacklists
+            // the update via +[CodePush saveFailedUpdate:] (retrying won't fix a bad signature).
+            *error = [CodePushErrorUtils errorWithMessage:verificationError.localizedDescription];
+        }
         return nil;
     }
+
+    return payload;
 }
 
 + (BOOL)verifyUpdateSignatureFor:(NSString *)folderPath
                     expectedHash:(NSString *)newUpdateHash
-                   withPublicKey:(NSString *)publicKeyString
+                   withPublicKey:(NSString *)publicKey
                            error:(NSError **)error
 {
-    NSString *publicKey = [self getKeyValueFromPublicKeyString: publicKeyString];
-    
     NSError *signatureVerificationError;
     NSString *signature = [self getSignatureFor: folderPath
                                           error: &signatureVerificationError];
