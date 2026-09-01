@@ -270,30 +270,26 @@ public class CodePushUpdateManager {
                 String signaturePath = CodePushUpdateUtils.getSignatureFilePath(newUpdateFolderPath);
                 boolean isSignatureAppearedInBundle = FileUtils.fileAtPathExists(signaturePath);
 
+                if (isSignatureVerificationEnabled && !isSignatureAppearedInBundle) {
+                    throw new CodePushInvalidUpdateException(
+                            "Error! Public key was provided but there is no JWT signature within app bundle to verify. " +
+                            "Possible reasons, why that might happen: \n" +
+                            "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" +
+                            "2. You've been released CodePush bundle update without providing --privateKeyPath option."
+                    );
+                }
+
+                if (!isSignatureVerificationEnabled && isSignatureAppearedInBundle) {
+                    CodePushUtils.log(
+                            "Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. " +
+                            "Please ensure that public key is properly configured within your application."
+                    );
+                }
+
+                CodePushUpdateUtils.verifyFolderHash(newUpdateFolderPath, newUpdateHash);
+
                 if (isSignatureVerificationEnabled) {
-                    if (isSignatureAppearedInBundle) {
-                        CodePushUpdateUtils.verifyFolderHash(newUpdateFolderPath, newUpdateHash);
-                        CodePushUpdateUtils.verifyUpdateSignature(newUpdateFolderPath, newUpdateHash, stringPublicKey);
-                    } else {
-                        throw new CodePushInvalidUpdateException(
-                                "Error! Public key was provided but there is no JWT signature within app bundle to verify. " +
-                                "Possible reasons, why that might happen: \n" +
-                                "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" +
-                                "2. You've been released CodePush bundle update without providing --privateKeyPath option."
-                        );
-                    }
-                } else {
-                    if (isSignatureAppearedInBundle) {
-                        CodePushUtils.log(
-                                "Warning! JWT signature exists in codepush update but code integrity check couldn't be performed because there is no public key configured. " +
-                                "Please ensure that public key is properly configured within your application."
-                        );
-                        CodePushUpdateUtils.verifyFolderHash(newUpdateFolderPath, newUpdateHash);
-                    } else {
-                        if (isDiffUpdate) {
-                            CodePushUpdateUtils.verifyFolderHash(newUpdateFolderPath, newUpdateHash);
-                        }
-                    }
+                    CodePushUpdateUtils.verifyUpdateSignature(newUpdateFolderPath, newUpdateHash, stringPublicKey);
                 }
 
                 CodePushUtils.setJSONValueForKey(updatePackage, CodePushConstants.RELATIVE_BUNDLE_PATH_KEY, relativeBundlePath);
