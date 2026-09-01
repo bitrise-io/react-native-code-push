@@ -55,10 +55,9 @@ function setupServer(targetPlatform) {
 }
 exports.setupServer = setupServer;
 /**
- * The real content hash of each update archive built during this run, keyed by archive path.
- * Populated by setPackageHashForPath and applied to exports.updateResponse.
+ * The real content hash of the update archive most recently built during this test scenario.
  */
-var packageHashesByPath = {};
+var knownPackageHash;
 var _updatePackagePath;
 Object.defineProperty(exports, "updatePackagePath", {
     enumerable: true,
@@ -70,18 +69,17 @@ Object.defineProperty(exports, "updatePackagePath", {
     }
 });
 /**
- * Records the real content hash for an update archive, so that any update_check response
- * pointing exports.updatePackagePath at this archive gets the matching package_hash instead
- * of the one filled in by default.
+ * Records the real content hash for the update archive that will be served next, so that
+ * any update_check response gets the matching package_hash instead of the one filled in
+ * by default.
  */
-function setPackageHashForPath(archivePath, packageHash) {
-    packageHashesByPath[archivePath] = packageHash;
+function setKnownPackageHash(packageHash) {
+    knownPackageHash = packageHash;
 }
-exports.setPackageHashForPath = setPackageHashForPath;
+exports.setKnownPackageHash = setKnownPackageHash;
 function applyKnownPackageHash() {
-    var knownHash = _updatePackagePath && packageHashesByPath[_updatePackagePath];
-    if (knownHash && exports.updateResponse && exports.updateResponse.update_info) {
-        exports.updateResponse.update_info.package_hash = knownHash;
+    if (knownPackageHash && exports.updateResponse && exports.updateResponse.update_info) {
+        exports.updateResponse.update_info.package_hash = knownPackageHash;
     }
 }
 /**

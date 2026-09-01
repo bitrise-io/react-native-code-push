@@ -291,10 +291,11 @@ declare module 'code-push-plugin-testing-framework/script/serverUtil' {
 	 */
 	export function cleanupServer(): void;
 	/**
-	 * Records the real content hash for an update archive at archivePath, so any future
-	 * update_check response pointing updatePackagePath at it gets a matching package_hash.
+	 * Records the real content hash for the update archive that will be served next, so the
+	 * next update_check response gets a matching package_hash. Pass a falsy packageHash to
+	 * clear it.
 	 */
-	export function setPackageHashForPath(archivePath: string, packageHash: string): void;
+	export function setKnownPackageHash(packageHash: string): void;
 	/**
 	 * Class used to mock the codePush.checkForUpdate() response from the server.
 	 */

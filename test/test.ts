@@ -555,9 +555,9 @@ class RNProjectManager extends ProjectManager {
     // Records the real hash of bundleFolder of an archive, so the mock server can hand back a
     // package_hash that matches what the client's verifyFolderHash integrity check will compute.
     private updateMockPackageHash(bundleFolder: string, isDiff: boolean, archivePath: string): string {
-        if (!isDiff) {
-            ServerUtil.setPackageHashForPath(archivePath, computeUpdateContentsHash(bundleFolder));
-        }
+        // TODO(RA-4875): Diff updates clear it instead, since they are poorly implemented in the entire test harness.
+        // It's going to be a bigger refactor, so for now we just clear the known package hash to avoid using a stale value in diff tests.
+        ServerUtil.setKnownPackageHash(isDiff ? undefined : computeUpdateContentsHash(bundleFolder));
         return archivePath;
     }
 
