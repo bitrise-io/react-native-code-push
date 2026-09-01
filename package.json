@@ -54,7 +54,9 @@
     "test:debugger:ios": "mocha --extension mts --recursive --inspect-brk=0.0.0.0 test --ios",
     "test:unit:js": "mocha --config .mocharc.unit.cjs",
     "test:unit:android": "cd android && ./gradlew :app:test",
-    "test:unit:ios": "xcodebuild test -project ios/CodePush.xcodeproj -scheme CodePushTests -destination \"platform=iOS Simulator,id=$(xcrun simctl list devices available | grep -m1 iPhone | grep -oE '[0-9A-F-]{36}')\"",
+    "test:unit:ios": "npm run test:unit:ios:codepush && npm run test:unit:ios:core",
+    "test:unit:ios:codepush": "xcodebuild test -project ios/CodePush.xcodeproj -scheme CodePushTests -destination \"platform=iOS Simulator,id=$(xcrun simctl list devices available | grep -m1 iPhone | grep -oE '[0-9A-F-]{36}')\"",
+    "test:unit:ios:core": "cd ios/CodePushCore && xcodebuild test -scheme CodePushCore -destination \"platform=iOS Simulator,id=$(xcrun simctl list devices available | grep -m1 iPhone | grep -oE '[0-9A-F-]{36}')\"",
     "lint": "eslint --max-warnings 0 'src/**/*.ts' 'test/**/*.mts'",
     "lint:fix": "npm run lint -- --fix"
   },
