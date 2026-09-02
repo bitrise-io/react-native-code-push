@@ -36,10 +36,6 @@ Pod::Spec.new do |s|
   # The pod contains Swift, so CocoaPods refuses to install it as a static library (the React
   # Native default) if a dependency does not define a Clang module. Only add a dependency that is
   # a Swift pod or whose podspec sets DEFINES_MODULE.
-  #
-  # Note: Even though there are copy/pasted versions of some of these dependencies in the repo,
-  # we explicitly let CocoaPods pull in the versions below so all dependencies are resolved and
-  # linked properly at a parent workspace level.
   s.dependency 'React-Core'
   s.dependency 'SSZipArchive', '~> 2.5.5'
 end
