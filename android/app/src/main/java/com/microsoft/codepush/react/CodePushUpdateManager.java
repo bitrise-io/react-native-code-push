@@ -178,6 +178,13 @@ public class CodePushUpdateManager {
             }
 
             connection.setRequestProperty("Accept-Encoding", "identity");
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode < 200 || responseCode >= 300) {
+                throw new CodePushUnknownException("Error downloading update package. Response code: "
+                        + responseCode + ". Response body: " + NetworkUtils.readStreamToString(connection.getErrorStream()));
+            }
+
             bin = new BufferedInputStream(connection.getInputStream());
 
             long totalBytes = connection.getContentLength();
@@ -349,6 +356,13 @@ public class CodePushUpdateManager {
         try {
             downloadUrl = new URL(remoteBundleUrl);
             connection = (HttpURLConnection) (downloadUrl.openConnection());
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode < 200 || responseCode >= 300) {
+                throw new CodePushUnknownException("Error downloading update package. Response code: "
+                        + responseCode + ". Response body: " + NetworkUtils.readStreamToString(connection.getErrorStream()));
+            }
+
             bin = new BufferedInputStream(connection.getInputStream());
             File downloadFile = new File(getCurrentPackageBundlePath(bundleFileName));
             downloadFile.delete();
