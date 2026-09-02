@@ -17,6 +17,9 @@ import del = require("del");
 
 import { codeSigningPublicKey, signAndRecordUpdateArchive, setupTamperedSignatureUpdateScenario } from "./codesign";
 
+// Used in test/template/app.json to avoid duplicating the PEM fixture in two places (ios and android plugin config).
+const CODE_SIGNING_PUBLIC_KEY_PLACEHOLDER = "{{CODE_SIGNING_PUBLIC_KEY}}";
+
 function ensureAndroidCleartextTraffic(androidManifestPath: string): void {
     const androidManifestContents = fs.readFileSync(androidManifestPath, "utf8");
 
@@ -402,6 +405,12 @@ class RNProjectManager extends ProjectManager {
             return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-57`, { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx expo init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
+                .then(() => {
+                    const appJsonPath = path.join(projectDirectory, TestConfig.TestAppName, "app.json");
+                    // app.json is JSON, so the PEM's line breaks must stay escaped rather than literal.
+                    const escapedPublicKey = codeSigningPublicKey.replace(/\n/g, "\\n");
+                    TestUtil.replaceString(appJsonPath, CODE_SIGNING_PUBLIC_KEY_PLACEHOLDER, escapedPublicKey);
+                })
                 .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
                 // create-expo-app's blank template ships without a metro.config.js. react-native-xcode.sh's

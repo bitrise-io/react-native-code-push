@@ -20,12 +20,12 @@
           "ios": {
             "CodePushDeploymentKey": "mock-ios-deployment-key",
             "CodePushServerURL": "http://127.0.0.1:3000",
-            "CodePushPublicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApZtuvtGcQmmeUh81n/jA\njeDkktkX1QryINqRZrcoofjw+w89FdW3XxQOhsjIJLr5u0xqjHde6Hzpx9sbcUGi\nvmW1O0HBuCsAeiVHyiTq/t+sEiKP0VZa1mbnSM3EEQl09Si3NpLs4sHK+uvttLT3\nKEZy+Zhx54gaM5iz7ErqavpDADaWDWplIXUK/D/pQulbM1oM+04V1XkKw5bBqEHT\ni6Whq/YUPWs2+7KXyLnvKyO+33YFWnHhHGbGkGLYE02sAGonYgaP220vJ4lnwLx0\nOcEagfdlM8YwfyOUSWn7LB0VCJazltDiuM1ZhL1rDA8d0rHZvtxKJDLz3uIRuppj\n7wIDAQAB\n-----END PUBLIC KEY-----"
+            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}"
           },
           "android": {
             "CodePushDeploymentKey": "mock-android-deployment-key",
             "CodePushServerURL": "http://10.0.2.2:3001",
-            "CodePushPublicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApZtuvtGcQmmeUh81n/jA\njeDkktkX1QryINqRZrcoofjw+w89FdW3XxQOhsjIJLr5u0xqjHde6Hzpx9sbcUGi\nvmW1O0HBuCsAeiVHyiTq/t+sEiKP0VZa1mbnSM3EEQl09Si3NpLs4sHK+uvttLT3\nKEZy+Zhx54gaM5iz7ErqavpDADaWDWplIXUK/D/pQulbM1oM+04V1XkKw5bBqEHT\ni6Whq/YUPWs2+7KXyLnvKyO+33YFWnHhHGbGkGLYE02sAGonYgaP220vJ4lnwLx0\nOcEagfdlM8YwfyOUSWn7LB0VCJazltDiuM1ZhL1rDA8d0rHZvtxKJDLz3uIRuppj\n7wIDAQAB\n-----END PUBLIC KEY-----"
+            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}"
           }
         }
       ]
