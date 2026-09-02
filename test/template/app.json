@@ -19,11 +19,13 @@
         {
           "ios": {
             "CodePushDeploymentKey": "mock-ios-deployment-key",
-            "CodePushServerURL": "http://127.0.0.1:3000"
+            "CodePushServerURL": "http://127.0.0.1:3000",
+            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}"
           },
           "android": {
             "CodePushDeploymentKey": "mock-android-deployment-key",
-            "CodePushServerURL": "http://10.0.2.2:3001"
+            "CodePushServerURL": "http://10.0.2.2:3001",
+            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}"
           }
         }
       ]

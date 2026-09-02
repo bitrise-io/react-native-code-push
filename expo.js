@@ -89,6 +89,9 @@ const withCodePushInfoPlist = (config, options = {}) => {
     if (options.ios && options.ios.CodePushServerURL) {
       config.modResults.CodePushServerURL = options.ios.CodePushServerURL;
     }
+    if (options.ios && options.ios.CodePushPublicKey) {
+      config.modResults.CodePushPublicKey = options.ios.CodePushPublicKey;
+    }
     return config;
   });
 };
@@ -323,6 +326,9 @@ const withAndroidStrings = (config, options) => {
     }
     if (options.android?.CodePushServerURL) {
       setString('CodePushServerUrl', options.android.CodePushServerURL);
+    }
+    if (options.android?.CodePushPublicKey) {
+      setString('CodePushPublicKey', options.android.CodePushPublicKey);
     }
     return config;
   });
