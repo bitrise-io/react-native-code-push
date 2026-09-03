@@ -19,7 +19,7 @@ function initializeTests(projectManager, supportedTargetPlatforms, describeTests
     // Log current configuration
     console.log("Initializing tests for " + testUtil_1.TestUtil.getPluginName());
     console.log(TestConfig.TestAppName + "\n" + TestConfig.TestNamespace);
-    console.log("Testing " + TestConfig.thisPluginPath + ".");
+    console.log("Testing " + TestConfig.pluginName + ".");
     targetPlatforms.forEach(function (platform) {
         console.log("On " + platform.getName());
     });
@@ -111,7 +111,7 @@ function initializeTests(projectManager, supportedTargetPlatforms, describeTests
             describe("Setting Up For Tests", function () { return setupTests(); });
         else {
             targetPlatforms.forEach(function (platform) {
-                var prefix = (TestConfig.onlyRunCoreTests ? "Core Tests " : "Tests ") + TestConfig.thisPluginPath + " on ";
+                var prefix = (TestConfig.onlyRunCoreTests ? "Core Tests " : "Tests ") + TestConfig.pluginName + " on ";
                 describe(prefix + platform.getName(), function () { return createAndRunTests(platform); });
             });
         }

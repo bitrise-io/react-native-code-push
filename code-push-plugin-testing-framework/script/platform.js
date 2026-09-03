@@ -174,6 +174,7 @@ function bootEmulatorInternal(platformName, restartEmulators, targetEmulator, ch
             console.log(platformName + " emulator is not ready after " + emulatorMaxReadyAttempts + " attempts, abort.");
             deferred.reject(platformName + " emulator failed to boot.");
             looperDeferred.resolve(undefined);
+            return looperDeferred.promise;
         }
         setTimeout(function () {
             checkEmulatorReady()
@@ -381,7 +382,12 @@ var IOSEmulatorManager = (function () {
         }
         function startIOSEmulator(iOSEmulatorId) {
             return testUtil_1.TestUtil.getProcessOutput("xcrun simctl boot " + iOSEmulatorId, { noLogStdErr: true })
-                .catch(function (error) { return undefined; /* Always fails because we do not specify a template, which is not necessary to just start the emulator */ }).then(function () { return null; });
+                .catch(function (error) {
+                    // Booting an already booted device fails harmlessly. Anything else is a real failure.
+                    if (!/current state: Booted/.test(String(error) + String(error && error.stderr))) {
+                        throw error;
+                    }
+                }).then(function () { return null; });
         }
         function killIOSEmulator() {
             return testUtil_1.TestUtil.getProcessOutput("xcrun simctl shutdown all").then(function () { return null; });
