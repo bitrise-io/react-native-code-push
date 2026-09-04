@@ -24,9 +24,11 @@ import javax.net.ssl.HttpsURLConnection;
 public class CodePushUpdateManager {
 
     private String mDocumentsDirectory;
+    private boolean mEnableDeltaUpdates;
 
-    public CodePushUpdateManager(String documentsDirectory) {
+    public CodePushUpdateManager(String documentsDirectory, boolean enableDeltaUpdates) {
         mDocumentsDirectory = documentsDirectory;
+        mEnableDeltaUpdates = enableDeltaUpdates;
     }
 
     private String getDownloadFilePath() {
@@ -267,15 +269,17 @@ public class CodePushUpdateManager {
             if (isDiffUpdate) {
                 // Run patching after copyNecessaryFilesFromCurrentPackage() so patched output overwrites
                 // bytes copied in from the old package at the same paths.
-                if (diffManifest.getVersion() == 2) {
+                if (diffManifest.getVersion() > 2 || diffManifest.getVersion() < 1) {
+                    throw new IOException("Diff manifest version " + diffManifest.getVersion() + " is not supported by this SDK version.");
+                } else if (diffManifest.getVersion() == 2 && !mEnableDeltaUpdates) {
+                    throw new IOException("Received a binary diff update, but delta updates are not enabled on this client. Set CodePushEnableDeltaUpdates to true in strings.xml to enable them.");
+                } else if (diffManifest.getVersion() == 2) {
                     String currentPackageFolderPath = getCurrentPackageFolderPath();
                     if (currentPackageFolderPath == null) {
                         throw new CodePushInvalidUpdateException("Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported.");
                     }
                     BinaryDiffPatcher.applyBinaryDiffPatches(diffManifest, new File(currentPackageFolderPath), new File(unzippedFolderPath), new File(newUpdateFolderPath));
                     FileUtils.deleteDirectoryAtPath(new File(newUpdateFolderPath, CodePushConstants.DIFF_PATCHES_FOLDER_NAME).getPath());
-                } else if (diffManifest.getVersion() > 2) {
-                    throw new IOException("Diff manifest version " + diffManifest.getVersion() + " is not supported by this SDK version.");
                 }
             }
 
