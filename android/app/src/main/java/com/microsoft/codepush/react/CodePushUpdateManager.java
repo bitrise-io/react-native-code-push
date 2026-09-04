@@ -234,6 +234,15 @@ public class CodePushUpdateManager {
             }
         }
 
+        installDownloadedUpdate(updatePackage, expectedBundleFileName, stringPublicKey,
+                downloadFile, isZip, newUpdateFolderPath, newUpdateMetadataPath);
+    }
+
+    void installDownloadedUpdate(JSONObject updatePackage, String expectedBundleFileName,
+                                  String stringPublicKey, File downloadFile, boolean isZip,
+                                  String newUpdateFolderPath, String newUpdateMetadataPath) throws IOException {
+        String newUpdateHash = updatePackage.optString(CodePushConstants.PACKAGE_HASH_KEY, null);
+
         if (isZip) {
             // Unzip the downloaded file and then delete the zip
             String unzippedFolderPath = getUnzippedFolderPath();
