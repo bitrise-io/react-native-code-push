@@ -52,6 +52,8 @@ android/.gradle
 android/**/*.iml
 android/.idea
 
+ios/CodePushDiffPatchTests/
+
 
 # Windows
 windows/.vs/
