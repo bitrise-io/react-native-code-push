@@ -103,6 +103,7 @@
 @property (copy) NSString *deploymentKey;
 @property (copy) NSString *serverURL;
 @property (copy) NSString *publicKey;
+@property (readonly) BOOL enableDeltaUpdates;
 
 + (instancetype)current;
 
@@ -141,6 +142,7 @@ failCallback:(void (^)(NSError *err))failCallback;
 + (void)downloadPackage:(NSDictionary *)updatePackage
  expectedBundleFileName:(NSString *)expectedBundleFileName
               publicKey:(NSString *)publicKey
+ enableDeltaUpdates:(BOOL)enableDeltaUpdates
          operationQueue:(dispatch_queue_t)operationQueue
        progressCallback:(void (^)(long long, long long))progressCallback
            doneCallback:(void (^)())doneCallback

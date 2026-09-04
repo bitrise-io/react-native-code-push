@@ -3,6 +3,7 @@
 
 @implementation CodePushConfig {
     NSMutableDictionary *_configDictionary;
+    BOOL _enableDeltaUpdates;
 }
 
 static CodePushConfig *_currentConfig;
@@ -36,7 +37,8 @@ static NSString * const PublicKeyKey = @"publicKey";
     NSString *deploymentKey = [infoDictionary objectForKey:@"CodePushDeploymentKey"];
     NSString *serverURL = [infoDictionary objectForKey:@"CodePushServerURL"];
     NSString *publicKey = [infoDictionary objectForKey:@"CodePushPublicKey"];
-    
+    _enableDeltaUpdates = [[infoDictionary objectForKey:@"CodePushEnableDeltaUpdates"] boolValue];
+
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSString *clientUniqueId = [userDefaults stringForKey:ClientUniqueIDConfigKey];
     if (clientUniqueId == nil) {
@@ -94,6 +96,11 @@ static NSString * const PublicKeyKey = @"publicKey";
 - (NSString *)publicKey
 {
     return [_configDictionary objectForKey:PublicKeyKey];
+}
+
+- (BOOL)enableDeltaUpdates
+{
+    return _enableDeltaUpdates;
 }
 
 - (void)setAppVersion:(NSString *)appVersion
