@@ -7,12 +7,18 @@ import mkdirp = require("mkdirp");
 import os = require("os");
 import path = require("path");
 import slash = require("slash");
+import { promisify } from "util";
 
 import { Platform, PluginTestingFramework, ProjectManager, setupTestRunScenario, setupUpdateScenario, ServerUtil, TestBuilder, TestConfig, TestUtil } from "code-push-plugin-testing-framework";
 
 import Q = require("q");
 
 import del = require("del");
+
+import { codeSigningPublicKey, signAndRecordUpdateArchive, setupTamperedSignatureUpdateScenario } from "./codesign";
+
+// Used in test/template/app.json to avoid duplicating the PEM fixture in two places (ios and android plugin config).
+const CODE_SIGNING_PUBLIC_KEY_PLACEHOLDER = "{{CODE_SIGNING_PUBLIC_KEY}}";
 
 function ensureAndroidCleartextTraffic(androidManifestPath: string): void {
     const androidManifestContents = fs.readFileSync(androidManifestPath, "utf8");
@@ -34,6 +40,10 @@ function ensureAndroidCleartextTraffic(androidManifestPath: string): void {
     if (nextContents !== androidManifestContents) {
         fs.writeFileSync(androidManifestPath, nextContents, "utf8");
     }
+}
+
+async function setPlistStringValue(plistPath: string, key: string, value: string): Promise<void> {
+    await promisify(childProcess.execFile)("plutil", ["-replace", key, "-string", value, plistPath]);
 }
 
 /**
@@ -167,6 +177,7 @@ class RNAndroid extends Platform.Android implements RNPlatform {
         const string = path.join(innerprojectDirectory, "android", "app", "src", "main", "res", "values", "strings.xml");
         TestUtil.replaceString(string, TestUtil.SERVER_URL_PLACEHOLDER, this.getServerUrl());
         TestUtil.replaceString(string, TestUtil.ANDROID_KEY_PLACEHOLDER, this.getDefaultDeploymentKey());
+        TestUtil.replaceString(string, "</resources>", `<string moduleConfig="true" name="CodePushPublicKey">${codeSigningPublicKey}</string>\n</resources>`);
         TestUtil.replaceString(AndroidManifest, "\\${usesCleartextTraffic}", "true");
 
 
@@ -238,14 +249,10 @@ class RNIOS extends Platform.IOS implements RNPlatform {
             // Install the Podfile
             return TestUtil.copyFile(path.join(TestConfig.templatePath, "ios", "Podfile"), podfilePath, true)
                 .then(() => TestUtil.getProcessOutput(`pod install`, { cwd: iOSProject, noLogStdOut: true }))
-                // Put the IOS deployment key in the Info.plist
-                .then(TestUtil.replaceString.bind(undefined, infoPlistPath,
-                    "</dict>\n</plist>",
-                    "<key>CodePushDeploymentKey</key>\n\t<string>" + this.getDefaultDeploymentKey() + "</string>\n\t<key>CodePushServerURL</key>\n\t<string>" + this.getServerUrl() + "</string>\n\t</dict>\n</plist>"))
-                // Set the app version to 1.0.0 instead of 1.0 in the Info.plist
-                .then(TestUtil.replaceString.bind(undefined, infoPlistPath, "1.0", "1.0.0"))
-                // Remove dependence of CFBundleShortVersionString from project.pbxproj
-                .then(TestUtil.replaceString.bind(undefined, infoPlistPath, "\\$\\(MARKETING_VERSION\\)", "1.0.0"))
+                .then(() => setPlistStringValue(infoPlistPath, "CFBundleShortVersionString", "1.0.0"))
+                .then(() => setPlistStringValue(infoPlistPath, "CodePushDeploymentKey", this.getDefaultDeploymentKey()))
+                .then(() => setPlistStringValue(infoPlistPath, "CodePushServerURL", this.getServerUrl()))
+                .then(() => setPlistStringValue(infoPlistPath, "CodePushPublicKey", codeSigningPublicKey))
                 // Fix the linker flag list in project.pbxproj (pod install adds an extra comma)
                 .then(TestUtil.replaceString.bind(undefined, path.join(iOSProject, TestConfig.TestAppName + ".xcodeproj", "project.pbxproj"),
                     "\"[$][(]inherited[)]\",\\s*[)];", "\"$(inherited)\"\n\t\t\t\t);"))
@@ -398,6 +405,12 @@ class RNProjectManager extends ProjectManager {
             return TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-57`, { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx expo init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
+                .then(() => {
+                    const appJsonPath = path.join(projectDirectory, TestConfig.TestAppName, "app.json");
+                    // app.json is JSON, so the PEM's line breaks must stay escaped rather than literal.
+                    const escapedPublicKey = codeSigningPublicKey.replace(/\n/g, "\\n");
+                    TestUtil.replaceString(appJsonPath, CODE_SIGNING_PUBLIC_KEY_PLACEHOLDER, escapedPublicKey);
+                })
                 .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
                 // create-expo-app's blank template ships without a metro.config.js. react-native-xcode.sh's
@@ -497,12 +510,14 @@ class RNProjectManager extends ProjectManager {
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx expo prebuild --platform " + targetPlatform.getName(), { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then(() => signAndRecordUpdateArchive(bundleFolder, isDiff))
                 .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
                 .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         } else {
             return deferred.promise
                 .then(TestUtil.getProcessOutput.bind(undefined, "npx react-native bundle --entry-file index.js --platform " + targetPlatform.getName() + " --bundle-output " + bundlePath + " --assets-dest " + bundleFolder + " --dev false",
                     { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then(() => signAndRecordUpdateArchive(bundleFolder, isDiff))
                 .then<string>(TestUtil.archiveFolder.bind(undefined, bundleFolder, "", path.join(projectDirectory, TestConfig.TestAppName, "update.zip"), isDiff))
                 .then((result) => { console.log(`[TIMING] createUpdateArchive(${projectDirectory}, ${targetPlatform.getName()}) took ${Date.now() - t0}ms`); return result; });
         }
@@ -616,6 +631,7 @@ const ScenarioSyncResumeDelay = "scenarioSyncResumeDelay.js";
 const ScenarioSyncRestartDelay = "scenarioSyncRestartDelay.js";
 const ScenarioSyncSuspendDelay = "scenarioSyncSuspendDelay.js";
 const ScenarioSync2x = "scenarioSync2x.js";
+const ScenarioSyncRestart2x = "scenarioSyncRestart2x.js";
 const ScenarioRestart = "scenarioRestart.js";
 const ScenarioRestart2x = "scenarioRestart2x.js";
 const ScenarioSyncMandatoryDefault = "scenarioSyncMandatoryDefault.js";
@@ -996,6 +1012,27 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                     });
             }, ScenarioInstall);
 
+        TestBuilder.describe("#localPackage.install.codeSigning",
+            () => {
+                TestBuilder.it("localPackage.install.codeSigning.tamperedSignature", false,
+                    async (done: Mocha.Done) => {
+                        try {
+                            ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
+
+                            /* create a normal update, then tamper with its signature after it's been signed */
+                            const updatePath = await setupTamperedSignatureUpdateScenario(projectManager, targetPlatform, UpdateNotifyApplicationReady, "Tampered Update");
+                            ServerUtil.updatePackagePath = updatePath;
+                            projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
+                            await ServerUtil.expectTestMessages([
+                                ServerUtil.TestMessage.CHECK_UPDATE_AVAILABLE,
+                                ServerUtil.TestMessage.DOWNLOAD_ERROR]);
+                            done();
+                        } catch (e) {
+                            done(e);
+                        }
+                    });
+            }, ScenarioInstall);
+
         TestBuilder.describe("#localPackage.install.revert",
             () => {
                 TestBuilder.it("localPackage.install.revert.dorevert", false,
@@ -1013,16 +1050,9 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                                     ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
                             })
                             .then<void>(() => {
-                                /* restart the app to ensure it was reverted and send it another update */
-                                ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
-                                targetPlatform.getEmulatorManager().restartApplication(TestConfig.TestNamespace);
-                                return ServerUtil.expectTestMessages([
-                                    ServerUtil.TestMessage.CHECK_UPDATE_AVAILABLE,
-                                    ServerUtil.TestMessage.DOWNLOAD_SUCCEEDED,
-                                    ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
-                            })
-                            .then<void>(() => {
-                                /* restart the app again to ensure it was reverted again and send the same update and expect it to reject it */
+                                /* restart the app to ensure it was reverted; the native rollback path marks
+                                   the failed update's hash as failed immediately, so the same update should
+                                   now be rejected outright rather than being re-downloaded and retried */
                                 targetPlatform.getEmulatorManager().restartApplication(TestConfig.TestNamespace);
                                 return ServerUtil.expectTestMessages([ServerUtil.TestMessage.UPDATE_FAILED_PREVIOUSLY]);
                             })
@@ -1537,6 +1567,31 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                             });
                     }, ScenarioSync2x);
             });
+
+        TestBuilder.describe("#window.codePush.sync restart 2x",
+            () => {
+                // Regression test: a sync() called again while a previous ON_NEXT_RESTART install is
+                // still pending (i.e. no actual restart happened in between) must report UPDATE_INSTALLED,
+                // not UP_TO_DATE. getCurrentPackage().isPending must reflect that pending state.
+                TestBuilder.it("window.codePush.sync.restart2x.stillpending", false,
+                    (done: Mocha.Done) => {
+                        ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
+
+                        setupUpdateScenario(projectManager, targetPlatform, UpdateDeviceReady, "Update 1 (good update)")
+                            .then<void>((updatePath: string) => {
+                                ServerUtil.updatePackagePath = updatePath;
+                                projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
+                                return ServerUtil.expectTestMessages([
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.PENDING_PACKAGE, [null]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.CURRENT_PACKAGE, [null]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UPDATE_INSTALLED]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.PENDING_PACKAGE, [ServerUtil.updateResponse.update_info.package_hash]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.CURRENT_PACKAGE, [null]),
+                                    new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UPDATE_INSTALLED])]);
+                            })
+                            .done(() => { done(); }, (e) => { done(e); });
+                    });
+            }, ScenarioSyncRestart2x);
 
         TestBuilder.describe("#window.codePush.sync minimum background duration tests",
             () => {
