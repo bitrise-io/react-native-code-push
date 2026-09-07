@@ -21,13 +21,26 @@
     private final ** mBundleLoader;
 }
 
+# ReactHostImpl was rewritten from Java to Kotlin between RN 0.80.3 and
+# 0.81.0, renaming its delegate field from "mReactHostDelegate" to
+# "reactHostDelegate".
 -keepclassmembers class com.facebook.react.runtime.ReactHostImpl {
     private final ** mReactHostDelegate;
+    private final ** reactHostDelegate;
 }
 
 -keep interface com.facebook.react.runtime.ReactHostDelegate { *; }
 
 -keep class * implements com.facebook.react.runtime.ReactHostDelegate { *; }
+
+# The bundle loader field on ReactHostDelegate implementations (e.g. Expo's
+# ExpoReactHostDelegate._jsBundleLoader) can still get stripped by R8 as
+# dead code under the wildcard "implements" rule above, since it's only
+# ever written via reflection. Keep it explicitly.
+-keepclassmembers class * implements com.facebook.react.runtime.ReactHostDelegate {
+    *** jsBundleLoader;
+    *** _jsBundleLoader;
+}
 
 # Can't find referenced class org.bouncycastle.**
 -dontwarn com.nimbusds.jose.**
