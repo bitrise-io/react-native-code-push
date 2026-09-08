@@ -1,4 +1,5 @@
 #import "CodePush.h"
+#import "CodePushDiffManifest.h"
 #import "CodePushErrorUtils.h"
 #if __has_include(<SSZipArchive/SSZipArchive.h>)
 #import <SSZipArchive/SSZipArchive.h>
@@ -172,9 +173,29 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             NSDictionary *manifestJSON = [NSJSONSerialization JSONObjectWithData:data
                                                                                                                          options:kNilOptions
                                                                                                                            error:&error];
-                                                            NSArray *deletedFiles = manifestJSON[@"deletedFiles"];
-                                                            for (NSString *deletedFileName in deletedFiles) {
-                                                                NSString *absoluteDeletedFilePath = [newUpdateFolderPath stringByAppendingPathComponent:deletedFileName];
+                                                            if (error) {
+                                                                failCallback(error);
+                                                                return;
+                                                            }
+
+                                                            CodePushDiffManifest *diffManifest = [CodePushDiffManifest manifestFromJSON:manifestJSON error:&error];
+                                                            if (error) {
+                                                                failCallback(error);
+                                                                return;
+                                                            }
+
+                                                            for (NSString *deletedFileName in diffManifest.deletedFiles) {
+                                                                // deletedFiles comes from the downloaded update, so it is untrusted: an
+                                                                // entry that does not name a file inside the new package folder, such as
+                                                                // "../../etc/passwd", fails the install.
+                                                                NSError *resolveError = nil;
+                                                                NSString *absoluteDeletedFilePath = [CodePushDiffManifest resolvePath:deletedFileName
+                                                                                                                         withinFolder:newUpdateFolderPath
+                                                                                                                                error:&resolveError];
+                                                                if (absoluteDeletedFilePath == nil) {
+                                                                    failCallback([CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest deletedFiles entry \"%@\": %@", deletedFileName, resolveError.localizedDescription]]);
+                                                                    return;
+                                                                }
                                                                 if ([[NSFileManager defaultManager] fileExistsAtPath:absoluteDeletedFilePath]) {
                                                                     [[NSFileManager defaultManager] removeItemAtPath:absoluteDeletedFilePath
                                                                                                                error:&error];
