@@ -16,6 +16,7 @@
 #endif
 
 #import "CodePush.h"
+#import "CodePushErrorUtils.h"
 
 @interface CodePush () <RCTBridgeModule, RCTFrameUpdateObserver>
 @end
