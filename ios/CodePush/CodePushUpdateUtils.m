@@ -1,5 +1,5 @@
 #import "CodePush.h"
-#include <CommonCrypto/CommonDigest.h>
+#import "CodePushSha256.h"
 #import "JWT.h"
 
 @implementation CodePushUpdateUtils
@@ -57,8 +57,10 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
                 return NO;
             }
         } else {
-            NSData *fileContents = [NSData dataWithContentsOfFile:fullFilePath];
-            NSString *fileContentsHash = [self computeHashForData:fileContents];
+            NSString *fileContentsHash = CodePushSha256HexForFile(fullFilePath, error);
+            if (!fileContentsHash) {
+                return NO;
+            }
             [manifest addObject:[[relativePath stringByAppendingString:@":"] stringByAppendingString:fileContentsHash]];
         }
     }
@@ -66,14 +68,18 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
     return YES;
 }
 
-+ (void)addFileToManifest:(NSURL *)fileURL
++ (BOOL)addFileToManifest:(NSURL *)fileURL
                  manifest:(NSMutableArray *)manifest
+                    error:(NSError **)error
 {
     if ([[NSFileManager defaultManager] fileExistsAtPath:[fileURL path]]) {
-        NSData *fileContents = [NSData dataWithContentsOfURL:fileURL];
-        NSString *fileContentsHash = [self computeHashForData:fileContents];
+        NSString *fileContentsHash = CodePushSha256HexForFile([fileURL path], error);
+        if (!fileContentsHash) {
+            return NO;
+        }
         [manifest addObject:[NSString stringWithFormat:@"%@/%@:%@", [self manifestFolderPrefix], [fileURL lastPathComponent], fileContentsHash]];
     }
+    return YES;
 }
 
 + (NSString *)computeFinalHashFromManifest:(NSMutableArray *)manifest
@@ -93,19 +99,7 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
     // The JSON serialization turns path separators into "\/", e.g. "CodePush\/assets\/image.png"
     manifestString = [manifestString stringByReplacingOccurrencesOfString:@"\\/"
                                                                withString:@"/"];
-    return [self computeHashForData:[NSData dataWithBytes:manifestString.UTF8String length:[manifestString lengthOfBytesUsingEncoding:NSUTF8StringEncoding]]];
-}
-
-+ (NSString *)computeHashForData:(NSData *)inputData
-{
-    uint8_t digest[CC_SHA256_DIGEST_LENGTH];
-    CC_SHA256(inputData.bytes, (CC_LONG)inputData.length, digest);
-    NSMutableString* inputHash = [NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
-    for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
-        [inputHash appendFormat:@"%02x", digest[i]];
-    }
-    
-    return inputHash;
+    return CodePushSha256HexForData([NSData dataWithBytes:manifestString.UTF8String length:[manifestString lengthOfBytesUsingEncoding:NSUTF8StringEncoding]]);
 }
 
 + (BOOL)copyEntriesInFolder:(NSString *)sourceFolder
@@ -230,8 +224,12 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
         }
     }
     
-    [self addFileToManifest:binaryBundleUrl manifest:manifest];
-    [self addFileToManifest:[binaryBundleUrl URLByAppendingPathExtension:@"meta"] manifest:manifest];
+    if (![self addFileToManifest:binaryBundleUrl manifest:manifest error:error]) {
+        return nil;
+    }
+    if (![self addFileToManifest:[binaryBundleUrl URLByAppendingPathExtension:@"meta"] manifest:manifest error:error]) {
+        return nil;
+    }
 
     binaryHash = [self computeFinalHashFromManifest:manifest error:error];
     
