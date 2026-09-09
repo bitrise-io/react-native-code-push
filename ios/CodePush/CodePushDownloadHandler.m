@@ -1,4 +1,5 @@
 #import "CodePush.h"
+#import "CodePushErrorUtils.h"
 
 @implementation CodePushDownloadHandler {
     // Header chars used to determine if the file is a zip.

@@ -129,13 +129,6 @@ failCallback:(void (^)(NSError *err))failCallback;
 
 @end
 
-@interface CodePushErrorUtils : NSObject
-
-+ (NSError *)errorWithMessage:(NSString *)errorMessage;
-+ (BOOL)isCodePushError:(NSError *)error;
-
-@end
-
 @interface CodePushPackage : NSObject
 
 + (void)downloadPackage:(NSDictionary *)updatePackage
