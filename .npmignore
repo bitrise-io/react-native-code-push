@@ -112,6 +112,7 @@ packages/
 # Dev tooling, not relevant to consumers
 .claude/
 CLAUDE.md
+AGENTS.md
 mise.toml
 tsconfig.json
 tsconfig.build.json
