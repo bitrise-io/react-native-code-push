@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
+		BBC7F97A68E454FB38953FC4 /* CodePushDiffManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */; };
+		CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
+		CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
+		0E9314F338AC505D2E33C1A3 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
+		C11A2DB29D3D814B1A7891DF /* CodePushDiffManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A092598DCE51279CA317823 /* CodePushDiffManifest.h */; };
+		4693408DCB9ACB8E02BF69B1 /* CodePushDiffManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A092598DCE51279CA317823 /* CodePushDiffManifest.h */; };
 		0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
 		0EC08441DDDD08C96DDE851C /* CodePushSha256Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */; };
 		13BE3DEE1AC21097009241FE /* CodePush.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* CodePush.m */; };
@@ -185,6 +191,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushDiffManifestTests.swift; sourceTree = "<group>"; };
+		2A092598DCE51279CA317823 /* CodePushDiffManifest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushDiffManifest.h; path = CodePush/CodePushDiffManifest.h; sourceTree = "<group>"; };
+		49166671F067D5F6429B262B /* CodePushDiffManifest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushDiffManifest.m; path = CodePush/CodePushDiffManifest.m; sourceTree = "<group>"; };
 		0BF68F85125CF81D7EB65ABB /* bspatch_bridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = bspatch_bridge.h; sourceTree = "<group>"; };
 		0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = bsdiff_wrapper/bspatch_wrapper.c; sourceTree = "<group>"; };
 		134814201AA4EA6300B7C361 /* libCodePush.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCodePush.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -439,6 +448,8 @@
 				1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */,
 				8C69F7C2081D7CEE96691674 /* CodePushErrorUtils.h */,
 				810D4E6C1B96935000B397E9 /* CodePushPackage.m */,
+				2A092598DCE51279CA317823 /* CodePushDiffManifest.h */,
+				49166671F067D5F6429B262B /* CodePushDiffManifest.m */,
 				5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */,
 				540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */,
 				1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */,
@@ -470,6 +481,7 @@
 			isa = PBXGroup;
 			children = (
 				95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */,
+				9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */,
 				E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */,
 				E74D80ECD8DD03C4C0772B7B /* Fixtures */,
 				D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */,
@@ -668,6 +680,7 @@
 				3221E4762C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */,
 				3221E4642C8ABE1300268379 /* mz_strm_split.h in Headers */,
 				6463C8471EBA0D290095B8CD /* CodePush.h in Headers */,
+				4693408DCB9ACB8E02BF69B1 /* CodePushDiffManifest.h in Headers */,
 				3221E46A2C8ABE1300268379 /* mz_strm.h in Headers */,
 				3221E4782C8ABE1300268379 /* mz_zip_rw.h in Headers */,
 				3221E4802C8ABE1400268379 /* mz.h in Headers */,
@@ -728,6 +741,7 @@
 				3221E4632C8ABE1300268379 /* mz_strm_split.h in Headers */,
 				3221E4752C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */,
 				8482F84E1E24C66300F793DB /* CodePush.h in Headers */,
+				C11A2DB29D3D814B1A7891DF /* CodePushDiffManifest.h in Headers */,
 				F88664711F4AD1EE0036D01B /* JWTCoding+VersionTwo.h in Headers */,
 				F886646B1F4AD1EE0036D01B /* JWTCoding+ResultTypes.h in Headers */,
 				3221E4652C8ABE1300268379 /* mz_strm_buf.h in Headers */,
@@ -897,6 +911,7 @@
 				5498D8F61D21F14100B5EB43 /* CodePushUtils.m in Sources */,
 				3221E4612C8ABE1300268379 /* mz_zip_rw.c in Sources */,
 				810D4E6D1B96935000B397E9 /* CodePushPackage.m in Sources */,
+				CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */,
 				3221E4552C8ABE1300268379 /* mz_strm_pkcrypt.c in Sources */,
 				F88664531F4AD1EE0036D01B /* JWTAlgorithmESBase.m in Sources */,
 				3221E4532C8ABE1300268379 /* mz_strm_os_posix.c in Sources */,
@@ -921,6 +936,7 @@
 				6463C8311EBA0CFB0095B8CD /* CodePushErrorUtils.m in Sources */,
 				3221E46E2C8ABE1300268379 /* mz_crypt.c in Sources */,
 				6463C8321EBA0CFB0095B8CD /* CodePushPackage.m in Sources */,
+				CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */,
 				6463C8331EBA0CFB0095B8CD /* CodePushTelemetryManager.m in Sources */,
 				6463C8341EBA0CFB0095B8CD /* CodePushUpdateUtils.m in Sources */,
 				3221E45C2C8ABE1300268379 /* mz_strm_zlib.c in Sources */,
@@ -943,7 +959,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5B50F91FAAF80444988E284 /* BSPatchTests.swift in Sources */,
+				BBC7F97A68E454FB38953FC4 /* CodePushDiffManifestTests.swift in Sources */,
 				47F66D5AF3C3185E1A3E3B15 /* bspatch_bridge.c in Sources */,
+				0E9314F338AC505D2E33C1A3 /* CodePushDiffManifest.m in Sources */,
 				DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */,
 				A88F11124A2120A8373A8B61 /* bsdiff_wrapper/bspatch_wrapper.c in Sources */,
 				0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */,
