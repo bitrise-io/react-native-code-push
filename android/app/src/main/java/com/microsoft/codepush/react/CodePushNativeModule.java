@@ -790,14 +790,25 @@ public class CodePushNativeModule extends BaseJavaModule {
     }
 
     public ReactHostDelegate getReactHostDelegate(ReactHostImpl reactHostImpl) {
+        Class<?> clazz = reactHostImpl.getClass();
+        Field field;
         try {
-            Class<?> clazz = reactHostImpl.getClass();
-            Field field = clazz.getDeclaredField("reactHostDelegate");
-            field.setAccessible(true);
+            // RN 0.81.0+ (Kotlin)
+            field = clazz.getDeclaredField("reactHostDelegate");
+        } catch (NoSuchFieldException e) {
+            try {
+                // RN 0.80.3 and earlier (Java)
+                field = clazz.getDeclaredField("mReactHostDelegate");
+            } catch (NoSuchFieldException e2) {
+                e2.printStackTrace();
+                return null;
+            }
+        }
 
-            // Get the value of the field for the provided instance
+        try {
+            field.setAccessible(true);
             return (ReactHostDelegate) field.get(reactHostImpl);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
             return null;
         }
