@@ -13,10 +13,23 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '15.5'
   s.tvos.deployment_target = '15.5'
   s.preserve_paths = '*.js'
-  s.library        = 'z'
-  s.source_files = 'ios/CodePush/*.{h,m}'
+  s.libraries      = 'z', 'bz2'
+  s.source_files = [
+    'ios/CodePush/*.{h,m}',
+    'shared/diffpatch/*.{c,h}',
+    'shared/third_party/hdiffpatch/libHDiffPatch/HPatch/patch.{c,h}',
+    'shared/third_party/hdiffpatch/bsdiff_wrapper/bspatch_wrapper.{c,h}',
+    'shared/third_party/hdiffpatch/file_for_patch.{c,h}',
+  ]
   s.public_header_files = ['ios/CodePush/CodePush.h']
-  s.pod_target_xcconfig = { "DEFINES_MODULE" => "YES" }
+  s.pod_target_xcconfig = {
+    "DEFINES_MODULE" => "YES",
+    # HDiffPatch's bspatch-only usage: no multithreading, no directory diff/patch, and no raw
+    # block device support (which would otherwise probe Linux-only <linux/fs.h> ioctls).
+    # Keep in sync with android/app/src/main/cpp/CMakeLists.txt.
+    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) _IS_NEED_BLOCK_DEV=0 _IS_USED_MULTITHREAD=0 _IS_NEED_DIR_DIFF_PATCH=0",
+    "HEADER_SEARCH_PATHS" => "$(inherited) $(PODS_TARGET_SRCROOT)/shared $(PODS_TARGET_SRCROOT)/shared/diffpatch $(PODS_TARGET_SRCROOT)/shared/third_party/hdiffpatch $(PODS_TARGET_SRCROOT)/shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
+  }
 
   # Note: Even though there are copy/pasted versions of some of these dependencies in the repo,
   # we explicitly let CocoaPods pull in the versions below so all dependencies are resolved and
