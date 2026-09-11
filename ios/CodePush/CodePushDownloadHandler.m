@@ -1,5 +1,7 @@
 #import "CodePush.h"
 
+static const NSTimeInterval DownloadTimeout = 300.0;
+
 @implementation CodePushDownloadHandler {
     // Header chars used to determine if the file is a zip.
     char _header[4];
@@ -24,7 +26,7 @@ failCallback:(void (^)(NSError *err))failCallback {
     self.downloadUrl = url;
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
-                                         timeoutInterval:60.0];
+                                         timeoutInterval:DownloadTimeout];
     NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request
                                                                   delegate:self
                                                           startImmediately:NO];

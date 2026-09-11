@@ -11,6 +11,7 @@ public class CodePushConstants {
     public static final String DEFAULT_JS_BUNDLE_NAME = "index.android.bundle";
     public static final String DIFF_MANIFEST_FILE_NAME = "hotcodepush.json";
     public static final int DOWNLOAD_BUFFER_SIZE = 1024 * 256;
+    public static final int DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
     public static final String DOWNLOAD_FILE_NAME = "download.zip";
     public static final String DOWNLOAD_PROGRESS_EVENT_NAME = "CodePushDownloadProgress";
     public static final String DOWNLOAD_URL_KEY = "downloadUrl";
