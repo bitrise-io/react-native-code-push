@@ -1,4 +1,5 @@
 #import "CodePush.h"
+#import "CodePushErrorUtils.h"
 #if __has_include(<SSZipArchive/SSZipArchive.h>)
 #import <SSZipArchive/SSZipArchive.h>
 #else

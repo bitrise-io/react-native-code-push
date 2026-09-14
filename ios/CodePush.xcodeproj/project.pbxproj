@@ -192,6 +192,7 @@
 		13BE3DED1AC21097009241FE /* CodePush.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePush.m; path = CodePush/CodePush.m; sourceTree = "<group>"; };
 		1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "RCTConvert+CodePushInstallMode.m"; path = "CodePush/RCTConvert+CodePushInstallMode.m"; sourceTree = "<group>"; };
 		1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushErrorUtils.m; path = CodePush/CodePushErrorUtils.m; sourceTree = "<group>"; };
+		8C69F7C2081D7CEE96691674 /* CodePushErrorUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushErrorUtils.h; path = CodePush/CodePushErrorUtils.h; sourceTree = "<group>"; };
 		1BCC09A61CC19EB700DDC0DD /* RCTConvert+CodePushUpdateState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "RCTConvert+CodePushUpdateState.m"; path = "CodePush/RCTConvert+CodePushUpdateState.m"; sourceTree = "<group>"; };
 		3221E42A2C8ABE1300268379 /* ZipArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZipArchive.h; sourceTree = "<group>"; };
 		3221E42C2C8ABE1300268379 /* mz_strm_os_posix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mz_strm_os_posix.c; sourceTree = "<group>"; };
@@ -436,6 +437,7 @@
 				81D51F391B6181C2000DA084 /* CodePushConfig.m */,
 				54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */,
 				1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */,
+				8C69F7C2081D7CEE96691674 /* CodePushErrorUtils.h */,
 				810D4E6C1B96935000B397E9 /* CodePushPackage.m */,
 				5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */,
 				540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */,
