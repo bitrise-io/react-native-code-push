@@ -12,12 +12,12 @@ project(codepush_diffpatch C)
 # See third_party/README.md for what we vendor and why.
 add_library(codepush_diffpatch SHARED
         diffpatch_jni.c
-        bspatch_bridge.c
+        ../../../../../shared/diffpatch/bspatch_bridge.c
 
-        third_party/hdiffpatch/libHDiffPatch/HPatch/patch.c
-        third_party/hdiffpatch/bsdiff_wrapper/bspatch_wrapper.c
-        third_party/hdiffpatch/file_for_patch.c
-        
+        ../../../../../shared/third_party/hdiffpatch/libHDiffPatch/HPatch/patch.c
+        ../../../../../shared/third_party/hdiffpatch/bsdiff_wrapper/bspatch_wrapper.c
+        ../../../../../shared/third_party/hdiffpatch/file_for_patch.c
+
         bzip2_error_stub.c
         third_party/bzip2/bzlib.c
         third_party/bzip2/decompress.c
@@ -28,6 +28,8 @@ add_library(codepush_diffpatch SHARED
 
 target_include_directories(codepush_diffpatch PRIVATE
         .
+        ../../../../../shared/diffpatch
+        ../../../../../shared
         third_party/bzip2
 )
 
