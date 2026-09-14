@@ -1,12 +1,80 @@
-import { AcquisitionManager as Sdk } from "./lib/acquisition-sdk/acquisition-sdk";
+import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/acquisition-sdk/acquisition-sdk";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
-import { AppState, Platform } from "react-native";
+import { AppState, NativeEventEmitter, Platform } from "react-native";
 import log from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
-const PackageMixins = require("./package-mixins")(NativeCodePush);
+
+// Reporting this event is important, but avoid blocking install()/restartApp() indefinitely
+// on a stalled network request.
+const REPORT_STATUS_DOWNLOAD_TIMEOUT_MS = 5000;
+
+async function withTimeout(promise, timeoutMs) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Downloads a remote package, augmenting it with a bound install() method
+// beyond what's included in the metadata sent by the server.
+async function downloadUpdate(remotePackage, downloadProgressCallback, reportStatusDownload) {
+  if (!remotePackage.downloadUrl) {
+    throw new Error("Cannot download an update without a download url");
+  }
+
+  let downloadProgressSubscription;
+  if (downloadProgressCallback) {
+    const codePushEventEmitter = new NativeEventEmitter(NativeCodePush);
+    // Use event subscription to obtain download progress.
+    downloadProgressSubscription = codePushEventEmitter.addListener(
+      "CodePushDownloadProgress",
+      downloadProgressCallback
+    );
+  }
+
+  const downloadStartTime = Date.now();
+  const reportDownloadStatus = async (status) => {
+    if (!reportStatusDownload) return;
+    // Only report a duration on success: on failure, this would be the time until
+    // the download broke rather than a completed download's duration, and could be misleading.
+    const downloadDurationMs = status === DownloadStatus.Succeeded ? Date.now() - downloadStartTime : undefined;
+    try {
+      await withTimeout(reportStatusDownload({ ...remotePackage, downloadDurationMs, status }), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
+    } catch (err) {
+      log(`Report download status failed: ${err}`);
+    }
+  };
+
+  // Use the downloaded package info. Native code will save the package info
+  // so that the client knows what the current package version is.
+  try {
+    const updatePackageCopy = Object.assign({}, remotePackage);
+    Object.keys(updatePackageCopy).forEach((key) => (typeof updatePackageCopy[key] === 'function') && delete updatePackageCopy[key]);
+
+    let downloadedPackage;
+    try {
+      downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
+    } catch (err) {
+      await reportDownloadStatus(DownloadStatus.Failed);
+      throw err;
+    }
+
+    await reportDownloadStatus(DownloadStatus.Succeeded);
+
+    return attachLocalPackageMethods({ ...downloadedPackage, isPending: false }); // A freshly downloaded package hasn't been installed yet
+  } finally {
+    downloadProgressSubscription && downloadProgressSubscription.remove();
+  }
+}
 
 async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchCallback = null) {
   /*
@@ -82,7 +150,8 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
 
     return null;
   } else {
-    const remotePackage = { ...update, ...PackageMixins.remote(sdk.reportStatusDownload) };
+    const remotePackage = { ...update, isPending: false }; // A remote package could never be in a pending state
+    remotePackage.download = (downloadProgressCallback) => downloadUpdate(remotePackage, downloadProgressCallback, sdk.reportStatusDownload);
     remotePackage.failedInstall = await NativeCodePush.isFailedUpdate(remotePackage.packageHash);
     remotePackage.deploymentKey = deploymentKey || nativeConfig.deploymentKey;
     return remotePackage;
@@ -107,10 +176,30 @@ async function getCurrentPackage() {
   return await getUpdateMetadata(CodePush.UpdateState.LATEST);
 }
 
+async function installUpdate(localPackage, installMode = NativeCodePush.codePushInstallModeOnNextRestart, minimumBackgroundDuration = 0, updateInstalledCallback) {
+  const localPackageCopy = Object.assign({}, localPackage); // In dev mode, React Native deep freezes any object queued over the bridge
+  await NativeCodePush.installUpdate(localPackageCopy, installMode, minimumBackgroundDuration);
+  updateInstalledCallback && updateInstalledCallback();
+  if (installMode == NativeCodePush.codePushInstallModeImmediate) {
+    NativeCodePush.restartApp(false);
+  } else {
+    NativeCodePush.clearPendingRestart();
+    localPackage.isPending = true; // Mark the package as pending since it hasn't been applied yet
+  }
+}
+
+// Augments a raw local package (as returned by native code) with a bound
+// install() method beyond what's included in the metadata sent by the server.
+function attachLocalPackageMethods(localPackage) {
+  localPackage.install = (installMode, minimumBackgroundDuration, updateInstalledCallback) =>
+    installUpdate(localPackage, installMode, minimumBackgroundDuration, updateInstalledCallback);
+  return localPackage;
+}
+
 async function getUpdateMetadata(updateState) {
   let updateMetadata = await NativeCodePush.getUpdateMetadata(updateState || CodePush.UpdateState.RUNNING);
   if (updateMetadata) {
-    updateMetadata = {...PackageMixins.local, ...updateMetadata};
+    updateMetadata = attachLocalPackageMethods({ ...updateMetadata });
     updateMetadata.failedInstall = await NativeCodePush.isFailedUpdate(updateMetadata.packageHash);
     updateMetadata.isFirstRun = await NativeCodePush.isFirstRun(updateMetadata.packageHash);
   }
