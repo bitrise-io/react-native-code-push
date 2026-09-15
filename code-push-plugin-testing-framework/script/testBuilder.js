@@ -35,7 +35,10 @@ function describeInternal(func, description, spec, scenarioPath) {
         });
         beforeEach(function () {
             return TestContext.targetPlatform.getEmulatorManager().prepareEmulatorForTest(TestConfig.TestNamespace)
-                .catch(function () { });
+                .catch(function (error) {
+                    console.error("Failed to prepare emulator/simulator for the test.");
+                    throw error;
+                });
         });
         if (scenarioPath) {
             before(function () {
