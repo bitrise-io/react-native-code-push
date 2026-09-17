@@ -53,6 +53,9 @@ android {
         externalNativeBuild {
             cmake {
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+                // Google Play requires 16 KB-aligned 64-bit native libs. RN's Gradle plugin only
+                // sets this on the app module, not on libraries, so we must opt in ourselves.
+                arguments "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
             }
         }
     }

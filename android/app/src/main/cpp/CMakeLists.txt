@@ -53,3 +53,9 @@ target_compile_definitions(codepush_diffpatch PRIVATE
 
 # HDiffPatch uses <android/log.h>
 target_link_libraries(codepush_diffpatch log)
+
+# ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES (set in build.gradle) is ignored by NDK < r27,
+# so also set the 16 KB alignment directly; on r27+ this duplicates the same flag harmlessly.
+if(ANDROID_ABI STREQUAL "arm64-v8a" OR ANDROID_ABI STREQUAL "x86_64")
+    target_link_options(codepush_diffpatch PRIVATE "-Wl,-z,max-page-size=16384")
+endif()
