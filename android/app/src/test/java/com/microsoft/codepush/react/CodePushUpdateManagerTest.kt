@@ -36,7 +36,8 @@ class CodePushUpdateManagerTest {
         logMock.close()
     }
 
-    private fun manager() = CodePushUpdateManager(tempFolder.newFolder("documents").absolutePath)
+    private fun manager() =
+        CodePushUpdateManager(tempFolder.newFolder("documents").absolutePath)
 
     private fun updatePackage(hash: String) = JSONObject().apply {
         put(CodePushConstants.PACKAGE_HASH_KEY, hash)
@@ -213,6 +214,42 @@ class CodePushUpdateManagerTest {
             fail("expected CodePushInvalidUpdateException")
         } catch (e: CodePushInvalidUpdateException) {
             assertTrue(e.message!!.contains("The update contents failed the data integrity check."))
+        }
+    }
+
+    @Test
+    fun installDownloadedUpdate_diffManifestVersionOutOfRange_throwsIOException() {
+        // Given
+        val update = manager()
+        val downloadFile = zipOf(CodePushConstants.DIFF_MANIFEST_FILE_NAME to """{"version":3,"deletedFiles":[],"patchedFiles":{}}""")
+        val pkg = updatePackage("hash8")
+        val newUpdateFolderPath = update.getPackageFolderPath("hash8")
+        val newUpdateMetadataPath = CodePushUtils.appendPathComponent(newUpdateFolderPath, CodePushConstants.PACKAGE_FILE_NAME)
+
+        // When / Then
+        try {
+            update.installDownloadedUpdate(pkg, "index.android.bundle", null, downloadFile, true, newUpdateFolderPath, newUpdateMetadataPath)
+            fail("expected IOException")
+        } catch (e: java.io.IOException) {
+            assertTrue(e.message!!.contains("Diff manifest version 3 is not supported by this SDK version"))
+        }
+    }
+
+    @Test
+    fun installDownloadedUpdate_binaryDiffUpdateWithNoCurrentPackageInstalled_throwsInvalidUpdateException() {
+        // Given
+        val update = manager()
+        val downloadFile = zipOf(CodePushConstants.DIFF_MANIFEST_FILE_NAME to """{"version":2,"deletedFiles":[],"patchedFiles":{}}""")
+        val pkg = updatePackage("hash10")
+        val newUpdateFolderPath = update.getPackageFolderPath("hash10")
+        val newUpdateMetadataPath = CodePushUtils.appendPathComponent(newUpdateFolderPath, CodePushConstants.PACKAGE_FILE_NAME)
+
+        // When / Then
+        try {
+            update.installDownloadedUpdate(pkg, "index.android.bundle", null, downloadFile, true, newUpdateFolderPath, newUpdateMetadataPath)
+            fail("expected CodePushInvalidUpdateException")
+        } catch (e: CodePushInvalidUpdateException) {
+            assertTrue(e.message!!.contains("Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported."))
         }
     }
 

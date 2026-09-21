@@ -3,6 +3,9 @@ package com.microsoft.codepush.react;
 import android.content.Context;
 import android.util.Base64;
 
+import com.microsoft.codepush.react.diffpatch.DiffManifest;
+import com.microsoft.codepush.react.diffpatch.Sha256;
+
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
@@ -10,8 +13,6 @@ import com.nimbusds.jwt.SignedJWT;
 import java.security.interfaces.*;
 
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -19,10 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.DigestInputStream;
 import java.security.KeyFactory;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
@@ -73,51 +71,32 @@ public class CodePushUpdateUtils {
     }
 
     private static String computeHash(InputStream dataStream) {
-        MessageDigest messageDigest = null;
-        DigestInputStream digestInputStream = null;
         try {
-            messageDigest = MessageDigest.getInstance("SHA-256");
-            digestInputStream = new DigestInputStream(dataStream, messageDigest);
-            byte[] byteBuffer = new byte[1024 * 8];
-            while (digestInputStream.read(byteBuffer) != -1) ;
-        } catch (NoSuchAlgorithmException | IOException e) {
+            return Sha256.sha256Hex(dataStream);
+        } catch (Exception e) {
             // Should not happen.
             throw new CodePushUnknownException("Unable to compute hash of update contents.", e);
-        } finally {
-            try {
-                if (digestInputStream != null) {
-                    digestInputStream.close();
-                }
-                if (dataStream != null) {
-                    dataStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-
-        byte[] hash = messageDigest.digest();
-        return String.format("%064x", new java.math.BigInteger(1, hash));
     }
 
-    public static void copyNecessaryFilesFromCurrentPackage(String diffManifestFilePath, String currentPackageFolderPath, String newPackageFolderPath) throws IOException {
+    public static void copyNecessaryFilesFromCurrentPackage(DiffManifest diffManifest, String currentPackageFolderPath, String newPackageFolderPath) throws IOException {
         if (currentPackageFolderPath == null || !new File(currentPackageFolderPath).exists()) {
             CodePushUtils.log("Unable to copy files from current package during diff update, because currentPackageFolderPath is invalid.");
             return;
         }
         FileUtils.copyDirectoryContents(currentPackageFolderPath, newPackageFolderPath);
-        JSONObject diffManifest = CodePushUtils.getJsonObjectFromFile(diffManifestFilePath);
-        try {
-            JSONArray deletedFiles = diffManifest.getJSONArray("deletedFiles");
-            for (int i = 0; i < deletedFiles.length(); i++) {
-                String fileNameToDelete = deletedFiles.getString(i);
-                File fileToDelete = new File(newPackageFolderPath, fileNameToDelete);
-                if (fileToDelete.exists()) {
-                    fileToDelete.delete();
-                }
+        File newPackageFolderCanonical = new File(newPackageFolderPath).getCanonicalFile();
+        for (String fileNameToDelete : diffManifest.getDeletedFiles()) {
+            // deletedFiles comes from the update's diff manifest, so treat it as untrusted: reject any
+            // entry (e.g. "../../etc/passwd") that would resolve outside newPackageFolderPath.
+            File fileToDelete = new File(newPackageFolderPath, fileNameToDelete).getCanonicalFile();
+            if (!fileToDelete.equals(newPackageFolderCanonical)
+                    && !fileToDelete.getPath().startsWith(newPackageFolderCanonical.getPath() + File.separator)) {
+                throw new CodePushInvalidUpdateException("Diff manifest deletedFiles entry \"" + fileNameToDelete + "\" escapes the update package directory.");
             }
-        } catch (JSONException e) {
-            throw new CodePushUnknownException("Unable to copy files from current package during diff update", e);
+            if (fileToDelete.exists()) {
+                fileToDelete.delete();
+            }
         }
     }
 

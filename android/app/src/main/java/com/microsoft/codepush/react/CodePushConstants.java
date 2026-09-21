@@ -10,6 +10,8 @@ public class CodePushConstants {
     public static final String CURRENT_PACKAGE_KEY = "currentPackage";
     public static final String DEFAULT_JS_BUNDLE_NAME = "index.android.bundle";
     public static final String DIFF_MANIFEST_FILE_NAME = "hotcodepush.json";
+    // Folder within the update ZIP that contains the diff patches. Must be in sync with server-side impl.
+    public static final String DIFF_PATCHES_FOLDER_NAME = "__hcp_patches";
     public static final int DOWNLOAD_BUFFER_SIZE = 1024 * 256;
     public static final String DOWNLOAD_FILE_NAME = "download.zip";
     public static final String DOWNLOAD_PROGRESS_EVENT_NAME = "CodePushDownloadProgress";
