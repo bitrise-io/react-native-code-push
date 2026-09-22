@@ -2,4 +2,5 @@
     <string name="app_name">TestCodePush</string>
     <string moduleConfig="true" name="CodePushDeploymentKey">CODE_PUSH_ANDROID_DEPLOYMENT_KEY</string>
     <string moduleConfig="true" name="CodePushServerUrl">CODE_PUSH_SERVER_URL</string>
+    <bool moduleConfig="true" name="CodePushEnableDeltaUpdates">true</bool>
 </resources>

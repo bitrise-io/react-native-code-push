@@ -57,6 +57,7 @@ export interface Configuration {
     deploymentKey: string;
     serverUrl: string;
     ignoreAppVersion?: boolean
+    enableDeltaUpdates?: boolean;
 }
 
 export class AcquisitionStatus {
@@ -72,6 +73,7 @@ export class DownloadStatus {
 export class AcquisitionManager {
     private readonly BASE_URL_PART = "appcenter.ms";
     private _appVersion: string;
+    private _capabilities: string[];
     private _clientUniqueId: string;
     private _deploymentKey: string;
     private _httpRequester: Http.Requester;
@@ -92,6 +94,10 @@ export class AcquisitionManager {
         this._clientUniqueId = configuration.clientUniqueId;
         this._deploymentKey = configuration.deploymentKey;
         this._ignoreAppVersion = configuration.ignoreAppVersion;
+
+        // Sent on update_check and report_status/deploy. Must match what the native side will
+        // accept: it rejects binary diffs unless delta updates are enabled in the app config.
+        this._capabilities = configuration.enableDeltaUpdates ? ["binary_diff:bsdiff"] : [];
     }
 
     private isRecoverable = (statusCode: number): boolean => statusCode >= 500 || statusCode === 408 || statusCode === 429;
@@ -119,10 +125,11 @@ export class AcquisitionManager {
             package_hash: currentPackage.packageHash,
             is_companion: this._ignoreAppVersion,
             label: currentPackage.label,
-            client_unique_id: this._clientUniqueId
+            client_unique_id: this._clientUniqueId,
+            capabilities: this._capabilities
         };
 
-        var requestUrl: string = this._serverUrl + this._publicPrefixUrl + "update_check?" + queryStringify(updateRequest);
+        var requestUrl: string = this._serverUrl + this._publicPrefixUrl + "update_check?" + toQueryString(updateRequest);
 
         this._httpRequester.request(Http.Verb.GET, requestUrl, (error: Error, response: Http.Response) => {
             if (error) {
@@ -187,6 +194,7 @@ export class AcquisitionManager {
         var url: string = this._serverUrl + this._publicPrefixUrl + "report_status/deploy";
         var body: DeploymentStatusReport = {
             app_version: this._appVersion,
+            capabilities: this._capabilities,
             deployment_key: this._deploymentKey
         };
 
@@ -283,25 +291,19 @@ export class AcquisitionManager {
     }
 }
 
-function queryStringify(object: Object): string {
-    var queryString = "";
-    var isFirst: boolean = true;
+// Built by hand because RN 0.76-0.79's URLSearchParams polyfill accepts only a plain object,
+// which cannot hold a repeated key. RN 0.80 accepts [key, value] pairs, so this can become
+// `new URLSearchParams(pairs)` once support for RN 0.76-0.79 is dropped.
+function toQueryString(request: UpdateCheckRequest): string {
+    var pairs: string[] = [];
 
-    for (var property in object) {
-        if (object.hasOwnProperty(property)) {
-            var value: string = (<any>object)[property];
-            if (value !== null && typeof value !== "undefined") {
-                if (!isFirst) {
-                    queryString += "&";
-                }
-
-                queryString += encodeURIComponent(property) + "=";
-                queryString += encodeURIComponent(value);
+    for (var [key, value] of Object.entries(request)) {
+        for (var element of Array.isArray(value) ? value : [value]) {
+            if (element !== null && typeof element !== "undefined") {
+                pairs.push(encodeURIComponent(key) + "=" + encodeURIComponent(String(element)));
             }
-
-            isFirst = false;
         }
     }
 
-    return queryString;
+    return pairs.join("&");
 }

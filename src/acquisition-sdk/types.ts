@@ -5,6 +5,7 @@
 /*in*/
 export interface DeploymentStatusReport {
     app_version: string;
+    capabilities?: string[];
     client_unique_id?: string;
     deployment_key: string;
     previous_deployment_key?: string;
@@ -44,6 +45,7 @@ export interface UpdateCheckResponse {
 /*in*/
 export interface UpdateCheckRequest {
     app_version: string;
+    capabilities?: string[];
     client_unique_id?: string;
     deployment_key: string;
     is_companion?: boolean;

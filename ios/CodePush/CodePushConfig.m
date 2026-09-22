@@ -1,6 +1,9 @@
 #import "CodePush.h"
 #import <UIKit/UIKit.h>
 
+// Legacy untyped store: do not add new fields here. Keep new config as typed properties
+// (like enableDeltaUpdates) and serialize them only in -configuration, at the JS boundary.
+// A TurboModule spec with codegen should eventually replace this dictionary entirely.
 @implementation CodePushConfig {
     NSMutableDictionary *_configDictionary;
 }
@@ -13,6 +16,7 @@ static NSString * const ClientUniqueIDConfigKey = @"clientUniqueId";
 static NSString * const DeploymentKeyConfigKey = @"deploymentKey";
 static NSString * const ServerURLConfigKey = @"serverUrl";
 static NSString * const PublicKeyKey = @"publicKey";
+static NSString * const EnableDeltaUpdatesConfigKey = @"enableDeltaUpdates";
 
 + (instancetype)current
 {
@@ -74,7 +78,9 @@ static NSString * const PublicKeyKey = @"publicKey";
 
 - (NSDictionary *)configuration
 {
-    return _configDictionary;
+    NSMutableDictionary *configuration = [_configDictionary mutableCopy];
+    configuration[EnableDeltaUpdatesConfigKey] = @(_enableDeltaUpdates);
+    return configuration;
 }
 
 - (NSString *)deploymentKey
