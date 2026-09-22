@@ -104,17 +104,12 @@ jobs:
           arch: x86
           disable-animations: true
           # connectedAndroidTest is included here (rather than a separate job or step) to reuse
-          # this job's already-booted emulator, even though it means it runs once per matrix
-          # variant. The android-emulator-runner action has no post-cleanup step, so a second
-          # step would boot and tear down a second emulator; ::group:: markers keep the two
-          # test runs visually separated in the Actions log instead.
-          script: |
-            echo "::group::Instrumented tests"
-            (cd android && ./gradlew :app:connectedAndroidTest)
-            echo "::endgroup::"
-            echo "::group::E2E tests"
-            npm run ${{ matrix.test-command }}
-            echo "::endgroup::"
+          # this job's already-booted emulator. The emulator only lives for the duration of this
+          # action (it's killed at the end of the same invocation, not in a post/cleanup step),
+          # so the logic can't be split into a later workflow step - it has to run here.
+          # android-emulator-runner also runs each line of `script` as its own separate `sh -c`
+          # invocation, so multi-line shell logic is delegated to a script file instead of inlining here.
+          script: .github/scripts/run-android-tests.sh ${{ matrix.variant }} ${{ matrix.test-command }}
 
   ios-test:
     needs: lint
@@ -141,10 +136,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
 
-      - name: Run iOS Tests
-        run: |
-          npm install
-          npm run ${{ matrix.test-command }}
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run iOS unit tests
+        # These tests are independent of the bare/expo distinction. Bare tests are slightly faster.
+        if: matrix.variant == 'bare'
+        run: npm run test:unit:ios
+
+      - name: Run iOS E2E Tests
+        run: npm run ${{ matrix.test-command }}
 
       - name: Upload iOS Simulator crash reports
         if: failure()
