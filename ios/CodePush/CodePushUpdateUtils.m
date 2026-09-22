@@ -1,4 +1,5 @@
 #import "CodePush.h"
+#import "CodePushErrorUtils.h"
 #import "CodePushSha256.h"
 #import "JWT.h"
 

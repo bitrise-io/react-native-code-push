@@ -1,4 +1,4 @@
-#import "CodePush.h"
+#import "CodePushErrorUtils.h"
 
 @implementation CodePushErrorUtils
 
