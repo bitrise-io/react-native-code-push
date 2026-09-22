@@ -1,6 +1,7 @@
 #import "CodePush.h"
 #import "CodePushDiffManifest.h"
 #import "CodePushErrorUtils.h"
+#import "CodePushBinaryDiffPatcher.h"
 #if __has_include(<SSZipArchive/SSZipArchive.h>)
 #import <SSZipArchive/SSZipArchive.h>
 #else
@@ -12,12 +13,86 @@
 #pragma mark - Private constants
 
 static NSString *const DiffManifestFileName = @"hotcodepush.json";
+// Folder within the update ZIP that contains the diff patches.
+static NSString *const DiffPatchesFolderName = @"__hcp_patches";
 static NSString *const DownloadFileName = @"download.zip";
 static NSString *const RelativeBundlePathKey = @"bundlePath";
 static NSString *const StatusFile = @"codepush.json";
 static NSString *const UpdateBundleFileName = @"app.jsbundle";
 static NSString *const UpdateMetadataFileName = @"app.json";
 static NSString *const UnzippedFolderName = @"unzipped";
+
+#pragma mark - Private methods
+
++ (BOOL)validateDiffManifest:(CodePushDiffManifest *)diffManifest
+         currentPackageFolder:(NSString *)currentPackageFolderPath
+           enableDeltaUpdates:(BOOL)enableDeltaUpdates
+                        error:(NSError **)error
+{
+    if (diffManifest.version > 2 || diffManifest.version < 1) {
+        if (error) {
+            *error = [CodePushErrorUtils errorWithMessage:
+                      [NSString stringWithFormat:@"Diff manifest version %ld is not supported by this SDK version.", (long)diffManifest.version]];
+        }
+        return NO;
+    } else if (diffManifest.version == 2 && !enableDeltaUpdates) {
+        if (error) {
+            *error = [CodePushErrorUtils errorWithMessage:
+                      @"Received a binary diff update, but delta updates are not enabled on this client. Set CodePushEnableDeltaUpdates to true in Info.plist to enable them."];
+        }
+        return NO;
+    } else if (diffManifest.version == 2 && currentPackageFolderPath == nil) {
+        if (error) {
+            *error = [CodePushErrorUtils errorWithMessage:
+                      @"Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported."];
+        }
+        return NO;
+    }
+
+    return YES;
+}
+
++ (BOOL)applyDiffManifest:(CodePushDiffManifest *)diffManifest
+      currentPackageFolder:(NSString *)currentPackageFolderPath
+            unzippedFolder:(NSString *)unzippedFolderPath
+           newUpdateFolder:(NSString *)newUpdateFolderPath
+                     error:(NSError **)error
+{
+    if (diffManifest.version != 2) {
+        return YES;
+    }
+
+    NSError *patchError = nil;
+    BOOL patchesApplied = [CodePushBinaryDiffPatcher applyBinaryDiffPatchesFromManifest:diffManifest
+                                                                  currentPackageFolder:currentPackageFolderPath
+                                                                        unzippedFolder:unzippedFolderPath
+                                                                       newUpdateFolder:newUpdateFolderPath
+                                                                                 error:&patchError];
+    if (!patchesApplied) {
+        if (error) {
+            *error = patchError ?: [CodePushErrorUtils errorWithMessage:@"Failed to apply the binary diff patches of this update."];
+        }
+        return NO;
+    }
+
+    // The patches folder must not stay in the installed package: it is
+    // not part of the released contents, so it changes the folder hash
+    // and surfaces later as a misleading integrity-check failure.
+    NSString *patchesFolderPath = [newUpdateFolderPath stringByAppendingPathComponent:DiffPatchesFolderName];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:patchesFolderPath]) {
+        NSError *removeError = nil;
+        BOOL patchesFolderRemoved = [[NSFileManager defaultManager] removeItemAtPath:patchesFolderPath
+                                                                               error:&removeError];
+        if (!patchesFolderRemoved) {
+            if (error) {
+                *error = removeError;
+            }
+            return NO;
+        }
+    }
+
+    return YES;
+}
 
 #pragma mark - Public methods
 
@@ -114,10 +189,12 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                         
                                                         NSString *diffManifestFilePath = [unzippedFolderPath stringByAppendingPathComponent:DiffManifestFileName];
                                                         BOOL isDiffUpdate = [[NSFileManager defaultManager] fileExistsAtPath:diffManifestFilePath];
-                                                        
+                                                        CodePushDiffManifest *diffManifest = nil;
+                                                        NSString *currentPackageFolderPath = nil;
+
                                                         if (isDiffUpdate) {
                                                             // Copy the current package to the new package.
-                                                            NSString *currentPackageFolderPath = [self getCurrentPackageFolderPath:&error];
+                                                            currentPackageFolderPath = [self getCurrentPackageFolderPath:&error];
                                                             if (error) {
                                                                 failCallback(error);
                                                                 return;
@@ -160,7 +237,6 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                 }
                                                             }
                                                             
-                                                            // Delete files mentioned in the manifest.
                                                             NSString *manifestContent = [NSString stringWithContentsOfFile:diffManifestFilePath
                                                                                                                   encoding:NSUTF8StringEncoding
                                                                                                                      error:&error];
@@ -178,8 +254,16 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                 return;
                                                             }
 
-                                                            CodePushDiffManifest *diffManifest = [CodePushDiffManifest manifestFromJSON:manifestJSON error:&error];
+                                                            diffManifest = [CodePushDiffManifest manifestFromJSON:manifestJSON error:&error];
                                                             if (error) {
+                                                                failCallback(error);
+                                                                return;
+                                                            }
+
+                                                            if (![CodePushPackage validateDiffManifest:diffManifest
+                                                                                   currentPackageFolder:currentPackageFolderPath
+                                                                                     enableDeltaUpdates:[[CodePushConfig current] enableDeltaUpdates]
+                                                                                                  error:&error]) {
                                                                 failCallback(error);
                                                                 return;
                                                             }
@@ -221,7 +305,21 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             failCallback(error);
                                                             return;
                                                         }
-                                                        
+
+                                                        if (isDiffUpdate) {
+                                                            // Run patching after both copyItemAtPath:currentPackageFolderPath (old-package
+                                                            // bytes, above) and copyEntriesInFolder (downloaded-tree bytes, immediately
+                                                            // above) so patched output overwrites bytes copied in by either at the same paths.
+                                                            if (![CodePushPackage applyDiffManifest:diffManifest
+                                                                                currentPackageFolder:currentPackageFolderPath
+                                                                                      unzippedFolder:unzippedFolderPath
+                                                                                     newUpdateFolder:newUpdateFolderPath
+                                                                                               error:&error]) {
+                                                                failCallback(error);
+                                                                return;
+                                                            }
+                                                        }
+
                                                         [[NSFileManager defaultManager] removeItemAtPath:unzippedFolderPath
                                                                                                    error:&nonFailingError];
                                                         if (nonFailingError) {
