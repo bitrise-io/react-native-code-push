@@ -1,5 +1,6 @@
 package com.microsoft.codepush.react.diffpatch
 
+import com.microsoft.codepush.react.CodePushConstants
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -36,15 +37,20 @@ fun parseDiffManifest(json: JSONObject): DiffManifest {
         emptyList()
     }
 
+    val reservedPatchesFolderPrefix = "${CodePushConstants.DIFF_PATCHES_FOLDER_NAME}/"
     val patchedFilesJson = json.optJSONObject("patchedFiles")
     val patchedFiles = if (patchedFilesJson != null) {
         patchedFilesJson.keys().asSequence().associateWith { relativePath ->
             val entry = patchedFilesJson.getJSONObject(relativePath)
+            val patch = entry.getString("patch")
+            if (!patch.startsWith(reservedPatchesFolderPrefix)) {
+                throw JSONException("Diff manifest patchedFiles[\"$relativePath\"] field \"patch\" must be under the reserved \"$reservedPatchesFolderPrefix\" prefix, but is \"$patch\".")
+            }
             PatchedFileEntry(
                 algo = entry.getString("algo"),
                 baseHash = entry.getString("baseHash"),
                 targetHash = entry.getString("targetHash"),
-                patch = entry.getString("patch"),
+                patch = patch,
             )
         }
     } else {

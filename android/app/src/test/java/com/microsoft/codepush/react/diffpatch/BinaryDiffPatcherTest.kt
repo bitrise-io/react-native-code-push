@@ -297,6 +297,36 @@ class BinaryDiffPatcherTest {
     }
 
     @Test
+    fun applyBinaryDiffPatches_patchFieldResolvesToUnzippedFolderItself_throwsWithoutInvokingApplier() {
+        // Given
+        val currentPackageFolder = tempFolder.newFolder("current")
+        val oldFile = File(currentPackageFolder, "index.android.bundle").apply { writeText("old hermes bytecode contents") }
+        val unzippedFolder = tempFolder.newFolder("unzipped")
+        val newUpdateFolder = tempFolder.newFolder("newUpdate")
+
+        val manifest = manifestOf(
+            mapOf(
+                "index.android.bundle" to PatchedFileEntry(
+                    algo = "bsdiff",
+                    baseHash = sha256Hex(oldFile),
+                    targetHash = "irrelevant",
+                    patch = "__hcp_patches/..",
+                )
+            )
+        )
+        val applier = FakePatchApplier { _, _, _ -> DiffPatch.PatchResult.OK }
+
+        // When / Then
+        try {
+            applyBinaryDiffPatches(manifest, currentPackageFolder, unzippedFolder, newUpdateFolder, applier)
+            fail("expected BinaryDiffApplyException")
+        } catch (e: BinaryDiffApplyException) {
+            assertEquals("__hcp_patches/..", e.relativePath)
+        }
+        assertEquals(0, applier.invocationCount)
+    }
+
+    @Test
     fun applyBinaryDiffPatches_realBsdiffFixtureShape_appliesSuccessfully() {
         fun fixture(name: String) =
             checkNotNull(javaClass.getResourceAsStream("/binarydiff/basic/$name")) { "missing fixture $name" }

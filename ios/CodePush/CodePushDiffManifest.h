@@ -2,6 +2,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Folder within the update ZIP that contains the diff patches. Must be in sync with server-side impl.
+extern NSString *const CodePushDiffPatchesFolderName;
+
 @interface CodePushPatchedFileEntry : NSObject
 
 // The only value this client understands at the moment is "bsdiff".

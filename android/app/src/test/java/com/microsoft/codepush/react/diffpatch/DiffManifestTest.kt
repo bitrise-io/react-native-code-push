@@ -3,6 +3,7 @@ package com.microsoft.codepush.react.diffpatch
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 class DiffManifestTest {
@@ -122,6 +123,43 @@ class DiffManifestTest {
 
         // When / Then (parseDiffManifest is expected to throw)
         parseDiffManifest(json)
+    }
+
+    private fun assertPatchFieldRejectedByParser(patch: String) {
+        // Given
+        val json = JSONObject(
+            """
+            {
+              "version": 2,
+              "patchedFiles": {
+                "relative/path.js": {
+                  "algo": "bsdiff",
+                  "baseHash": "base-hash-1",
+                  "targetHash": "target-hash-1",
+                  "patch": "$patch"
+                }
+              }
+            }
+            """.trimIndent()
+        )
+
+        // When / Then
+        try {
+            parseDiffManifest(json)
+            fail("expected JSONException")
+        } catch (e: org.json.JSONException) {
+            assertTrue(e.message, e.message!!.contains("__hcp_patches/"))
+        }
+    }
+
+    @Test
+    fun parseDiffManifest_patchedFileEntryPatchOutsideReservedPrefix_throws() {
+        assertPatchFieldRejectedByParser("relative/path.js.bsdiff")
+    }
+
+    @Test
+    fun parseDiffManifest_patchedFileEntryPatchWithPrefixButNoSlash_throws() {
+        assertPatchFieldRejectedByParser("__hcp_patchesX/relative/path.js.bsdiff")
     }
 
     @Test(expected = org.json.JSONException::class)

@@ -14,6 +14,8 @@ static NSError *wrongTypedFieldError(NSString *fieldName, NSString *context, id 
     return [CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest %@ field \"%@\" must be a string, but is %@", context, fieldName, NSStringFromClass([value class])]];
 }
 
+NSString *const CodePushDiffPatchesFolderName = @"__hcp_patches";
+
 static BOOL isAbsent(id value)
 {
     return value == nil || [value isKindOfClass:[NSNull class]];
@@ -170,10 +172,17 @@ static NSString *canonicalPathAllowingMissingComponents(NSString *path)
                 }
             }
 
+            NSString *patch = entryJSON[@"patch"];
+            NSString *reservedPatchesFolderPrefix = [CodePushDiffPatchesFolderName stringByAppendingString:@"/"];
+            if (![patch hasPrefix:reservedPatchesFolderPrefix]) {
+                if (error) *error = [CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest %@ field \"patch\" must be under the reserved \"%@\" prefix, but is \"%@\"", context, reservedPatchesFolderPrefix, patch]];
+                return nil;
+            }
+
             patchedFiles[relativePath] = [[CodePushPatchedFileEntry alloc] initWithAlgo:entryJSON[@"algo"]
                                                                                baseHash:entryJSON[@"baseHash"]
                                                                              targetHash:entryJSON[@"targetHash"]
-                                                                                  patch:entryJSON[@"patch"]];
+                                                                                  patch:patch];
         }
     }
 

@@ -13,8 +13,6 @@
 #pragma mark - Private constants
 
 static NSString *const DiffManifestFileName = @"hotcodepush.json";
-// Folder within the update ZIP that contains the diff patches.
-static NSString *const DiffPatchesFolderName = @"__hcp_patches";
 static NSString *const DownloadFileName = @"download.zip";
 static NSString *const RelativeBundlePathKey = @"bundlePath";
 static NSString *const StatusFile = @"codepush.json";
@@ -78,7 +76,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
     // The patches folder must not stay in the installed package: it is
     // not part of the released contents, so it changes the folder hash
     // and surfaces later as a misleading integrity-check failure.
-    NSString *patchesFolderPath = [newUpdateFolderPath stringByAppendingPathComponent:DiffPatchesFolderName];
+    NSString *patchesFolderPath = [newUpdateFolderPath stringByAppendingPathComponent:CodePushDiffPatchesFolderName];
     if ([[NSFileManager defaultManager] fileExistsAtPath:patchesFolderPath]) {
         NSError *removeError = nil;
         BOOL patchesFolderRemoved = [[NSFileManager defaultManager] removeItemAtPath:patchesFolderPath
