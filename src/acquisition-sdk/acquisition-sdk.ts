@@ -25,8 +25,7 @@ export interface Package {
     deploymentKey: string;
     description: string;
     label: string;
-    // "vN" release number of the update within its deployment. Undefined for packages
-    // persisted by an older SDK version, or served by a server that predates the field.
+    // Optional because packages persisted by an older SDK have no versionLabel.
     versionLabel?: string;
     appVersion: string;
     isMandatory: boolean;

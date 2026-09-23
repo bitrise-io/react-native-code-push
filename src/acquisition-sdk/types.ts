@@ -34,8 +34,6 @@ export interface UpdateCheckResponse {
     is_disabled?: boolean;
     target_binary_range: string;
     /*generated*/ label?: string;
-    // Human-readable "vN" release number of the update within its deployment.
-    // Absent from servers that predate it.
     /*generated*/ version_label?: string;
     /*generated*/ package_hash?: string;
     package_size?: number;
