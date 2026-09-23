@@ -9,7 +9,12 @@
     "compilerOptions": {
         "target": "ES5",
         "module": "commonjs",
-        "lib": ["es6"],
+        // A subset of what RN supports at the oldest supported version (0.76). Widen it only as far as RN's list:
+        // https://github.com/facebook/react-native/blob/0.76-stable/packages/typescript-config/tsconfig.json
+        "lib": ["es2019"],
+        // No ambient @types/* (e.g. Node), otherwise they add their own libs and the list above is not enforced.
+        // RN globals come from src/globals.d.ts instead.
+        "types": [],
         "declaration": true,
         "noImplicitAny": true,
         "noEmitOnError": true,
