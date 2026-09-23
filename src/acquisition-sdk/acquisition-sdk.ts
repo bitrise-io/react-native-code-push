@@ -25,6 +25,9 @@ export interface Package {
     deploymentKey: string;
     description: string;
     label: string;
+    // "vN" release number of the update within its deployment. Undefined for packages
+    // persisted by an older SDK version, or served by a server that predates the field.
+    versionLabel?: string;
     appVersion: string;
     isMandatory: boolean;
     packageHash: string;
@@ -165,6 +168,7 @@ export class AcquisitionManager {
                 deploymentKey: this._deploymentKey,
                 description: updateInfo.description,
                 label: updateInfo.label,
+                versionLabel: updateInfo.version_label,
                 appVersion: updateInfo.target_binary_range,
                 isMandatory: updateInfo.is_mandatory,
                 packageHash: updateInfo.package_hash,

@@ -12,6 +12,7 @@ export var latestPackage = <types.UpdateCheckResponse>{
     description: "Angry flappy birds",
     target_binary_range: "1.5.0",
     label: "2.4.0",
+    version_label: "v3",
     is_mandatory: false,
     is_available: true,
     update_app_version: false,

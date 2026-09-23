@@ -76,6 +76,12 @@ export interface Package {
     label: string;
 
     /**
+     * The human-readable version label of the update within its deployment, such as `v5`, matching what the Bitrise UI and CLI show.
+     * Undefined for updates downloaded by an older version of this SDK, or served by a server that does not yet provide it.
+     */
+    versionLabel?: string;
+
+    /**
      * The SHA hash value of the update.
      */
     packageHash: string;

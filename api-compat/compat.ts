@@ -37,6 +37,7 @@ const _isFirstRun: boolean = pkg.isFirstRun;
 const _isMandatory: boolean = pkg.isMandatory;
 const _isPending: boolean = pkg.isPending;
 const _label: string = pkg.label;
+const _versionLabel: string | undefined = pkg.versionLabel;
 const _packageHash: string = pkg.packageHash;
 const _packageSize: number = pkg.packageSize;
 

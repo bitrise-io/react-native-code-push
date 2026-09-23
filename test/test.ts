@@ -852,6 +852,7 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                                 assert.strictEqual(remotePackage.downloadUrl, updateResponse.download_url);
                                 assert.strictEqual(remotePackage.isMandatory, updateResponse.is_mandatory);
                                 assert.strictEqual(remotePackage.label, updateResponse.label);
+                                assert.strictEqual(remotePackage.versionLabel, updateResponse.version_label);
                                 assert.strictEqual(remotePackage.packageHash, updateResponse.package_hash);
                                 assert.strictEqual(remotePackage.packageSize, updateResponse.package_size);
                                 assert.strictEqual(remotePackage.deploymentKey, targetPlatform.getDefaultDeploymentKey());
