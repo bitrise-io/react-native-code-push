@@ -16,6 +16,11 @@ public class FileUtils {
     private static final int WRITE_BUFFER_SIZE = 1024 * 8;
 
     public static void copyDirectoryContents(String sourceDirectoryPath, String destinationDirectoryPath) throws IOException {
+        copyDirectoryContents(sourceDirectoryPath, destinationDirectoryPath, null);
+    }
+
+    // excludedEntryName applies only to the top level of sourceDirectoryPath: nested entries with the same name are copied.
+    public static void copyDirectoryContents(String sourceDirectoryPath, String destinationDirectoryPath, String excludedEntryName) throws IOException {
         File sourceDir = new File(sourceDirectoryPath);
         File destDir = new File(destinationDirectoryPath);
         if (!destDir.exists()) {
@@ -23,6 +28,9 @@ public class FileUtils {
         }
 
         for (File sourceFile : sourceDir.listFiles()) {
+            if (sourceFile.getName().equals(excludedEntryName)) {
+                continue;
+            }
             if (sourceFile.isDirectory()) {
                 copyDirectoryContents(
                         CodePushUtils.appendPathComponent(sourceDirectoryPath, sourceFile.getName()),

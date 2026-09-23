@@ -180,6 +180,12 @@ failCallback:(void (^)(NSError *err))failCallback;
                  destFolder:(NSString *)destFolder
                       error:(NSError **)error;
 
+// excludedEntryName applies only to the top level of sourceFolder: nested entries with the same name are copied.
++ (BOOL)copyEntriesInFolder:(NSString *)sourceFolder
+                 destFolder:(NSString *)destFolder
+             excludingEntry:(NSString *)excludedEntryName
+                      error:(NSError **)error;
+
 + (NSString *)findMainBundleInFolder:(NSString *)folderPath
                     expectedFileName:(NSString *)expectedFileName
                                error:(NSError **)error;

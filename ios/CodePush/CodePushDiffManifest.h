@@ -28,6 +28,11 @@ extern NSString *const CodePushDiffPatchesFolderName;
 // No version field, or version 1: original format, file-by-file patching only.
 // Version 2: adds support for binary diff patching.
 @property (nonatomic, readonly, assign) NSInteger version;
+// YES if this manifest describes a binary diff update, which ships its patches under CodePushDiffPatchesFolderName.
+// This is a subset of "diff updates" in general, as a diff update payload can also consist of:
+// - The modified files included in the ZIP, which are applied on top of the existing files (without any binary patching)
+// - The list of files to delete from the old package
+@property (nonatomic, readonly, assign) BOOL isBinaryDiff;
 // Relative paths, from the old package, to delete rather than carry over into the new one.
 @property (nonatomic, readonly, copy) NSArray<NSString *> *deletedFiles;
 // Key: file's relative path in the package being installed.
