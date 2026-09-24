@@ -852,6 +852,7 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                                 assert.strictEqual(remotePackage.downloadUrl, updateResponse.download_url);
                                 assert.strictEqual(remotePackage.isMandatory, updateResponse.is_mandatory);
                                 assert.strictEqual(remotePackage.label, updateResponse.label);
+                                assert.strictEqual(remotePackage.versionLabel, updateResponse.version_label);
                                 assert.strictEqual(remotePackage.packageHash, updateResponse.package_hash);
                                 assert.strictEqual(remotePackage.packageSize, updateResponse.package_size);
                                 assert.strictEqual(remotePackage.deploymentKey, targetPlatform.getDefaultDeploymentKey());
@@ -915,17 +916,38 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
             () => {
                 TestBuilder.it("remotePackage.download.success", false,
                     (done: Mocha.Done) => {
-                        ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
+                        const updateResponse = ServerUtil.createUpdateResponse(false, targetPlatform);
+                        ServerUtil.updateResponse = { update_info: updateResponse };
 
                         /* pass the path to any file for download (here, index.js) to make sure the download completed callback is invoked */
                         ServerUtil.updatePackagePath = path.join(TestConfig.templatePath, "index.js");
 
-                        projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
+                        let sawUpdateAvailable = false;
+                        let finished = false;
+                        ServerUtil.testMessageCallback = (requestBody: any) => {
+                            if (finished) {
+                                return;
+                            }
+                            try {
+                                if (requestBody.message === ServerUtil.TestMessage.CHECK_UPDATE_AVAILABLE) {
+                                    sawUpdateAvailable = true;
+                                    return;
+                                }
+                                assert.strictEqual(requestBody.message, ServerUtil.TestMessage.DOWNLOAD_SUCCEEDED);
+                                assert(sawUpdateAvailable, "download reported before the update check");
+                                // The local package is read back from native storage, so this covers the metadata round trip.
+                                const localPackage: any = requestBody.args[0];
+                                assert.strictEqual(localPackage.label, updateResponse.label);
+                                assert.strictEqual(localPackage.versionLabel, updateResponse.version_label);
+                                finished = true;
+                                done();
+                            } catch (e) {
+                                finished = true;
+                                done(e);
+                            }
+                        };
 
-                        ServerUtil.expectTestMessages([
-                            ServerUtil.TestMessage.CHECK_UPDATE_AVAILABLE,
-                            ServerUtil.TestMessage.DOWNLOAD_SUCCEEDED])
-                            .then(() => { done(); }, (e) => { done(e); });
+                        projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
                     });
 
                 TestBuilder.it("remotePackage.download.error", false,

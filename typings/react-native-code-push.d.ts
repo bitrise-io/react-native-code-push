@@ -76,6 +76,12 @@ export interface Package {
     label: string;
 
     /**
+     * The `vN` release label of the update within its deployment, as shown in the Bitrise UI and CLI.
+     * Undefined for updates downloaded by an older SDK version or from a server that does not send it.
+     */
+    versionLabel?: string;
+
+    /**
      * The SHA hash value of the update.
      */
     packageHash: string;

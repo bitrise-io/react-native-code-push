@@ -125,6 +125,7 @@ function createDefaultResponse() {
     defaultResponse.target_binary_range = "";
     defaultResponse.package_hash = "";
     defaultResponse.label = "";
+    defaultResponse.version_label = "";
     defaultResponse.package_size = 0;
     defaultResponse.should_run_binary_version = false;
     defaultResponse.update_app_version = false;
@@ -144,6 +145,7 @@ function createUpdateResponse(mandatory, targetPlatform, randomHash) {
     updateResponse.download_url = "mock.url/v0.1/public/codepush/report_status/download";
     updateResponse.is_mandatory = mandatory;
     updateResponse.label = "mock-update";
+    updateResponse.version_label = "v1";
     updateResponse.package_hash = "12345-67890";
     updateResponse.package_size = 12345;
     updateResponse.should_run_binary_version = false;

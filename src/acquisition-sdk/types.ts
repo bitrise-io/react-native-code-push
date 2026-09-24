@@ -34,6 +34,7 @@ export interface UpdateCheckResponse {
     is_disabled?: boolean;
     target_binary_range: string;
     /*generated*/ label?: string;
+    /*generated*/ version_label?: string;
     /*generated*/ package_hash?: string;
     package_size?: number;
     should_run_binary_version?: boolean;

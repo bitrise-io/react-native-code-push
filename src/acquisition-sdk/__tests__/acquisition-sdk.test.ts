@@ -34,6 +34,7 @@ var scriptUpdateResult: acquisitionSdk.RemotePackage = {
     description: latestPackage.description,
     downloadUrl: latestPackage.download_url,
     label: latestPackage.label,
+    versionLabel: latestPackage.version_label,
     appVersion: latestPackage.target_binary_range,
     isMandatory: latestPackage.is_mandatory,
     packageHash: latestPackage.package_hash,

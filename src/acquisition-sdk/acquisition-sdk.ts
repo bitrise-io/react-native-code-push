@@ -25,6 +25,8 @@ export interface Package {
     deploymentKey: string;
     description: string;
     label: string;
+    // Optional because packages persisted by an older SDK have no versionLabel.
+    versionLabel?: string;
     appVersion: string;
     isMandatory: boolean;
     packageHash: string;
@@ -165,6 +167,7 @@ export class AcquisitionManager {
                 deploymentKey: this._deploymentKey,
                 description: updateInfo.description,
                 label: updateInfo.label,
+                versionLabel: updateInfo.version_label,
                 appVersion: updateInfo.target_binary_range,
                 isMandatory: updateInfo.is_mandatory,
                 packageHash: updateInfo.package_hash,

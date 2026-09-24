@@ -309,6 +309,7 @@ declare module 'code-push-plugin-testing-framework/script/serverUtil' {
 		is_disabled: boolean;
 		description: string;
 		label: string;
+		version_label: string;
 		package_hash: string;
 		is_mandatory: boolean;
 	}

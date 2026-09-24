@@ -217,7 +217,7 @@ codePush.checkForUpdate(deploymentKey: String = null, handleBinaryVersionMismatc
 Queries the CodePush service to see whether the configured app deployment has an update available. By default, it will use the deployment key that is configured in your `Info.plist` file (iOS), or `strings.xml` file (Android), but you can override that by specifying a value via the optional `deploymentKey` parameter. This can be useful when you want to dynamically "redirect" a user to a specific deployment, such as allowing "early access" via an easter egg or a user setting switch.
 
 Second optional parameter `handleBinaryVersionMismatchCallback` is an optional callback function that can be used to notify user if there are any binary update.
-E.g. consider a use-case where currently installed binary version is 1.0.1 with label(codepush label) v1. Later native code was changed in the dev cycle and binary version was updated to 1.0.2. When code-push update check is triggered we ignore updates having binary version mismatch (because the update is not targeting to the binary version of currently installed app). In this case installed app (1.0.1) will ignore the update targeting version 1.0.2. You can use `handleBinaryVersionMismatchCallback` to provide a hook to handle such situations.
+E.g. consider a use-case where the currently installed binary version is 1.0.1 and it runs the CodePush update whose `versionLabel` is `v1`. Later native code was changed in the dev cycle and binary version was updated to 1.0.2. When code-push update check is triggered we ignore updates having binary version mismatch (because the update is not targeting to the binary version of currently installed app). In this case installed app (1.0.1) will ignore the update targeting version 1.0.2. You can use `handleBinaryVersionMismatchCallback` to provide a hook to handle such situations.
 
 **NOTE:**
 Be cautious to use Alerts within this callback if you are developing iOS application, due to [App Store](https://developer.apple.com/app-store/review/guidelines/) review process: 
@@ -536,9 +536,10 @@ Contains details about an update that has been downloaded locally or already ins
 - __isFirstRun__: Indicates whether this is the first time the update has been run after being installed. This is useful for determining whether you would like to show a "What's New?" UI to the end user after installing an update. *(Boolean)*
 - __isMandatory__: Indicates whether the update is considered mandatory.  This is the value that was specified in the CLI when the update was released. *(Boolean)*
 - __isPending__: Indicates whether this update is in a "pending" state. When `true`, that means the update has been downloaded and installed, but the app restart needed to apply it hasn't occurred yet, and therefore, it's changes aren't currently visible to the end-user. *(Boolean)*
-- __label__: The internal label automatically given to the update by the CodePush server, such as `v5`. This value uniquely identifies the update within it's deployment. *(String)*
+- __label__: The internal label automatically given to the update by the CodePush server. This value uniquely identifies the update within its deployment. *(String)*
 - __packageHash__: The SHA hash value of the update. *(String)*
 - __packageSize__: The size of the code contained within the update, in bytes. *(Number)*
+- __versionLabel__: The human-readable version label of the update within its deployment, such as `v5`, matching what the Bitrise UI and CLI show. This is `undefined` for updates downloaded by an older version of this SDK, or served by a server that does not yet provide it. *(String)*
 
 ###### Methods
 
