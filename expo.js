@@ -92,6 +92,9 @@ const withCodePushInfoPlist = (config, options = {}) => {
     if (options.ios && options.ios.CodePushPublicKey) {
       config.modResults.CodePushPublicKey = options.ios.CodePushPublicKey;
     }
+    if (typeof options.ios?.CodePushEnableDeltaUpdates === 'boolean') {
+      config.modResults.CodePushEnableDeltaUpdates = options.ios.CodePushEnableDeltaUpdates;
+    }
     return config;
   });
 };
@@ -329,6 +332,19 @@ const withAndroidStrings = (config, options) => {
     }
     if (options.android?.CodePushPublicKey) {
       setString('CodePushPublicKey', options.android.CodePushPublicKey);
+    }
+    // Read natively as a bool resource (not a string), so it goes into its own <bool> element.
+    if (typeof options.android?.CodePushEnableDeltaUpdates === 'boolean') {
+      if (!config.modResults.resources.bool) config.modResults.resources.bool = [];
+      const bools = config.modResults.resources.bool;
+      const name = 'CodePushEnableDeltaUpdates';
+      const value = String(options.android.CodePushEnableDeltaUpdates);
+      const existing = bools.find(b => b.$.name === name);
+      if (existing) {
+        existing._ = value;
+      } else {
+        bools.push({ $: { name }, _: value });
+      }
     }
     return config;
   });

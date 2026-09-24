@@ -51,6 +51,7 @@ public class CodePush implements ReactPackage {
     // Config properties.
     private String mDeploymentKey;
     private static String mServerUrl = "https://codepush.appcenter.ms/";
+    private final boolean mEnableDeltaUpdates;
 
     private Context mContext;
     private final boolean mIsDebugMode;
@@ -70,8 +71,8 @@ public class CodePush implements ReactPackage {
     private CodePush(String deploymentKey, Context context, boolean isDebugMode) {
         mContext = context.getApplicationContext();
 
-        boolean enableDeltaUpdates = getBooleanCustomPropertyFromStringsIfExist("EnableDeltaUpdates", false);
-        mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath(), enableDeltaUpdates);
+        mEnableDeltaUpdates = getBooleanCustomPropertyFromStringsIfExist("EnableDeltaUpdates", false);
+        mUpdateManager = new CodePushUpdateManager(context.getFilesDir().getAbsolutePath(), mEnableDeltaUpdates);
         mTelemetryManager = new CodePushTelemetryManager(mContext);
         mDeploymentKey = deploymentKey;
         mIsDebugMode = isDebugMode;
@@ -287,6 +288,10 @@ public class CodePush implements ReactPackage {
 
     public String getServerUrl() {
         return mServerUrl;
+    }
+
+    public boolean isDeltaUpdatesEnabled() {
+        return mEnableDeltaUpdates;
     }
 
     void initializeUpdateAfterRestart() {

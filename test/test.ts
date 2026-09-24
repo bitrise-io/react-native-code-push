@@ -46,6 +46,10 @@ async function setPlistStringValue(plistPath: string, key: string, value: string
     await promisify(childProcess.execFile)("plutil", ["-replace", key, "-string", value, plistPath]);
 }
 
+async function setPlistBoolValue(plistPath: string, key: string, value: boolean): Promise<void> {
+    await promisify(childProcess.execFile)("plutil", ["-replace", key, "-bool", String(value), plistPath]);
+}
+
 /**
  * Returns a " --platform <ios|android>" flag for `expo prebuild` when exactly one platform is
  * under test in this mocha run, so prebuild only regenerates that platform's native project
@@ -253,6 +257,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
                 .then(() => setPlistStringValue(infoPlistPath, "CodePushDeploymentKey", this.getDefaultDeploymentKey()))
                 .then(() => setPlistStringValue(infoPlistPath, "CodePushServerURL", this.getServerUrl()))
                 .then(() => setPlistStringValue(infoPlistPath, "CodePushPublicKey", codeSigningPublicKey))
+                .then(() => setPlistBoolValue(infoPlistPath, "CodePushEnableDeltaUpdates", true))
                 // Fix the linker flag list in project.pbxproj (pod install adds an extra comma)
                 .then(TestUtil.replaceString.bind(undefined, path.join(iOSProject, TestConfig.TestAppName + ".xcodeproj", "project.pbxproj"),
                     "\"[$][(]inherited[)]\",\\s*[)];", "\"$(inherited)\"\n\t\t\t\t);"))
@@ -866,6 +871,8 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                             try {
                                 assert.notStrictEqual(null, request);
                                 assert.strictEqual(request.query.deployment_key, targetPlatform.getDefaultDeploymentKey());
+                                // The test apps enable delta updates, so this checks the flag end to end: native config -> getConfiguration() -> SDK.
+                                assert.strictEqual(request.query.capabilities, "binary_diff:bsdiff");
                             } catch (e) {
                                 done(e);
                             }

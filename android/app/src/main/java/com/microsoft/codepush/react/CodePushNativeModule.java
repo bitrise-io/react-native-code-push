@@ -426,6 +426,7 @@ public class CodePushNativeModule extends BaseJavaModule {
             configMap.putString("clientUniqueId", mClientUniqueId);
             configMap.putString("deploymentKey", mCodePush.getDeploymentKey());
             configMap.putString("serverUrl", mCodePush.getServerUrl());
+            configMap.putBoolean("enableDeltaUpdates", mCodePush.isDeltaUpdatesEnabled());
 
             // The binary hash may be null in debug builds
             if (mBinaryContentsHash != null) {

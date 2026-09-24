@@ -20,12 +20,14 @@
           "ios": {
             "CodePushDeploymentKey": "mock-ios-deployment-key",
             "CodePushServerURL": "http://127.0.0.1:3000",
-            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}"
+            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}",
+            "CodePushEnableDeltaUpdates": true
           },
           "android": {
             "CodePushDeploymentKey": "mock-android-deployment-key",
             "CodePushServerURL": "http://10.0.2.2:3001",
-            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}"
+            "CodePushPublicKey": "{{CODE_SIGNING_PUBLIC_KEY}}",
+            "CodePushEnableDeltaUpdates": true
           }
         }
       ]
