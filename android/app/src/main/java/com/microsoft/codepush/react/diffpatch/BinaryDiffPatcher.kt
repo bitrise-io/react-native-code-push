@@ -43,11 +43,12 @@ fun applyBinaryDiffPatches(
 
 // Manifest-supplied paths come from the update's JSON, so we treat them as untrusted.
 // Resolve them strictly under `base` and reject anything ("../../etc", an absolute path) that would otherwise
-// let a manifest entry read or write outside the package/patch folders.
+// let a manifest entry read or write outside the package/patch folders. Callers treat the result as a file
+// inside `base`, so `base` itself (e.g. from ".") does not pass either.
 private fun resolveWithin(base: File, relativePath: String): File {
     val baseCanonical = base.canonicalFile
     val resolved = File(base, relativePath).canonicalFile
-    if (resolved != baseCanonical && !resolved.path.startsWith(baseCanonical.path + File.separator)) {
+    if (!resolved.path.startsWith(baseCanonical.path + File.separator)) {
         throw BinaryDiffApplyException(relativePath, "path escapes expected directory")
     }
     return resolved

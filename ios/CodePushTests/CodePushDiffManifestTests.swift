@@ -102,6 +102,42 @@ final class CodePushDiffManifestTests: XCTestCase {
         XCTAssertThrowsError(try CodePushDiffManifest(json: jsonWithPatchedFiles))
     }
 
+    func testManifest_patchedFilesEntryPatchOutsideReservedPrefix_throws() {
+        let json: [AnyHashable: Any] = [
+            "version": 2,
+            "patchedFiles": [
+                "main.jsbundle": [
+                    "algo": "bsdiff",
+                    "baseHash": "aaaa",
+                    "targetHash": "bbbb",
+                    "patch": "main.jsbundle.bsdiff",
+                ]
+            ],
+        ]
+
+        XCTAssertThrowsError(try CodePushDiffManifest(json: json)) { error in
+            XCTAssertTrue(error.localizedDescription.contains("__hcp_patches/"), error.localizedDescription)
+        }
+    }
+
+    func testManifest_patchedFilesEntryPatchWithPrefixButNoSlash_throws() {
+        let json: [AnyHashable: Any] = [
+            "version": 2,
+            "patchedFiles": [
+                "main.jsbundle": [
+                    "algo": "bsdiff",
+                    "baseHash": "aaaa",
+                    "targetHash": "bbbb",
+                    "patch": "__hcp_patchesX/main.jsbundle.bsdiff",
+                ]
+            ],
+        ]
+
+        XCTAssertThrowsError(try CodePushDiffManifest(json: json)) { error in
+            XCTAssertTrue(error.localizedDescription.contains("__hcp_patches/"), error.localizedDescription)
+        }
+    }
+
     func testManifest_patchedFilesWithoutVersionTwo_throws() {
         let json: [AnyHashable: Any] = [
             "version": 1,
