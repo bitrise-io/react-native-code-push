@@ -16,6 +16,19 @@ static NSError *wrongTypedFieldError(NSString *fieldName, NSString *context, id 
 
 NSString *const CodePushDiffPatchesFolderName = @"__hcp_patches";
 
+// The top-level entry that `relativePath` names under a base folder. Empty and
+// "." components are skipped. The caller rejects ".." components first, so
+// they need no handling here.
+static NSString *topLevelComponentOf(NSString *relativePath)
+{
+    for (NSString *component in [relativePath componentsSeparatedByString:@"/"]) {
+        if (component.length > 0 && ![component isEqualToString:@"."]) {
+            return component;
+        }
+    }
+    return nil;
+}
+
 static BOOL isAbsent(id value)
 {
     return value == nil || [value isKindOfClass:[NSNull class]];
@@ -111,6 +124,11 @@ static NSString *canonicalPathAllowingMissingComponents(NSString *path)
     return self;
 }
 
+- (BOOL)isBinaryDiff
+{
+    return self.version == 2;
+}
+
 + (nullable instancetype)manifestFromJSON:(NSDictionary *)json error:(NSError **)error
 {
     if (![json isKindOfClass:[NSDictionary class]]) {
@@ -157,6 +175,17 @@ static NSString *canonicalPathAllowingMissingComponents(NSString *path)
         }
         for (NSString *relativePath in (NSDictionary *)patchedFilesJSON) {
             NSString *context = [NSString stringWithFormat:@"patchedFiles[\"%@\"]", relativePath];
+            NSString *reservedPatchesFolderPrefix = [CodePushDiffPatchesFolderName stringByAppendingString:@"/"];
+
+            if ([[relativePath componentsSeparatedByString:@"/"] containsObject:@".."]) {
+                if (error) *error = [CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest %@ must not contain \"..\" components", context]];
+                return nil;
+            }
+
+            if ([topLevelComponentOf(relativePath) isEqualToString:CodePushDiffPatchesFolderName]) {
+                if (error) *error = [CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest %@ targets the reserved \"%@\" folder, which is not part of the installed package", context, reservedPatchesFolderPrefix]];
+                return nil;
+            }
 
             id entryJSON = patchedFilesJSON[relativePath];
             if (![entryJSON isKindOfClass:[NSDictionary class]]) {
@@ -173,7 +202,6 @@ static NSString *canonicalPathAllowingMissingComponents(NSString *path)
             }
 
             NSString *patch = entryJSON[@"patch"];
-            NSString *reservedPatchesFolderPrefix = [CodePushDiffPatchesFolderName stringByAppendingString:@"/"];
             if (![patch hasPrefix:reservedPatchesFolderPrefix]) {
                 if (error) *error = [CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest %@ field \"patch\" must be under the reserved \"%@\" prefix, but is \"%@\"", context, reservedPatchesFolderPrefix, patch]];
                 return nil;
@@ -189,14 +217,15 @@ static NSString *canonicalPathAllowingMissingComponents(NSString *path)
     // Only version 2 defines file patching.
     // A manifest of any other version that lists patched files is malformed,
     // and applying none of them would leave the old bytes behind.
-    if (version != 2 && patchedFiles.count > 0) {
+    CodePushDiffManifest *manifest = [[CodePushDiffManifest alloc] initWithVersion:version
+                                                                      deletedFiles:deletedFiles
+                                                                      patchedFiles:patchedFiles];
+    if (!manifest.isBinaryDiff && patchedFiles.count > 0) {
         if (error) *error = [CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest declares version %ld but lists %lu patchedFiles, which require version 2", (long)version, (unsigned long)patchedFiles.count]];
         return nil;
     }
 
-    return [[CodePushDiffManifest alloc] initWithVersion:version
-                                            deletedFiles:deletedFiles
-                                            patchedFiles:patchedFiles];
+    return manifest;
 }
 
 + (nullable NSString *)resolvePath:(NSString *)relativePath

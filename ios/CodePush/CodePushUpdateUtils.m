@@ -107,6 +107,17 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
                  destFolder:(NSString *)destFolder
                       error:(NSError **)error
 {
+    return [self copyEntriesInFolder:sourceFolder
+                          destFolder:destFolder
+                      excludingEntry:nil
+                               error:error];
+}
+
++ (BOOL)copyEntriesInFolder:(NSString *)sourceFolder
+                 destFolder:(NSString *)destFolder
+             excludingEntry:(NSString *)excludedEntryName
+                      error:(NSError **)error
+{
     NSArray *files = [[NSFileManager defaultManager]
                       contentsOfDirectoryAtPath:sourceFolder
                       error:error];
@@ -115,6 +126,9 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
     }
     
     for (NSString *fileName in files) {
+        if ([fileName isEqualToString:excludedEntryName]) {
+            continue;
+        }
         NSString * fullFilePath = [sourceFolder stringByAppendingPathComponent:fileName];
         BOOL isDir = NO;
         if ([[NSFileManager defaultManager] fileExistsAtPath:fullFilePath

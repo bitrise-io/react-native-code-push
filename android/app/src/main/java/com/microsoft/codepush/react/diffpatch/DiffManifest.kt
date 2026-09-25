@@ -24,7 +24,14 @@ data class DiffManifest(
     val deletedFiles: List<String>,
     // Map key: file's relative path in the package being installed.
     val patchedFiles: Map<String, PatchedFileEntry>,
-)
+) {
+    // True if this manifest describes a binary diff update, which ships its patches under CodePushConstants.DIFF_PATCHES_FOLDER_NAME.
+    // This is a subset of "diff updates" in general, as a diff update payload can also consist of:
+    // - The modified files included in the ZIP, which are applied on top of the existing files (without any binary patching)
+    // - The list of files to delete from the old package
+    val isBinaryDiff: Boolean
+        get() = version == 2
+}
 
 @Throws(JSONException::class)
 fun parseDiffManifest(json: JSONObject): DiffManifest {
@@ -41,6 +48,12 @@ fun parseDiffManifest(json: JSONObject): DiffManifest {
     val patchedFilesJson = json.optJSONObject("patchedFiles")
     val patchedFiles = if (patchedFilesJson != null) {
         patchedFilesJson.keys().asSequence().associateWith { relativePath ->
+            if (relativePath.split('/').contains("..")) {
+                throw JSONException("Diff manifest patchedFiles[\"$relativePath\"] must not contain \"..\" components.")
+            }
+            if (topLevelComponentOf(relativePath) == CodePushConstants.DIFF_PATCHES_FOLDER_NAME) {
+                throw JSONException("Diff manifest patchedFiles[\"$relativePath\"] targets the reserved \"$reservedPatchesFolderPrefix\" folder, which is not part of the installed package.")
+            }
             val entry = patchedFilesJson.getJSONObject(relativePath)
             val patch = entry.getString("patch")
             if (!patch.startsWith(reservedPatchesFolderPrefix)) {
@@ -57,9 +70,15 @@ fun parseDiffManifest(json: JSONObject): DiffManifest {
         emptyMap()
     }
 
-    if (version != 2 && patchedFiles.isNotEmpty()) {
+    val manifest = DiffManifest(version = version, deletedFiles = deletedFiles, patchedFiles = patchedFiles)
+    if (!manifest.isBinaryDiff && patchedFiles.isNotEmpty()) {
         throw JSONException("Diff manifest declares version $version but contains patchedFiles, which requires version 2.")
     }
 
-    return DiffManifest(version = version, deletedFiles = deletedFiles, patchedFiles = patchedFiles)
+    return manifest
 }
+
+// The top-level entry that `relativePath` names under a base folder. Empty and "." components are skipped.
+// The caller rejects ".." components first, so they need no handling here.
+private fun topLevelComponentOf(relativePath: String): String? =
+    relativePath.split('/').firstOrNull { it.isNotEmpty() && it != "." }

@@ -152,6 +152,77 @@ class DiffManifestTest {
         }
     }
 
+    private fun manifestWithPatchedFileKey(relativePath: String) = JSONObject().apply {
+        put("version", 2)
+        put("patchedFiles", JSONObject().apply {
+            put(relativePath, JSONObject().apply {
+                put("algo", "bsdiff")
+                put("baseHash", "base-hash-1")
+                put("targetHash", "target-hash-1")
+                put("patch", "__hcp_patches/relative/path.js.bsdiff")
+            })
+        })
+    }
+
+    @Test
+    fun parseDiffManifest_patchedFileKeyResolvingIntoReservedFolder_throws() {
+        val keys = listOf(
+            "__hcp_patches",
+            "__hcp_patches/",
+            "__hcp_patches/relative/path.js",
+            "./__hcp_patches/relative/path.js",
+            "/__hcp_patches/relative/path.js",
+        )
+        for (key in keys) {
+            try {
+                parseDiffManifest(manifestWithPatchedFileKey(key))
+                fail("expected JSONException for key \"$key\"")
+            } catch (e: org.json.JSONException) {
+                assertTrue(e.message, e.message!!.contains("reserved \"__hcp_patches/\" folder"))
+            }
+        }
+    }
+
+    @Test
+    fun parseDiffManifest_patchedFileKeyOutsideReservedFolder_isAccepted() {
+        val keys = listOf(
+            "assets/__hcp_patches/path.js",
+            "__hcp_patches_extra/path.js",
+        )
+        for (key in keys) {
+            val manifest = parseDiffManifest(manifestWithPatchedFileKey(key))
+            assertEquals(setOf(key), manifest.patchedFiles.keys)
+        }
+    }
+
+    @Test
+    fun parseDiffManifest_patchedFileKeyWithParentComponent_throws() {
+        val keys = listOf(
+            "relative/../__hcp_patches/path.js",
+            "__hcp_patches/../relative/path.js",
+            "relative/../path.js",
+            "../path.js",
+            "relative/..",
+        )
+        for (key in keys) {
+            try {
+                parseDiffManifest(manifestWithPatchedFileKey(key))
+                fail("expected JSONException for key \"$key\"")
+            } catch (e: org.json.JSONException) {
+                assertTrue(e.message, e.message!!.contains("must not contain \"..\" components"))
+            }
+        }
+    }
+
+    @Test
+    fun parseDiffManifest_patchedFileKeyWithDotsInComponentName_isAccepted() {
+        val keys = listOf("relative/..path.js", "relative/path..js", "...")
+        for (key in keys) {
+            val manifest = parseDiffManifest(manifestWithPatchedFileKey(key))
+            assertEquals(setOf(key), manifest.patchedFiles.keys)
+        }
+    }
+
     @Test
     fun parseDiffManifest_patchedFileEntryPatchOutsideReservedPrefix_throws() {
         assertPatchFieldRejectedByParser("relative/path.js.bsdiff")

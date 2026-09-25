@@ -14,6 +14,7 @@ import org.junit.rules.TemporaryFolder
 import org.mockito.MockedStatic
 import org.mockito.Mockito
 import java.io.File
+import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -59,6 +60,15 @@ class CodePushUpdateManagerTest {
         val file = tempFolder.newFile("download.bundle")
         file.writeText(content)
         return file
+    }
+
+    // The package hash the CLI computes for a release with the given file contents: the SHA-256 of the
+    // JSON array of sorted "<relativePath>:<sha256 of contents>" entries.
+    private fun releaseHashOf(files: Map<String, String>): String {
+        fun sha256Hex(bytes: ByteArray) =
+            MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        val entries = files.map { (relativePath, content) -> "$relativePath:${sha256Hex(content.toByteArray())}" }.sorted()
+        return sha256Hex(entries.joinToString(",", "[", "]") { "\"$it\"" }.toByteArray())
     }
 
     // Registers `hash` as the currently installed package, with the given file contents, so that
@@ -302,5 +312,32 @@ class CodePushUpdateManagerTest {
         assertFalse("deletedFiles entry should have been removed", File(newUpdateFolderPath, "old_extra.txt").exists())
         assertEquals("new bundle contents", File(newUpdateFolderPath, "index.android.bundle").readText())
         assertFalse("the manifest itself should not be carried into the installed package", File(newUpdateFolderPath, CodePushConstants.DIFF_MANIFEST_FILE_NAME).exists())
+    }
+
+    @Test
+    fun installDownloadedUpdate_binaryDiffUpdate_passesFolderHashCheckWithoutPatchesFolder() {
+        // Given
+        val update = manager(enableDeltaUpdates = true)
+        installCurrentPackage(update, "current-hash", mapOf("kept.txt" to "kept contents"))
+        val downloadFile = zipOf(
+            CodePushConstants.DIFF_MANIFEST_FILE_NAME to """{"version":2,"deletedFiles":[],"patchedFiles":{}}""",
+            "index.android.bundle" to "new bundle contents",
+            "${CodePushConstants.DIFF_PATCHES_FOLDER_NAME}/unused.bsdiff" to "patch bytes",
+        )
+        // The release contents, as the CLI hashes them: the patches folder and the manifest are not part of them.
+        val pkg = updatePackage(releaseHashOf(mapOf(
+            "kept.txt" to "kept contents",
+            "index.android.bundle" to "new bundle contents",
+        )))
+        val newUpdateFolderPath = update.getPackageFolderPath("new-hash")
+        val newUpdateMetadataPath = CodePushUtils.appendPathComponent(newUpdateFolderPath, CodePushConstants.PACKAGE_FILE_NAME)
+
+        // When
+        update.installDownloadedUpdate(pkg, "index.android.bundle", null, downloadFile, true, newUpdateFolderPath, newUpdateMetadataPath)
+
+        // Then
+        assertEquals("kept contents", File(newUpdateFolderPath, "kept.txt").readText())
+        assertEquals("new bundle contents", File(newUpdateFolderPath, "index.android.bundle").readText())
+        assertFalse(File(newUpdateFolderPath, CodePushConstants.DIFF_PATCHES_FOLDER_NAME).exists())
     }
 }
