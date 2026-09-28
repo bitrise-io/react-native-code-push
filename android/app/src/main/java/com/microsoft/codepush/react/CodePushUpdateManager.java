@@ -273,22 +273,26 @@ public class CodePushUpdateManager {
                 diffManifestFile.delete();
             }
 
-            FileUtils.copyDirectoryContents(unzippedFolderPath, newUpdateFolderPath);
+            // The patches folder of a binary diff must not end up in the installed package: it is
+            // not part of the released contents, so it changes the folder hash and surfaces later
+            // as a misleading integrity-check failure. The patcher reads it from unzippedFolderPath.
+            boolean isBinaryDiffUpdate = isDiffUpdate && diffManifest.isBinaryDiff();
+            FileUtils.copyDirectoryContents(unzippedFolderPath, newUpdateFolderPath,
+                    isBinaryDiffUpdate ? CodePushConstants.DIFF_PATCHES_FOLDER_NAME : null);
 
             if (isDiffUpdate) {
                 // Run patching after copyNecessaryFilesFromCurrentPackage() so patched output overwrites
                 // bytes copied in from the old package at the same paths.
                 if (diffManifest.getVersion() > 2 || diffManifest.getVersion() < 1) {
                     throw new IOException("Diff manifest version " + diffManifest.getVersion() + " is not supported by this SDK version.");
-                } else if (diffManifest.getVersion() == 2 && !mEnableDeltaUpdates) {
+                } else if (diffManifest.isBinaryDiff() && !mEnableDeltaUpdates) {
                     throw new IOException("Received a binary diff update, but delta updates are not enabled on this client. Set CodePushEnableDeltaUpdates to true in strings.xml to enable them.");
-                } else if (diffManifest.getVersion() == 2) {
+                } else if (diffManifest.isBinaryDiff()) {
                     String currentPackageFolderPath = getCurrentPackageFolderPath();
                     if (currentPackageFolderPath == null) {
                         throw new CodePushInvalidUpdateException("Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported.");
                     }
                     BinaryDiffPatcher.applyBinaryDiffPatches(diffManifest, new File(currentPackageFolderPath), new File(unzippedFolderPath), new File(newUpdateFolderPath));
-                    FileUtils.deleteDirectoryAtPath(new File(newUpdateFolderPath, CodePushConstants.DIFF_PATCHES_FOLDER_NAME).getPath());
                 }
             }
 

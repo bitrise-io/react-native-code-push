@@ -33,13 +33,13 @@ static NSString *const UnzippedFolderName = @"unzipped";
                       [NSString stringWithFormat:@"Diff manifest version %ld is not supported by this SDK version.", (long)diffManifest.version]];
         }
         return NO;
-    } else if (diffManifest.version == 2 && !enableDeltaUpdates) {
+    } else if (diffManifest.isBinaryDiff && !enableDeltaUpdates) {
         if (error) {
             *error = [CodePushErrorUtils errorWithMessage:
                       @"Received a binary diff update, but delta updates are not enabled on this client. Set CodePushEnableDeltaUpdates to true in Info.plist to enable them."];
         }
         return NO;
-    } else if (diffManifest.version == 2 && currentPackageFolderPath == nil) {
+    } else if (diffManifest.isBinaryDiff && currentPackageFolderPath == nil) {
         if (error) {
             *error = [CodePushErrorUtils errorWithMessage:
                       @"Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported."];
@@ -56,7 +56,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
            newUpdateFolder:(NSString *)newUpdateFolderPath
                      error:(NSError **)error
 {
-    if (diffManifest.version != 2) {
+    if (!diffManifest.isBinaryDiff) {
         return YES;
     }
 
@@ -71,22 +71,6 @@ static NSString *const UnzippedFolderName = @"unzipped";
             *error = patchError ?: [CodePushErrorUtils errorWithMessage:@"Failed to apply the binary diff patches of this update."];
         }
         return NO;
-    }
-
-    // The patches folder must not stay in the installed package: it is
-    // not part of the released contents, so it changes the folder hash
-    // and surfaces later as a misleading integrity-check failure.
-    NSString *patchesFolderPath = [newUpdateFolderPath stringByAppendingPathComponent:CodePushDiffPatchesFolderName];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:patchesFolderPath]) {
-        NSError *removeError = nil;
-        BOOL patchesFolderRemoved = [[NSFileManager defaultManager] removeItemAtPath:patchesFolderPath
-                                                                               error:&removeError];
-        if (!patchesFolderRemoved) {
-            if (error) {
-                *error = removeError;
-            }
-            return NO;
-        }
     }
 
     return YES;
@@ -296,8 +280,13 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             }
                                                         }
                                                         
+                                                        // The patches folder of a binary diff must not end up in the installed package:
+                                                        // it is not part of the released contents, so it changes the folder hash and
+                                                        // surfaces later as a misleading integrity-check failure. The patcher reads it
+                                                        // from unzippedFolderPath.
                                                         [CodePushUpdateUtils copyEntriesInFolder:unzippedFolderPath
                                                                                       destFolder:newUpdateFolderPath
+                                                                                  excludingEntry:(diffManifest.isBinaryDiff ? CodePushDiffPatchesFolderName : nil)
                                                                                            error:&error];
                                                         if (error) {
                                                             failCallback(error);

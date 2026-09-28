@@ -138,6 +138,64 @@ final class CodePushDiffManifestTests: XCTestCase {
         }
     }
 
+    private func manifestJSON(patchedFileKey: String) -> [AnyHashable: Any] {
+        return [
+            "version": 2,
+            "patchedFiles": [
+                patchedFileKey: [
+                    "algo": "bsdiff",
+                    "baseHash": "aaaa",
+                    "targetHash": "bbbb",
+                    "patch": "__hcp_patches/main.jsbundle.bsdiff",
+                ]
+            ],
+        ]
+    }
+
+    func testManifest_patchedFilesKeyInReservedFolder_throws() {
+        let keys = [
+            "__hcp_patches",
+            "__hcp_patches/",
+            "__hcp_patches/main.jsbundle",
+            "./__hcp_patches/main.jsbundle",
+            "/__hcp_patches/main.jsbundle",
+        ]
+        for key in keys {
+            XCTAssertThrowsError(try CodePushDiffManifest(json: manifestJSON(patchedFileKey: key)), key) { error in
+                XCTAssertTrue(error.localizedDescription.contains("reserved \"__hcp_patches/\" folder"), error.localizedDescription)
+            }
+        }
+    }
+
+    func testManifest_patchedFilesKeyOutsideReservedFolder_isAccepted() throws {
+        for key in ["assets/__hcp_patches/main.jsbundle", "__hcp_patches_extra/main.jsbundle"] {
+            let manifest = try CodePushDiffManifest(json: manifestJSON(patchedFileKey: key))
+            XCTAssertEqual(Array(manifest.patchedFiles.keys), [key])
+        }
+    }
+
+    func testManifest_patchedFilesKeyWithParentComponent_throws() {
+        let keys = [
+            "relative/../__hcp_patches/main.jsbundle",
+            "__hcp_patches/../relative/main.jsbundle",
+            "relative/../main.jsbundle",
+            "../main.jsbundle",
+            "relative/..",
+        ]
+        for key in keys {
+            XCTAssertThrowsError(try CodePushDiffManifest(json: manifestJSON(patchedFileKey: key)), key) { error in
+                XCTAssertTrue(error.localizedDescription.contains("must not contain \"..\" components"), error.localizedDescription)
+            }
+        }
+    }
+
+    func testManifest_patchedFilesKeyWithDotsInComponentName_isAccepted() throws {
+        for key in ["relative/..main.jsbundle", "relative/main..jsbundle", "..."] {
+            let manifest = try CodePushDiffManifest(json: manifestJSON(patchedFileKey: key))
+            XCTAssertEqual(Array(manifest.patchedFiles.keys), [key])
+        }
+    }
+
     func testManifest_patchedFilesWithoutVersionTwo_throws() {
         let json: [AnyHashable: Any] = [
             "version": 1,
