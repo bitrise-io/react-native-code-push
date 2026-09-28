@@ -155,7 +155,7 @@ export class AcquisitionManager {
                 var responseObject = JSON.parse(response.body);
                 var updateInfo: UpdateCheckResponse = responseObject.update_info;
             } catch (error) {
-                callback(error, /*remotePackage=*/ null);
+                callback(error as Error, /*remotePackage=*/ null);
                 return;
             }
 

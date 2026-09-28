@@ -15,9 +15,6 @@ import Q from "q";
 
 import del from "del";
 
-// ESM requires the explicit `.mts` extension, which TS 4.9 rejects in import paths.
-// TODO: when upgrading to TS 5.x, enable `allowImportingTsExtensions` (and `erasableSyntaxOnly`) and remove this suppression.
-// @ts-expect-error TS2691
 import { codeSigningPublicKey, signAndRecordUpdateArchive, setupTamperedSignatureUpdateScenario } from "./codesign.mts";
 
 // Used in test/template/app.json to avoid duplicating the PEM fixture in two places (ios and android plugin config).
@@ -82,7 +79,7 @@ function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
     return TestUtil.getProcessOutput(
         `npm install --save-dev @react-native/metro-config@${reactNativeVersion} @react-native-community/cli`,
         { cwd: projectPath, noLogStdOut: true }
-    ).then(() => { return null; });
+    ).then(() => {});
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +193,7 @@ class RNAndroid extends Platform.Android implements RNPlatform {
      */
     installApp(projectDirectory: string): Q.Promise<void> {
         const androidDirectory: string = path.join(projectDirectory, TestConfig.TestAppName, "android");
-        return TestUtil.getProcessOutput("adb install -r " + this.getBinaryPath(projectDirectory), { cwd: androidDirectory }).then(() => { return null; });
+        return TestUtil.getProcessOutput("adb install -r " + this.getBinaryPath(projectDirectory), { cwd: androidDirectory }).then(() => {});
     }
 
     /**
@@ -207,7 +204,7 @@ class RNAndroid extends Platform.Android implements RNPlatform {
         const androidDirectory: string = path.join(projectDirectory, TestConfig.TestAppName, "android");
         const gradlewCommand = process.platform === "darwin" || process.platform === "linux" ? "./gradlew" : "gradlew";
         return TestUtil.getProcessOutput(`${gradlewCommand} assembleRelease`, { noLogStdOut: true, cwd: androidDirectory })
-            .then(() => { return null; });
+            .then(() => {});
     }
 }
 
@@ -280,7 +277,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
      * Installs the binary of the given project on this platform.
      */
     installApp(projectDirectory: string): Q.Promise<void> {
-        return TestUtil.getProcessOutput("xcrun simctl install booted " + this.getBinaryPath(projectDirectory)).then(() => { return null; });
+        return TestUtil.getProcessOutput("xcrun simctl install booted " + this.getBinaryPath(projectDirectory)).then(() => {});
     }
 
     /**
@@ -331,7 +328,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
         });
 
         return TestUtil.getProcessOutput(`"${scriptPath}"`, { cwd: iOSProject, env, timeout: 2 * 60 * 1000, noLogStdOut: true, noLogStdErr: true })
-            .then(() => { return null; });
+            .then(() => {});
     }
 
     /**
@@ -345,7 +342,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
                 return TestUtil.getProcessOutput("xcodebuild -workspace " + path.join(iOSProject, TestConfig.TestAppName) + ".xcworkspace -scheme " + TestConfig.TestAppName +
                     " -configuration Release -destination \"platform=iOS Simulator,id=" + targetEmulator + "\" -derivedDataPath build", { cwd: iOSProject, timeout: 10 * 60 * 1000, maxBuffer: 1024 * 1024 * 5000, noLogStdOut: true });
             })
-            .then<void>(() => { return null; });
+            .then(() => {});
     }
 }
 
@@ -393,7 +390,7 @@ class RNProjectManager extends ProjectManager {
             });
 
             // Chain promise so that it maintains Q.Promise<void> type instead of Q.Promise<void[]>
-            return Q.all<void>(promises).then(() => { return null; });
+            return Q.all<void>(promises).then(() => {});
         }
 
         return copyDirectoryRecursively(templatePath, path.join(projectDirectory, TestConfig.TestAppName));
@@ -419,12 +416,12 @@ class RNProjectManager extends ProjectManager {
                     const escapedPublicKey = codeSigningPublicKey.replace(/\n/g, "\\n");
                     TestUtil.replaceString(appJsonPath, CODE_SIGNING_PUBLIC_KEY_PLACEHOLDER, escapedPublicKey);
                 })
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
+                .then(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
                 .then(installExpoBundleTooling.bind(undefined, path.join(projectDirectory, TestConfig.TestAppName)))
                 // create-expo-app's blank template ships without a metro.config.js. react-native-xcode.sh's
                 // bundling step (used both for the initial build and for fast-path scenario-switch rebuilds)
                 // shells out to react-native's cli.js, which throws "No Metro config found" without one.
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
+                .then(TestUtil.getProcessOutput.bind(undefined, "npx expo customize metro.config.js", { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(TestUtil.getProcessOutput.bind(undefined, `npx expo prebuild --clean${getExpoPrebuildPlatformFlag()}`, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true }))
                 .then(() => {
                     // Skipped entirely on iOS-only runs, where prebuild no longer generates the android/ folder.
@@ -432,15 +429,13 @@ class RNProjectManager extends ProjectManager {
                     if (fs.existsSync(androidManifestPath)) {
                         ensureAndroidCleartextTraffic(androidManifestPath);
                     }
-                    return null;
-                })
-                .then(() => { return null; });
+                });
         } else {
             return TestUtil.getProcessOutput("npx @react-native-community/cli init " + appName + " --version 0.87.0 --install-pods", { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true })
                 .then((e) => { console.log(`"npx @react-native-community/cli init ${appName}" success. cwd=${projectDirectory}`); return e; })
                 .then(this.copyTemplate.bind(this, templatePath, projectDirectory))
-                .then<void>(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
-                .then(() => { return null; })
+                .then(TestUtil.getProcessOutput.bind(undefined, TestConfig.thisPluginInstallString, { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true, noLogStdErr: true }))
+                .then(() => {})
                 .catch((error) => {
                     console.log(`"npx @react-native-community/cli init ${appName} failed". cwd=${projectDirectory}`, error);
                     throw new Error(error);

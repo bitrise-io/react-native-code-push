@@ -1,5 +1,5 @@
 // Type-checks test/ for the mocha-based integration test suite (see package.json's
-// typecheck:tests/test:* scripts). Mocha runs the .ts sources directly via Node's native
+// typecheck:tests/test:* scripts). Mocha runs the .mts sources directly via Node's native
 // TypeScript type-stripping, which only strips syntax and doesn't type-check - this config's
 // job is purely `tsc --noEmit`. Deliberately excludes src/ - that's a separate compilation unit
 // with its own config, see tsconfig.build.json for why.
@@ -8,12 +8,16 @@
 // this and tsconfig.build.json should be unified into a single project.
 {
     "compilerOptions": {
-        "target": "ES5",
+        "target": "es2024",
         "module": "nodenext",
-        "lib": ["es6"],
-        "noImplicitAny": true,
-        "moduleResolution": "nodenext",
-        "esModuleInterop": true,
+        "lib": ["es2024"],
+        "types": ["node", "mocha"],
+        "strict": true,
+        // TODO: The legacy test code is not null-safe, fix one day.
+        "strictNullChecks": false,
+        // Node's type stripping needs explicit `.mts` import paths and rejects syntax with runtime semantics (enum, etc.).
+        "allowImportingTsExtensions": true,
+        "erasableSyntaxOnly": true,
         "rootDir": "test",
         "noEmit": true
     },
