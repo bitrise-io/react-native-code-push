@@ -659,8 +659,7 @@ let nativeLogBuffer = "";
 function readIOSLogEvent(line: string): string {
     try {
         // `log stream` opens with a human-readable banner before the ndjson starts, so
-        // anything unparseable is expected and simply skipped. CPLog also prefixes its
-        // format string with a newline.
+        // anything unparseable is expected and simply skipped.
         return (JSON.parse(line).eventMessage || "").trim() || null;
     } catch (error) {
         return null;

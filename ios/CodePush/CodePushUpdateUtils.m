@@ -353,7 +353,7 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
                    withPublicKey:(NSString *)publicKeyString
                            error:(NSError **)error
 {
-    NSLog(@"Verifying signature for folder path: %@", folderPath);
+    CPLog(@"Verifying signature for folder path: %@", folderPath);
     
     NSString *publicKey = [self getKeyValueFromPublicKeyString: publicKeyString];
     

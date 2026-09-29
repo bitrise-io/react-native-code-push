@@ -62,7 +62,7 @@ public class CodePushTelemetryManager {
                 JSONObject retryStatusReport = new JSONObject(retryStatusReportString);
                 return CodePushUtils.convertJsonObjectToWritable(retryStatusReport);
             } catch (JSONException e) {
-                e.printStackTrace();
+                CodePushLog.error("Failed to parse the retry status report", e);
             }
         }
 

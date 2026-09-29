@@ -151,7 +151,7 @@ public class CodePush implements ReactPackage {
             if (!property.isEmpty()) {
                 return property;
             } else {
-                CodePushUtils.log("Specified " + propertyName + " is empty");
+                CodePushLog.warn("Specified " + propertyName + " is empty");
             } 
         }
 
@@ -257,20 +257,20 @@ public class CodePush implements ReactPackage {
             packageFilePath = mUpdateManager.getCurrentPackageBundlePath(this.mAssetsBundleFileName);
         } catch (CodePushMalformedDataException e) {
             // We need to recover the app in case 'codepush.json' is corrupted
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to read the current package metadata, clearing updates", e);
             clearUpdates();
         }
 
         if (packageFilePath == null) {
             // There has not been any downloaded updates.
-            CodePushUtils.logBundleUrl(binaryJsBundleUrl);
+            CodePushLog.info("Loading JS bundle from \"" + binaryJsBundleUrl + "\"");
             sIsRunningBinaryVersion = true;
             return binaryJsBundleUrl;
         }
 
         JSONObject packageMetadata = this.mUpdateManager.getCurrentPackage();
         if (isPackageBundleLatest(packageMetadata)) {
-            CodePushUtils.logBundleUrl(packageFilePath);
+            CodePushLog.info("Loading JS bundle from \"" + packageFilePath + "\"");
             sIsRunningBinaryVersion = false;
             return packageFilePath;
         } else {
@@ -280,7 +280,7 @@ public class CodePush implements ReactPackage {
                 this.clearUpdates();
             }
 
-            CodePushUtils.logBundleUrl(binaryJsBundleUrl);
+            CodePushLog.info("Loading JS bundle from \"" + binaryJsBundleUrl + "\"");
             sIsRunningBinaryVersion = true;
             return binaryJsBundleUrl;
         }
@@ -307,12 +307,12 @@ public class CodePush implements ReactPackage {
                 packageMetadata = this.mUpdateManager.getCurrentPackage();
             } catch (CodePushMalformedDataException e) {
                 // We need to recover the app in case 'codepush.json' is corrupted
-                CodePushUtils.log(e);
+                CodePushLog.error("Failed to read the current package metadata, clearing updates", e);
                 clearUpdates();
                 return;
             }
             if (packageMetadata == null || !isPackageBundleLatest(packageMetadata) && hasBinaryVersionChanged(packageMetadata)) {
-                CodePushUtils.log("Skipping initializeUpdateAfterRestart(), binary version is newer");
+                CodePushLog.info("Skipping initializeUpdateAfterRestart(), binary version is newer");
                 return;
             }
 
@@ -321,7 +321,7 @@ public class CodePush implements ReactPackage {
                 if (updateIsLoading) {
                     // Pending update was initialized, but notifyApplicationReady was not called.
                     // Therefore, deduce that it is a broken update and rollback.
-                    CodePushUtils.log("Update did not finish loading the last time, rolling back to a previous version.");
+                    CodePushLog.warn("Update did not finish loading the last time, rolling back to a previous version.");
                     sNeedToReportRollback = true;
                     rollbackPackage();
                 } else {

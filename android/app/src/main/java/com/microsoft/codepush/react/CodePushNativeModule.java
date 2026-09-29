@@ -156,10 +156,10 @@ public class CodePushNativeModule extends BaseJavaModule {
             bundleLoaderField.set(reactHostDelegate, latestJSBundleLoader);
 
         } catch (NoSuchFieldException nsfe) {
-            CodePushUtils.log("Field 'jsBundleLoader' NOT FOUND on " + (reactHostDelegate != null ? reactHostDelegate.getClass().getName() : "null") + ". This is an EXPECTED and IGNORED failure with ExpoReactHostDelegate. Will rely on reactHost.reload(). Original log: Unable to set JSBundle of ReactHostDelegate - CodePush may not support this version of React Native");
+            CodePushLog.info("Field 'jsBundleLoader' NOT FOUND on " + (reactHostDelegate != null ? reactHostDelegate.getClass().getName() : "null") + ". This is an EXPECTED and IGNORED failure with ExpoReactHostDelegate. Will rely on reactHost.reload(). Original log: Unable to set JSBundle of ReactHostDelegate - CodePush may not support this version of React Native");
             // DO NOT THROW for NoSuchFieldException.
         }catch (Exception e) {
-            CodePushUtils.log("Unable to set JSBundle of ReactHostDelegate - CodePush may not support this version of React Native");
+            CodePushLog.warn("Unable to set JSBundle of ReactHostDelegate - CodePush may not support this version of React Native", e);
             throw new IllegalAccessException("Could not setJSBundle");
         }
     }
@@ -192,7 +192,6 @@ public class CodePushNativeModule extends BaseJavaModule {
             }
 
             String latestJSBundleFile = mCodePush.getJSBundleFileInternal(mCodePush.getAssetsBundleFileName());
-            CodePushUtils.log("[MyDebug] Latest JS bundle for New Arch: " + latestJSBundleFile);
 
 
             try {
@@ -202,16 +201,16 @@ public class CodePushNativeModule extends BaseJavaModule {
                         // #2) Update the locally stored JS bundle file path
                         setJSBundle(delegate, latestJSBundleFile);
                     } else {
-                        CodePushUtils.log("Could not get ReactHostDelegate from ReactHostImpl.");
+                        CodePushLog.warn("Could not get ReactHostDelegate from ReactHostImpl.");
                     }
                 } else {
-                    CodePushUtils.log("ReactHost is not a direct ReactHostImpl instance (" + reactHost.getClass().getName() + "), skipping direct setJSBundle reflection attempt. This is expected with Expo.");
+                    CodePushLog.info("ReactHost is not a direct ReactHostImpl instance (" + reactHost.getClass().getName() + "), skipping direct setJSBundle reflection attempt. This is expected with Expo.");
                 }
             } catch (ClassCastException cce) {
-                CodePushUtils.log(new Exception("ClassCastException trying to get/use ReactHostDelegate. Skipping reflection call to setJSBundle. This is expected for Expo.", cce));
+                CodePushLog.info("ClassCastException trying to get/use ReactHostDelegate. Skipping reflection call to setJSBundle. This is expected for Expo. cause=" + cce.getMessage());
             }catch (Exception e) {
                 // Catch any unexpected errors from the attempt to call setJSBundle, e.g., if getReactHostDelegate itself fails
-                CodePushUtils.log(new Exception("Exception during the reflective setJSBundle block", e));
+                CodePushLog.warn("Exception during the reflective setJSBundle block", e);
             }
 
             // #3) Get the context creation method
@@ -226,7 +225,7 @@ public class CodePushNativeModule extends BaseJavaModule {
 
         } catch (Exception e) {
             // reflection logic failed somewhere so fall back to restarting the Activity (if it exists)
-            CodePushUtils.log(new Exception("Failed to load the bundle, falling back to restarting the Activity (if it exists)", e));
+            CodePushLog.warn("Failed to load the bundle, falling back to restarting the Activity (if it exists)", e);
             loadBundleLegacy();
         }
     }
@@ -274,11 +273,11 @@ public class CodePushNativeModule extends BaseJavaModule {
 
     private void restartAppInternal(boolean onlyIfUpdateIsPending) {
         if (this._restartInProgress) {
-            CodePushUtils.log("Restart request queued until the current restart is completed");
+            CodePushLog.info("Restart request queued until the current restart is completed");
             this._restartQueue.add(onlyIfUpdateIsPending);
             return;
         } else if (!this._allowed) {
-            CodePushUtils.log("Restart request queued until restarts are re-allowed");
+            CodePushLog.info("Restart request queued until restarts are re-allowed");
             this._restartQueue.add(onlyIfUpdateIsPending);
             return;
         }
@@ -286,7 +285,7 @@ public class CodePushNativeModule extends BaseJavaModule {
         this._restartInProgress = true;
         if (!onlyIfUpdateIsPending || mSettingsManager.isPendingUpdate(null)) {
             loadBundle();
-            CodePushUtils.log("Restarting app");
+            CodePushLog.info("Restarting app");
             return;
         }
 
@@ -300,11 +299,11 @@ public class CodePushNativeModule extends BaseJavaModule {
 
     @ReactMethod
     public void allow(Promise promise) {
-        CodePushUtils.log("Re-allowing restarts");
+        CodePushLog.info("Re-allowing restarts");
         this._allowed = true;
 
         if (_restartQueue.size() > 0) {
-            CodePushUtils.log("Executing pending restart");
+            CodePushLog.info("Executing pending restart");
             boolean buf = this._restartQueue.get(0);
             this._restartQueue.remove(0);
             this.restartAppInternal(buf);
@@ -323,7 +322,7 @@ public class CodePushNativeModule extends BaseJavaModule {
 
     @ReactMethod
     public void disallow(Promise promise) {
-        CodePushUtils.log("Disallowing restarts");
+        CodePushLog.info("Disallowing restarts");
         this._allowed = false;
         promise.resolve(null);
         return;
@@ -335,7 +334,7 @@ public class CodePushNativeModule extends BaseJavaModule {
             restartAppInternal(onlyIfUpdateIsPending);
             promise.resolve(null);
         } catch(CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to restart the app", e);
             promise.reject(e);
         }
     }
@@ -397,17 +396,17 @@ public class CodePushNativeModule extends BaseJavaModule {
                     JSONObject newPackage = mUpdateManager.getPackage(CodePushUtils.tryGetString(updatePackage, CodePushConstants.PACKAGE_HASH_KEY));
                     promise.resolve(CodePushUtils.convertJsonObjectToWritable(newPackage));
                 } catch (CodePushInvalidUpdateException e) {
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Downloaded update is invalid", e);
                     mSettingsManager.saveFailedUpdate(CodePushUtils.convertReadableToJsonObject(updatePackage));
                     promise.reject(e);
                 } catch (IOException | CodePushUnknownException | CodePushMalformedDataException e) {
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to download update", e);
                     promise.reject(e);
                 } catch (Exception e) {
                     // Safety net: make sure a download failure always rejects the JS promise
                     // instead of escaping this background task uncaught, which would leave
                     // the promise hanging forever with no error and no log tying it to a cause.
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to download update", e);
                     promise.reject(e);
                 }
 
@@ -435,7 +434,7 @@ public class CodePushNativeModule extends BaseJavaModule {
 
             promise.resolve(configMap);
         } catch(CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to get the configuration", e);
             promise.reject(e);
         }
     }
@@ -493,17 +492,17 @@ public class CodePushNativeModule extends BaseJavaModule {
                     }
                 } catch (CodePushMalformedDataException e) {
                     // We need to recover the app in case 'codepush.json' is corrupted
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to get update metadata", e);
                     clearUpdates();
                     promise.resolve(null);
                 } catch(CodePushUnknownException e) {
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to get update metadata", e);
                     promise.reject(e);
                 } catch (Exception e) {
                     // Safety net: make sure a failure always rejects the JS promise
                     // instead of escaping this background task uncaught, which would leave
                     // the promise hanging forever with no error and no log tying it to a cause.
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to get update metadata", e);
                     promise.reject(e);
                 }
 
@@ -561,13 +560,13 @@ public class CodePushNativeModule extends BaseJavaModule {
                     
                     promise.resolve("");
                 } catch(CodePushUnknownException e) {
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to get the new status report", e);
                     promise.reject(e);
                 } catch (Exception e) {
                     // Safety net: make sure a failure always rejects the JS promise
                     // instead of escaping this background task uncaught, which would leave
                     // the promise hanging forever with no error and no log tying it to a cause.
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to get the new status report", e);
                     promise.reject(e);
                 }
                 return null;
@@ -612,7 +611,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                                 private Runnable loadBundleRunnable = new Runnable() {
                                     @Override
                                     public void run() {
-                                        CodePushUtils.log("Loading bundle on suspend");
+                                        CodePushLog.info("Loading bundle on suspend");
                                         restartAppInternal(false);
                                     }
                                 };
@@ -626,7 +625,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                                         long durationInBackground = (new Date().getTime() - lastPausedDate.getTime()) / 1000;
                                         if (installMode == CodePushInstallMode.IMMEDIATE.getValue()
                                                 || durationInBackground >= CodePushNativeModule.this.mMinimumBackgroundDuration) {
-                                            CodePushUtils.log("Loading bundle on resume");
+                                            CodePushLog.info("Loading bundle on resume");
                                             restartAppInternal(false);
                                         }
                                     }
@@ -654,13 +653,13 @@ public class CodePushNativeModule extends BaseJavaModule {
 
                     promise.resolve("");
                 } catch (CodePushUnknownException | CodePushMalformedDataException e) {
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to install update", e);
                     promise.reject(e);
                 } catch (Exception e) {
                     // Safety net: make sure an install failure always rejects the JS promise
                     // instead of escaping this background task uncaught, which would leave
                     // the promise hanging forever with no error and no log tying it to a cause.
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to install update", e);
                     promise.reject(e);
                 }
 
@@ -676,7 +675,7 @@ public class CodePushNativeModule extends BaseJavaModule {
         try {
             promise.resolve(mSettingsManager.isFailedHash(packageHash));
         } catch (CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to check whether the update failed earlier", e);
             promise.reject(e);
         }
     }
@@ -691,7 +690,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                 promise.resolve(null);
             }
         } catch (CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to get the latest rollback info", e);
             promise.reject(e);
         }
     }
@@ -702,7 +701,7 @@ public class CodePushNativeModule extends BaseJavaModule {
             mSettingsManager.setLatestRollbackInfo(packageHash);
             promise.resolve(null);
         } catch (CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to set the latest rollback info", e);
             promise.reject(e);
         }
     }
@@ -716,7 +715,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                     && packageHash.equals(mUpdateManager.getCurrentPackageHash());
             promise.resolve(isFirstRun);
         } catch(CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to check whether this is the first run of the update", e);
             promise.reject(e);
         }
     }
@@ -727,7 +726,7 @@ public class CodePushNativeModule extends BaseJavaModule {
             mSettingsManager.removePendingUpdate();
             promise.resolve("");
         } catch(CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to notify that the app is ready", e);
             promise.reject(e);
         }
     }
@@ -737,7 +736,7 @@ public class CodePushNativeModule extends BaseJavaModule {
         try {
             mTelemetryManager.recordStatusReported(statusReport);
         } catch(CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to record the reported status", e);
         }
     }
 
@@ -746,7 +745,7 @@ public class CodePushNativeModule extends BaseJavaModule {
         try {
             mTelemetryManager.saveStatusReportForRetry(statusReport);
         } catch(CodePushUnknownException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to save the status report for retry", e);
         }
     }
 
@@ -763,7 +762,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                 }
             }
         } catch(CodePushUnknownException | CodePushMalformedDataException e) {
-            CodePushUtils.log(e);
+            CodePushLog.error("Failed to download and replace the current bundle", e);
         }
     }
 
@@ -776,7 +775,7 @@ public class CodePushNativeModule extends BaseJavaModule {
      */
     @ReactMethod
     public void clearUpdates() {
-        CodePushUtils.log("Clearing updates.");
+        CodePushLog.info("Clearing updates.");
         mCodePush.clearUpdates();
     }
 
@@ -801,7 +800,7 @@ public class CodePushNativeModule extends BaseJavaModule {
                 // RN 0.80.3 and earlier (Java)
                 field = clazz.getDeclaredField("mReactHostDelegate");
             } catch (NoSuchFieldException e2) {
-                e2.printStackTrace();
+                CodePushLog.warn("Could not find the ReactHostDelegate field on ReactHostImpl", e2);
                 return null;
             }
         }
@@ -810,7 +809,7 @@ public class CodePushNativeModule extends BaseJavaModule {
             field.setAccessible(true);
             return (ReactHostDelegate) field.get(reactHostImpl);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            CodePushLog.warn("Could not access the ReactHostDelegate field on ReactHostImpl", e);
             return null;
         }
     }

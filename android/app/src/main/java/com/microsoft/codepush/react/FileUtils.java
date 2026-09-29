@@ -64,7 +64,7 @@ public class FileUtils {
 
     public static void deleteDirectoryAtPath(String directoryPath) {
         if (directoryPath == null) {
-            CodePushUtils.log("deleteDirectoryAtPath attempted with null directoryPath");
+            CodePushLog.warn("deleteDirectoryAtPath attempted with null directoryPath");
             return;
         }
         File file = new File(directoryPath);
@@ -90,7 +90,7 @@ public class FileUtils {
         }
 
         if (!file.delete()) {
-            CodePushUtils.log("Error deleting file " + file.getName());
+            CodePushLog.warn("Error deleting file " + file.getName());
         }
     }
 
