@@ -649,12 +649,12 @@ const UpdateSync2x = "updateSync2x.js";
 const UpdateNotifyApplicationReadyConditional = "updateNARConditional.js";
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Forward the app's native log into this run's output. By default a run log contains nothing
-// whatsoever from the native module, and there's no way to tell from a CI log which native
-// path a test took.
+// Forward the app's device log (the CodePush native and JS lines) into this run's output. By
+// default, a run log contains nothing whatsoever from the app, and there's no way to tell from a
+// CI log which native path a test took.
 
-let nativeLogProcess: childProcess.ChildProcess = null;
-let nativeLogBuffer = "";
+let deviceLogProcess: childProcess.ChildProcess = null;
+let deviceLogBuffer = "";
 
 function readIOSLogEvent(line: string): string {
     try {
@@ -666,35 +666,37 @@ function readIOSLogEvent(line: string): string {
     }
 }
 
-function startNativeLogForwarding(): void {
+function startDeviceLogForwarding(): void {
     const isIOS = TestUtil.readMochaCommandLineFlag("--ios");
     const isAndroid = TestUtil.readMochaCommandLineFlag("--android");
-    if (nativeLogProcess || (!isIOS && !isAndroid)) {
+    if (deviceLogProcess || (!isIOS && !isAndroid)) {
         return;
     }
 
     // The two platforms filter differently. iOS filters on CodePush's own message prefix in
-    // the log command itself, and emits one JSON object per line. Android filters by log tag:
-    // "ReactNative" is shared with React Native's own logging, but a release build barely uses
-    // it, so it's good enough. "-T 1" starts at the tail rather than replaying earlier runs'
-    // output, without mutating device state the way "logcat -c" would.
+    // the log command itself, and emits one JSON object per line. "--level info" is required for
+    // the JS lines: React Native logs console.log and console.warn at the info level, which
+    // `log stream` drops by default. Android filters by log tag: "ReactNative" (native) and
+    // "ReactNativeJS" (JS console) are shared with React Native's own logging, but a release build
+    // barely uses them, so it's good enough. "-T 1" starts at the tail rather than replaying
+    // earlier runs' output, without mutating device state the way "logcat -c" would.
     const commandArgs = isIOS
-        ? ["simctl", "spawn", "booted", "log", "stream", "--style", "ndjson", "--predicate", "eventMessage CONTAINS \"[CodePush]\""]
-        : ["logcat", "-v", "brief", "-T", "1", "ReactNative:D", "*:S"];
+        ? ["simctl", "spawn", "booted", "log", "stream", "--style", "ndjson", "--level", "info", "--predicate", "eventMessage CONTAINS \"[CodePush]\""]
+        : ["logcat", "-v", "brief", "-T", "1", "ReactNative:D", "ReactNativeJS:D", "*:S"];
 
     const logProcess = childProcess.spawn(isIOS ? "xcrun" : "adb", commandArgs, { stdio: ["ignore", "pipe", "ignore"] });
 
     logProcess.stdout.setEncoding("utf8");
     logProcess.stdout.on("data", (chunk: string) => {
-        nativeLogBuffer += chunk;
-        const lines = nativeLogBuffer.split("\n");
+        deviceLogBuffer += chunk;
+        const lines = deviceLogBuffer.split("\n");
         // The last element is either empty or a partial line still being written.
-        nativeLogBuffer = lines.pop() || "";
+        deviceLogBuffer = lines.pop() || "";
 
         lines.forEach((line) => {
             const message = isIOS ? readIOSLogEvent(line) : line.trim();
             if (message) {
-                console.log(`[NATIVE] ${message}`);
+                console.log(`[DEVICE] ${message}`);
             }
         });
     });
@@ -702,31 +704,31 @@ function startNativeLogForwarding(): void {
     // Failing to stream logs must never fail the run, this is diagnostics only. The handler
     // is also required: an unhandled "error" event on a child process throws.
     logProcess.on("error", (error: Error) => {
-        console.log(`[NATIVE] Could not stream native logs: ${error.message}`);
+        console.log(`[DEVICE] Could not stream device logs: ${error.message}`);
     });
 
     // A process that spawns fine but later dies (e.g. simulator not booted yet) emits
     // "close", not "error". Reset state so the next beforeEach can restart streaming,
-    // instead of leaving nativeLogProcess set and silently losing logs for the rest of the run.
+    // instead of leaving deviceLogProcess set and silently losing logs for the rest of the run.
     logProcess.on("close", (code: number) => {
-        if (nativeLogProcess === logProcess) {
-            console.log(`[NATIVE] Native log stream exited (code ${code}), will retry`);
-            nativeLogProcess = null;
-            nativeLogBuffer = "";
+        if (deviceLogProcess === logProcess) {
+            console.log(`[DEVICE] Device log stream exited (code ${code}), will retry`);
+            deviceLogProcess = null;
+            deviceLogBuffer = "";
         }
     });
 
-    nativeLogProcess = logProcess;
+    deviceLogProcess = logProcess;
 }
 
 beforeEach(function () {
-    startNativeLogForwarding();
+    startDeviceLogForwarding();
 });
 
 after(function () {
-    if (nativeLogProcess) {
-        nativeLogProcess.kill();
-        nativeLogProcess = null;
+    if (deviceLogProcess) {
+        deviceLogProcess.kill();
+        deviceLogProcess = null;
     }
 });
 
