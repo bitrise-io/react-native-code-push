@@ -16,7 +16,7 @@ jobs:
         run: npm install
 
       - name: Lint and type-check
-        run: npm run build:tests
+        run: npm run typecheck:tests
 
       - name: Check public API compatibility
         run: npm run check:api-compat
@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.ts') }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.mts') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
@@ -67,8 +67,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          # Note about test.ts: some NPM package versions are hardcoded here and installed during the test run.
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.ts') }}
+          # Note about test.mts: some NPM package versions are hardcoded here and installed during the test run.
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.mts') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
@@ -131,8 +131,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.npm
-          # Note about test.ts: some NPM package versions are hardcoded here and installed during the test run.
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.ts') }}
+          # Note about test.mts: some NPM package versions are hardcoded here and installed during the test run.
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json', 'test/test.mts') }}
           restore-keys: |
             ${{ runner.os }}-npm-
 
