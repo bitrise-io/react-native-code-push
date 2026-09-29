@@ -7,18 +7,22 @@
 // this and tsconfig.json should be unified into a single project.
 {
     "compilerOptions": {
-        "target": "ES5",
+        "target": "es2019",
         "module": "commonjs",
         // A subset of what RN supports at the oldest supported version (0.76). Widen it only as far as RN's list:
         // https://github.com/facebook/react-native/blob/0.76-stable/packages/typescript-config/tsconfig.json
         "lib": ["es2019"],
-        // No ambient @types/* (e.g. Node), otherwise they add their own libs and the list above is not enforced.
-        // RN globals come from src/globals.d.ts instead.
-        "types": [],
+        // Only RN's globals (console, fetch, etc.). Other ambient @types/* (e.g. Node) would add their own libs,
+        // and the list above would not be enforced.
+        "types": ["react-native"],
+        // RN's own .d.ts files do not type-check standalone (as in @react-native/typescript-config).
+        "skipLibCheck": true,
         "declaration": true,
-        "noImplicitAny": true,
+        "strict": true,
+        // TODO: existing legacy code is not null-safe, fix one day.
+        "strictNullChecks": false,
         "noEmitOnError": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "sourceMap": true,
         "rootDir": "src",
         "outDir": "lib",
