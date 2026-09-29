@@ -37,6 +37,11 @@ function setupServer(targetPlatform) {
         console.log("Body: " + JSON.stringify(req.body));
         res.sendStatus(200);
     });
+    app.post("/v0.1/public/codepush/report_status/deploy", function (req, res) {
+        console.log("Application reported deployment status.");
+        console.log("Body: " + JSON.stringify(req.body));
+        res.sendStatus(200);
+    });
     app.post("/reportTestMessage", function (req, res) {
         console.log("Application reported a test message.");
         console.log("Body: " + JSON.stringify(req.body));

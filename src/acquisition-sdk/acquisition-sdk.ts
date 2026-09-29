@@ -104,15 +104,18 @@ export class AcquisitionManager {
 
     private isRecoverable = (statusCode: number): boolean => statusCode >= 500 || statusCode === 408 || statusCode === 429;
 
+    // Logs with console directly: this file is compiled to lib/ separately, and cannot import the root logging.js.
+    // TODO: simplify this once we adopt TypeScript properly in the entire repo.
     private handleRequestFailure() {
-        if (this._serverUrl.includes(this.BASE_URL_PART) && !this.isRecoverable(this._statusCode)) {
+        if (this._serverUrl.includes(this.BASE_URL_PART) && !this.isRecoverable(this._statusCode) && !AcquisitionManager._apiCallsDisabled) {
             AcquisitionManager._apiCallsDisabled = true;
+            console.warn(`[CodePush] The server returned HTTP ${this._statusCode}, so all later API calls are disabled for the rest of this app session.`);
         }
     }
 
     public queryUpdateWithCurrentPackage(currentPackage: Package, callback?: Callback<RemotePackage | NativeUpdateNotification>): void {
         if (AcquisitionManager._apiCallsDisabled) {
-            console.log(`[CodePush] Api calls are disabled, skipping API call`);
+            console.log(`[CodePush] API calls are disabled, skipping the update_check request.`);
             callback(/*error=*/ null, /*remotePackage=*/ null);
             return;
         }
@@ -189,7 +192,7 @@ export class AcquisitionManager {
     // Note: deployedPackage and status are null when reporting a "binary update" (i.e. the app was updated through the app store, not CodePush)
     public reportStatusDeploy(deployedPackage?: Package, status?: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string, callback?: Callback<void>): void {
         if (AcquisitionManager._apiCallsDisabled) {
-            console.log(`[CodePush] Api calls are disabled, skipping API call`);
+            console.log(`[CodePush] API calls are disabled, skipping the report_status/deploy request.`);
             callback(/*error*/ null, /*not used*/ null);
             return;
         }
@@ -258,7 +261,7 @@ export class AcquisitionManager {
 
     public reportStatusDownload(downloadedPackage: DownloadedPackage, callback?: Callback<void>): void {
         if (AcquisitionManager._apiCallsDisabled) {
-            console.log(`[CodePush] Api calls are disabled, skipping API call`);
+            console.log(`[CodePush] API calls are disabled, skipping the report_status/download request.`);
             callback(/*error*/ null, /*not used*/ null);
             return;
         }

@@ -25,4 +25,23 @@ function error(message, err) {
   console.error(`${PREFIX} ${message}${formatError(err)}`);
 }
 
-module.exports = { info, warn, error };
+function logFields(fields) {
+  return Object.entries(fields)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => `${key}=${value}`)
+    .join(" ");
+}
+
+function packageLogFields(pkg) {
+  return {
+    versionLabel: pkg && pkg.versionLabel,
+    packageHash: pkg && pkg.packageHash
+  };
+}
+
+// Signed download URLs can have credentials in the query string.
+function redactUrl(url) {
+  return url ? url.split("?")[0] : url;
+}
+
+module.exports = { info, warn, error, logFields, packageLogFields, redactUrl };

@@ -2,7 +2,7 @@ import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/acquisition-sdk
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, NativeEventEmitter, Platform } from "react-native";
-import log from "./logging";
+import log, { logFields, packageLogFields, redactUrl } from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
@@ -41,12 +41,12 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
     );
   }
 
+  log.info(`Downloading update. ${logFields({ ...packageLogFields(remotePackage), packageSize: remotePackage.packageSize, url: redactUrl(remotePackage.downloadUrl) })}`);
   const downloadStartTime = Date.now();
-  const reportDownloadStatus = async (status) => {
+  // Only report a duration on success: on failure, this would be the time until
+  // the download broke rather than a completed download's duration, and could be misleading.
+  const reportDownloadStatus = async (status, downloadDurationMs) => {
     if (!reportStatusDownload) return;
-    // Only report a duration on success: on failure, this would be the time until
-    // the download broke rather than a completed download's duration, and could be misleading.
-    const downloadDurationMs = status === DownloadStatus.Succeeded ? Date.now() - downloadStartTime : undefined;
     try {
       await withTimeout(reportStatusDownload({ ...remotePackage, downloadDurationMs, status }), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
     } catch (err) {
@@ -68,7 +68,9 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
       throw err;
     }
 
-    await reportDownloadStatus(DownloadStatus.Succeeded);
+    const downloadDurationMs = Date.now() - downloadStartTime;
+    log.info(`Downloaded update. ${logFields({ ...packageLogFields(remotePackage), durationMs: downloadDurationMs })}`);
+    await reportDownloadStatus(DownloadStatus.Succeeded, downloadDurationMs);
 
     return attachLocalPackageMethods({ ...downloadedPackage, isPending: false }); // A freshly downloaded package hasn't been installed yet
   } finally {
@@ -118,6 +120,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
     }
   }
 
+  log.info(`Checking for update. ${logFields({ appVersion: queryPackage.appVersion, ...packageLogFields(queryPackage), deploymentKey: config.deploymentKey })}`);
   const update = await sdk.queryUpdateWithCurrentPackage(queryPackage);
 
   /*
@@ -138,22 +141,27 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    *    because we want to avoid having to install diff updates against the binary's
    *    version, which we can't do yet on Android.
    */
-  if (!update || update.updateAppVersion ||
-      localPackage && (update.packageHash === localPackage.packageHash) ||
-      (!localPackage || localPackage._isDebugOnly) && config.packageHash === update.packageHash) {
-    if (update && update.updateAppVersion) {
-      log.info("An update is available but it is not targeting the binary version of your app.");
-      if (handleBinaryVersionMismatchCallback && typeof handleBinaryVersionMismatchCallback === "function") {
-        handleBinaryVersionMismatchCallback(update)
-      }
+  if (!update) {
+    log.info("No update available.");
+    return null;
+  } else if (update.updateAppVersion) {
+    log.info(`An update is available but it is not targeting the binary version of your app. ${logFields({ targetBinaryVersion: update.appVersion })}`);
+    if (handleBinaryVersionMismatchCallback && typeof handleBinaryVersionMismatchCallback === "function") {
+      handleBinaryVersionMismatchCallback(update)
     }
-
+    return null;
+  } else if (localPackage && (update.packageHash === localPackage.packageHash)) {
+    log.info(`The server returned the update that is already installed, ignoring it. ${logFields(packageLogFields(update))}`);
+    return null;
+  } else if ((!localPackage || localPackage._isDebugOnly) && config.packageHash === update.packageHash) {
+    log.info(`The server returned the update that is already in the binary, ignoring it. ${logFields(packageLogFields(update))}`);
     return null;
   } else {
     const remotePackage = { ...update, isPending: false }; // A remote package could never be in a pending state
     remotePackage.download = (downloadProgressCallback) => downloadUpdate(remotePackage, downloadProgressCallback, sdk.reportStatusDownload);
     remotePackage.failedInstall = await NativeCodePush.isFailedUpdate(remotePackage.packageHash);
     remotePackage.deploymentKey = deploymentKey || nativeConfig.deploymentKey;
+    log.info(`Update available. ${logFields({ ...packageLogFields(remotePackage), packageSize: remotePackage.packageSize, mandatory: !!remotePackage.isMandatory, failedInstall: remotePackage.failedInstall })}`);
     return remotePackage;
   }
 }
@@ -178,13 +186,38 @@ async function getCurrentPackage() {
 
 async function installUpdate(localPackage, installMode = NativeCodePush.codePushInstallModeOnNextRestart, minimumBackgroundDuration = 0, updateInstalledCallback) {
   const localPackageCopy = Object.assign({}, localPackage); // In dev mode, React Native deep freezes any object queued over the bridge
+  log.info(`Installing update. ${logFields({ ...packageLogFields(localPackage), installMode: installModeName(installMode), minimumBackgroundDuration })}`);
   await NativeCodePush.installUpdate(localPackageCopy, installMode, minimumBackgroundDuration);
+  log.info(`Installed update. ${installedUpdateNextStep(installMode, minimumBackgroundDuration)}`);
   updateInstalledCallback && updateInstalledCallback();
   if (installMode == NativeCodePush.codePushInstallModeImmediate) {
     NativeCodePush.restartApp(false);
   } else {
     NativeCodePush.clearPendingRestart();
     localPackage.isPending = true; // Mark the package as pending since it hasn't been applied yet
+  }
+}
+
+function installModeName(installMode) {
+  const name = Object.keys(CodePush.InstallMode).find((key) => CodePush.InstallMode[key] === installMode);
+  return name || installMode;
+}
+
+function installedUpdateNextStep(installMode, minimumBackgroundDuration) {
+  switch (installMode) {
+    case CodePush.InstallMode.IMMEDIATE:
+      // Native logs whether the restart happens now or is queued (e.g. restarts are disallowed).
+      return "Requesting an app restart now.";
+    case CodePush.InstallMode.ON_NEXT_RESUME:
+      return minimumBackgroundDuration > 0
+        ? `It will run when the app resumes after at least ${minimumBackgroundDuration} seconds in the background.`
+        : "It will run when the app next resumes.";
+    case CodePush.InstallMode.ON_NEXT_SUSPEND:
+      return minimumBackgroundDuration > 0
+        ? `It will run when the app has been in the background for at least ${minimumBackgroundDuration} seconds.`
+        : "It will run when the app goes to the background.";
+    default:
+      return "It will run on the next app restart.";
   }
 }
 
@@ -234,6 +267,7 @@ function getPromisifiedSdk(requestFetchAdapter, config) {
   };
 
   sdk.reportStatusDownload = (downloadedPackage) => {
+    log.info(`Reporting download status. ${logFields({ status: downloadedPackage.status, ...packageLogFields(downloadedPackage), durationMs: downloadedPackage.downloadDurationMs })}`);
     return new Promise((resolve, reject) => {
       module.exports.AcquisitionSdk.prototype.reportStatusDownload.call(sdk, downloadedPackage, (err) => {
         if (err) {
@@ -275,7 +309,7 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
   const previousDeploymentKey = statusReport.previousDeploymentKey || config.deploymentKey;
   try {
     if (statusReport.appVersion) {
-      log.info(`Reporting binary update (${statusReport.appVersion})`);
+      log.info(`Reporting the first run of this binary version. ${logFields({ appVersion: statusReport.appVersion, previousLabelOrAppVersion, previousDeploymentKey })}`);
 
       if (!config.deploymentKey) {
         throw new Error("Deployment key is missed");
@@ -284,11 +318,11 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       const sdk = getPromisifiedSdk(requestFetchAdapter, config);
       await sdk.reportStatusDeploy(/* deployedPackage */ null, /* status */ null, previousLabelOrAppVersion, previousDeploymentKey);
     } else {
-      const label = statusReport.package.label;
+      const fields = logFields({ ...packageLogFields(statusReport.package), previousLabelOrAppVersion, previousDeploymentKey });
       if (statusReport.status === "DeploymentSucceeded") {
-        log.info(`Reporting CodePush update success (${label})`);
+        log.info(`Reporting update success. ${fields}`);
       } else {
-        log.info(`Reporting CodePush update rollback (${label})`);
+        log.info(`Reporting update rollback. ${fields}`);
         await NativeCodePush.setLatestRollbackInfo(statusReport.package.packageHash);
       }
 
@@ -300,7 +334,7 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
     NativeCodePush.recordStatusReported(statusReport);
     retryOnAppResume && retryOnAppResume.remove();
   } catch (e) {
-    log.error(`Report status failed: ${JSON.stringify(statusReport)}`, e);
+    log.warn(`Failed to report deployment status, will retry when the app resumes. ${logFields({ status: statusReport.status, ...packageLogFields(statusReport.package), appVersion: statusReport.appVersion })}`, e);
     NativeCodePush.saveStatusReportForRetry(statusReport);
     // Try again when the app resumes
     if (!retryOnAppResume) {
@@ -424,9 +458,8 @@ const sync = (() => {
     }
 
     if (syncInProgress) {
-      typeof syncStatusCallbackWithTryCatch === "function"
-        ? syncStatusCallbackWithTryCatch(CodePush.SyncStatus.SYNC_IN_PROGRESS)
-        : log.info("Sync already in progress.");
+      log.info("Sync already in progress.");
+      typeof syncStatusCallbackWithTryCatch === "function" && syncStatusCallbackWithTryCatch(CodePush.SyncStatus.SYNC_IN_PROGRESS);
       return Promise.resolve(CodePush.SyncStatus.SYNC_IN_PROGRESS);
     }
 
@@ -450,7 +483,6 @@ const sync = (() => {
  * when an update is available.
  */
 async function syncInternal(options = {}, syncStatusChangeCallback, downloadProgressCallback, handleBinaryVersionMismatchCallback) {
-  let resolvedInstallMode;
   const syncOptions = {
     deploymentKey: null,
     ignoreFailedUpdates: true,
@@ -462,44 +494,10 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
     ...options
   };
 
+  // The outcomes are logged below and in the API functions, whether or not a custom callback is passed.
   syncStatusChangeCallback = typeof syncStatusChangeCallback === "function"
     ? syncStatusChangeCallback
-    : (syncStatus) => {
-        switch(syncStatus) {
-          case CodePush.SyncStatus.CHECKING_FOR_UPDATE:
-            log.info("Checking for update.");
-            break;
-          case CodePush.SyncStatus.AWAITING_USER_ACTION:
-            log.info("Awaiting user action.");
-            break;
-          case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
-            log.info("Downloading package.");
-            break;
-          case CodePush.SyncStatus.INSTALLING_UPDATE:
-            log.info("Installing update.");
-            break;
-          case CodePush.SyncStatus.UP_TO_DATE:
-            log.info("App is up to date.");
-            break;
-          case CodePush.SyncStatus.UPDATE_IGNORED:
-            log.info("User cancelled the update.");
-            break;
-          case CodePush.SyncStatus.UPDATE_INSTALLED:
-            if (resolvedInstallMode == CodePush.InstallMode.ON_NEXT_RESTART) {
-              log.info("Update is installed and will be run on the next app restart.");
-            } else if (resolvedInstallMode == CodePush.InstallMode.ON_NEXT_RESUME) {
-              if (syncOptions.minimumBackgroundDuration > 0) {
-                log.info(`Update is installed and will be run after the app has been in the background for at least ${syncOptions.minimumBackgroundDuration} seconds.`);
-              } else {
-                log.info("Update is installed and will be run when the app next resumes.");
-              }
-            }
-            break;
-          case CodePush.SyncStatus.UNKNOWN_ERROR:
-            log.info("An unknown error occurred.");
-            break;
-        }
-      };
+    : () => {};
 
   try {
     await CodePush.notifyApplicationReady();
@@ -512,7 +510,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
       const localPackage = await remotePackage.download(downloadProgressCallback);
 
       // Determine the correct install mode based on whether the update is mandatory or not.
-      resolvedInstallMode = localPackage.isMandatory ? syncOptions.mandatoryInstallMode : syncOptions.installMode;
+      const resolvedInstallMode = localPackage.isMandatory ? syncOptions.mandatoryInstallMode : syncOptions.installMode;
 
       syncStatusChangeCallback(CodePush.SyncStatus.INSTALLING_UPDATE);
       await localPackage.install(resolvedInstallMode, syncOptions.minimumBackgroundDuration, () => {
@@ -526,14 +524,16 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
 
     if (!remotePackage || updateShouldBeIgnored) {
       if (updateShouldBeIgnored) {
-          log.warn("An update is available, but it is being ignored due to having been previously rolled back.");
+          log.warn(`An update is available, but it is being ignored due to having been previously rolled back. ${logFields(packageLogFields(remotePackage))}`);
       }
 
       const currentPackage = await CodePush.getCurrentPackage();
       if (currentPackage && currentPackage.isPending) {
+        log.info(`An installed update waits for the app to restart. ${logFields(packageLogFields(currentPackage))}`);
         syncStatusChangeCallback(CodePush.SyncStatus.UPDATE_INSTALLED);
         return CodePush.SyncStatus.UPDATE_INSTALLED;
       } else {
+        log.info("App is up to date.");
         syncStatusChangeCallback(CodePush.SyncStatus.UP_TO_DATE);
         return CodePush.SyncStatus.UP_TO_DATE;
       }
@@ -563,6 +563,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
           dialogButtons.push({
             text: syncOptions.updateDialog.optionalIgnoreButtonLabel,
             onPress: () => {
+              log.info(`The user ignored the update. ${logFields(packageLogFields(remotePackage))}`);
               syncStatusChangeCallback(CodePush.SyncStatus.UPDATE_IGNORED);
               resolve(CodePush.SyncStatus.UPDATE_IGNORED);
             }
@@ -585,6 +586,7 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
           message += `${syncOptions.updateDialog.descriptionPrefix} ${remotePackage.description}`;
         }
 
+        log.info("Showing the update dialog, waiting for user.");
         syncStatusChangeCallback(CodePush.SyncStatus.AWAITING_USER_ACTION);
         Alert.alert(syncOptions.updateDialog.title, message, dialogButtons);
       });
@@ -592,8 +594,8 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
       return await doDownloadAndInstall();
     }
   } catch (error) {
-    syncStatusChangeCallback(CodePush.SyncStatus.UNKNOWN_ERROR);
     log.error("Sync failed.", error);
+    syncStatusChangeCallback(CodePush.SyncStatus.UNKNOWN_ERROR);
     throw error;
   }
 };
