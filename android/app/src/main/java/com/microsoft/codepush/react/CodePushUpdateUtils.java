@@ -143,7 +143,6 @@ public class CodePushUpdateUtils {
     // 2. JSON stringify the array
     // 3. SHA256-hash the result
     public static void verifyFolderHash(String folderPath, String expectedHash) {
-        CodePushLog.info("Verifying hash for folder path: " + folderPath);
         ArrayList<String> updateContentsManifest = new ArrayList<>();
         addContentsOfFolderToManifest(folderPath, "", updateContentsManifest);
         //sort manifest strings to make sure, that they are completely equal with manifest strings has been generated in cli!
@@ -155,16 +154,17 @@ public class CodePushUpdateUtils {
 
         // The JSON serialization turns path separators into "\/", e.g. "CodePush\/assets\/image.png"
         String updateContentsManifestString = updateContentsJSONArray.toString().replace("\\/", "/");
-        CodePushLog.info("Manifest string: " + updateContentsManifestString);
-
         String updateContentsManifestHash = computeHash(new ByteArrayInputStream(updateContentsManifestString.getBytes()));
 
-        CodePushLog.info("Expected hash: " + expectedHash + ", actual hash: " + updateContentsManifestHash);
         if (!expectedHash.equals(updateContentsManifestHash)) {
-            throw new CodePushInvalidUpdateException("The update contents failed the data integrity check.");
+            // The manifest shows which files differ from the released contents.
+            CodePushLog.error("Hash mismatch. expectedHash=" + expectedHash + " actualHash=" + updateContentsManifestHash
+                    + " manifest=" + updateContentsManifestString);
+            throw new CodePushInvalidUpdateException("The update contents failed the data integrity check. expectedHash="
+                    + expectedHash + " actualHash=" + updateContentsManifestHash);
         }
 
-        CodePushLog.info("The update contents succeeded the data integrity check.");
+        CodePushLog.info("The update contents passed the data integrity check. hash=" + updateContentsManifestHash);
     }
 
     public static Map<String, Object> verifyAndDecodeJWT(String jwt, PublicKey publicKey) {
@@ -220,8 +220,6 @@ public class CodePushUpdateUtils {
     }
 
     public static void verifyUpdateSignature(String folderPath, String packageHash, String stringPublicKey) throws CodePushInvalidUpdateException {
-        CodePushLog.info("Verifying signature for folder path: " + folderPath);
-
         final PublicKey publicKey = parsePublicKey(stringPublicKey);
         if (publicKey == null) {
             throw new CodePushInvalidUpdateException("The update could not be verified because no public key was found.");

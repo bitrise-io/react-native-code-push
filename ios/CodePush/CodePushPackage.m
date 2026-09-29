@@ -174,6 +174,10 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                         CodePushDiffManifest *diffManifest = nil;
                                                         NSString *currentPackageFolderPath = nil;
 
+                                                        if (!isDiffUpdate) {
+                                                            CPLog(@"Applying full update.");
+                                                        }
+
                                                         if (isDiffUpdate) {
                                                             // Copy the current package to the new package.
                                                             currentPackageFolderPath = [self getCurrentPackageFolderPath:&error];
@@ -242,6 +246,9 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                 return;
                                                             }
 
+                                                            CPLog(@"Applying diff update. binaryDiff=%@ patchedFiles=%lu",
+                                                                  diffManifest.isBinaryDiff ? @"true" : @"false", (unsigned long)diffManifest.patchedFiles.count);
+
                                                             if (![CodePushPackage validateDiffManifest:diffManifest
                                                                                    currentPackageFolder:currentPackageFolderPath
                                                                                      enableDeltaUpdates:[[CodePushConfig current] enableDeltaUpdates]
@@ -305,6 +312,9 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                 failCallback(error);
                                                                 return;
                                                             }
+                                                            if (diffManifest.isBinaryDiff) {
+                                                                CPLog(@"Applied %lu binary diff patches.", (unsigned long)diffManifest.patchedFiles.count);
+                                                            }
                                                         }
 
                                                         [[NSFileManager defaultManager] removeItemAtPath:unzippedFolderPath
@@ -343,7 +353,6 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             }
                                                         }
 
-                                                        CPLog((isDiffUpdate) ? @"Applying diff update." : @"Applying full update.");
                                                         
                                                         BOOL isSignatureVerificationEnabled = (publicKey != nil);
                                                         
@@ -378,7 +387,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             failCallback(error);
                                                             return;
                                                         } else {
-                                                            CPLog(@"The update contents succeeded the data integrity check.");
+                                                            CPLog(@"The update contents passed the data integrity check. hash=%@", newUpdateHash);
                                                         }
 
                                                         if (isSignatureVerificationEnabled) {
@@ -398,6 +407,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             }
                                                         }
                                                     } else {
+                                                        CPLog(@"Applying full update. zip=false");
                                                         [[NSFileManager defaultManager] createDirectoryAtPath:newUpdateFolderPath
                                                                                   withIntermediateDirectories:YES
                                                                                                    attributes:nil

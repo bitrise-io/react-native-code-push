@@ -73,6 +73,7 @@ static NSString *const PendingUpdateIsLoadingKey = @"isLoading";
 // that is associated with an update's package.
 static NSString *const AppVersionKey = @"appVersion";
 static NSString *const BinaryBundleDateKey = @"binaryDate";
+static NSString *const VersionLabelKey = @"versionLabel";
 static NSString *const PackageHashKey = @"packageHash";
 static NSString *const PackageIsPendingKey = @"isPending";
 
@@ -170,14 +171,18 @@ static NSString *const LatestRollbackCountKey = @"count";
 
     [self ensureBinaryBundleExists];
 
-    NSString *logMessageFormat = @"Loading JS bundle from %@";
-
     NSError *error;
     NSString *packageFile = [CodePushPackage getCurrentPackageBundlePath:&error];
     NSURL *binaryBundleURL = [self binaryBundleURL];
 
-    if (error || !packageFile) {
-        CPLog(logMessageFormat, binaryBundleURL);
+    if (error) {
+        CPLog(@"Loading the JS bundle of the binary, because the installed update could not be read. error=%@", error);
+        isRunningBinaryVersion = YES;
+        return binaryBundleURL;
+    }
+
+    if (!packageFile) {
+        CPLog(@"Loading the JS bundle of the binary, because no update is installed.");
         isRunningBinaryVersion = YES;
         return binaryBundleURL;
     }
@@ -185,7 +190,7 @@ static NSString *const LatestRollbackCountKey = @"count";
     NSString *binaryAppVersion = [[CodePushConfig current] appVersion];
     NSDictionary *currentPackageMetadata = [CodePushPackage getCurrentPackage:&error];
     if (error || !currentPackageMetadata) {
-        CPLog(logMessageFormat, binaryBundleURL);
+        CPLog(@"Loading the JS bundle of the binary, because the installed update has no readable metadata. error=%@", error);
         isRunningBinaryVersion = YES;
         return binaryBundleURL;
     }
@@ -203,7 +208,7 @@ static NSString *const LatestRollbackCountKey = @"count";
         NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
         NSDictionary *pendingUpdate = [preferences objectForKey:PendingUpdateKey];
         if (pendingUpdate && [pendingUpdate[PendingUpdateIsLoadingKey] boolValue]) {
-            CPLog(@"Update did not finish loading the last time, rolling back to a previous version.");
+            CPLog(@"Update did not finish loading the last time, rolling back to a previous version. versionLabel=%@ packageHash=%@", currentPackageMetadata[VersionLabelKey], currentPackageMetadata[PackageHashKey]);
             [self discardStuckPendingUpdate];
             // Re-derive the URL now that the rollback has changed the current package.
             return [self bundleURLForResource:resourceName
@@ -214,7 +219,7 @@ static NSString *const LatestRollbackCountKey = @"count";
 
         // Return package file because it is newer than the app store binary's JS bundle
         NSURL *packageUrl = [[NSURL alloc] initFileURLWithPath:packageFile];
-        CPLog(logMessageFormat, packageUrl);
+        CPLog(@"Loading the JS bundle of the installed update. versionLabel=%@ packageHash=%@", currentPackageMetadata[VersionLabelKey], currentPackageMetadata[PackageHashKey]);
         isRunningBinaryVersion = NO;
         return packageUrl;
     } else {
@@ -223,11 +228,13 @@ static NSString *const LatestRollbackCountKey = @"count";
         isRelease = YES;
 #endif
 
-        if (isRelease || ![binaryAppVersion isEqualToString:packageAppVersion]) {
+        BOOL clearsUpdates = isRelease || ![binaryAppVersion isEqualToString:packageAppVersion];
+        if (clearsUpdates) {
             [CodePush clearUpdates];
         }
 
-        CPLog(logMessageFormat, binaryBundleURL);
+        CPLog(@"Loading the JS bundle of the binary, because the binary changed since the update was installed. versionLabel=%@ packageHash=%@ updatesCleared=%@",
+              currentPackageMetadata[VersionLabelKey], currentPackageMetadata[PackageHashKey], clearsUpdates ? @"true" : @"false");
         isRunningBinaryVersion = YES;
         return binaryBundleURL;
     }
@@ -903,12 +910,15 @@ RCT_EXPORT_METHOD(downloadUpdate:(NSDictionary*)updatePackage
             NSDictionary *newPackage = [CodePushPackage getPackage:mutableUpdatePackage[PackageHashKey] error:&err];
 
             if (err) {
+                CPLog(@"Failed to read the downloaded update. error=%@", err);
                 return reject([NSString stringWithFormat: @"%lu", (long)err.code], err.localizedDescription, err);
             }
             resolve(newPackage);
         }
         // The download failed
         failCallback:^(NSError *err) {
+            // Not the raw error: its userInfo holds the full download URL, including signed query credentials.
+            CPLog(@"Failed to download update. domain=%@ code=%ld description=%@", err.domain, (long)err.code, err.localizedDescription);
             if ([CodePushErrorUtils isCodePushError:err]) {
                 [[self class] saveFailedUpdate:mutableUpdatePackage];
             }

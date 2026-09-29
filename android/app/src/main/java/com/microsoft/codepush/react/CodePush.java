@@ -263,24 +263,27 @@ public class CodePush implements ReactPackage {
 
         if (packageFilePath == null) {
             // There has not been any downloaded updates.
-            CodePushLog.info("Loading JS bundle from \"" + binaryJsBundleUrl + "\"");
+            CodePushLog.info("Loading the JS bundle of the binary, because no update is installed.");
             sIsRunningBinaryVersion = true;
             return binaryJsBundleUrl;
         }
 
         JSONObject packageMetadata = this.mUpdateManager.getCurrentPackage();
         if (isPackageBundleLatest(packageMetadata)) {
-            CodePushLog.info("Loading JS bundle from \"" + packageFilePath + "\"");
+            CodePushLog.info("Loading the JS bundle of the installed update. "
+                    + packageLogFields(packageMetadata));
             sIsRunningBinaryVersion = false;
             return packageFilePath;
         } else {
             // The binary version is newer.
             this.mDidUpdate = false;
-            if (!this.mIsDebugMode || hasBinaryVersionChanged(packageMetadata)) {
+            boolean clearsUpdates = !this.mIsDebugMode || hasBinaryVersionChanged(packageMetadata);
+            if (clearsUpdates) {
                 this.clearUpdates();
             }
 
-            CodePushLog.info("Loading JS bundle from \"" + binaryJsBundleUrl + "\"");
+            CodePushLog.info("Loading the JS bundle of the binary, because the binary changed since the update was installed. "
+                    + packageLogFields(packageMetadata) + " updatesCleared=" + clearsUpdates);
             sIsRunningBinaryVersion = true;
             return binaryJsBundleUrl;
         }
@@ -321,7 +324,8 @@ public class CodePush implements ReactPackage {
                 if (updateIsLoading) {
                     // Pending update was initialized, but notifyApplicationReady was not called.
                     // Therefore, deduce that it is a broken update and rollback.
-                    CodePushLog.warn("Update did not finish loading the last time, rolling back to a previous version.");
+                    CodePushLog.warn("Update did not finish loading the last time, rolling back to a previous version. "
+                            + packageLogFields(packageMetadata));
                     sNeedToReportRollback = true;
                     rollbackPackage();
                 } else {
@@ -368,6 +372,11 @@ public class CodePush implements ReactPackage {
         } catch (NumberFormatException e) {
             throw new CodePushUnknownException("Error in reading binary modified date from package metadata", e);
         }
+    }
+
+    private static String packageLogFields(JSONObject packageMetadata) {
+        return "versionLabel=" + packageMetadata.optString(CodePushConstants.VERSION_LABEL_KEY, null)
+                + " packageHash=" + packageMetadata.optString(CodePushConstants.PACKAGE_HASH_KEY, null);
     }
 
     private boolean hasBinaryVersionChanged(JSONObject packageMetadata) {

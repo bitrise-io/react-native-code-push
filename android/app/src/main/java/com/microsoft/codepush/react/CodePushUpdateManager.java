@@ -228,6 +228,7 @@ public class CodePushUpdateManager {
             }
 
             isZip = ByteBuffer.wrap(header).getInt() == 0x504b0304;
+            CodePushLog.info("Downloaded update package. httpStatus=" + responseCode + " bytes=" + receivedBytes + " zip=" + isZip);
         } catch (MalformedURLException e) {
             throw new CodePushMalformedDataException(downloadUrlString, e);
         } finally {
@@ -267,10 +268,14 @@ public class CodePushUpdateManager {
                 } catch (JSONException e) {
                     throw new CodePushMalformedDataException(diffManifestFilePath, e);
                 }
+                CodePushLog.info("Applying diff update. binaryDiff=" + diffManifest.isBinaryDiff()
+                        + " patchedFiles=" + diffManifest.getPatchedFiles().size());
                 String currentPackageFolderPath = getCurrentPackageFolderPath();
                 CodePushUpdateUtils.copyNecessaryFilesFromCurrentPackage(diffManifest, currentPackageFolderPath, newUpdateFolderPath);
                 File diffManifestFile = new File(diffManifestFilePath);
                 diffManifestFile.delete();
+            } else {
+                CodePushLog.info("Applying full update.");
             }
 
             // The patches folder of a binary diff must not end up in the installed package: it is
@@ -293,6 +298,7 @@ public class CodePushUpdateManager {
                         throw new CodePushInvalidUpdateException("Received a binary diff update, but no currently installed package exists to diff against (this is likely the first CodePush update for this app install). Diffing against the embedded app binary is not yet supported.");
                     }
                     BinaryDiffPatcher.applyBinaryDiffPatches(diffManifest, new File(currentPackageFolderPath), new File(unzippedFolderPath), new File(newUpdateFolderPath));
+                    CodePushLog.info("Applied " + diffManifest.getPatchedFiles().size() + " binary diff patches.");
                 }
             }
 
@@ -308,12 +314,6 @@ public class CodePushUpdateManager {
                 if (FileUtils.fileAtPathExists(newUpdateMetadataPath)) {
                     File metadataFileFromOldUpdate = new File(newUpdateMetadataPath);
                     metadataFileFromOldUpdate.delete();
-                }
-
-                if (isDiffUpdate) {
-                    CodePushLog.info("Applying diff update.");
-                } else {
-                    CodePushLog.info("Applying full update.");
                 }
 
                 boolean isSignatureVerificationEnabled = (stringPublicKey != null);
@@ -346,6 +346,7 @@ public class CodePushUpdateManager {
                 CodePushUtils.setJSONValueForKey(updatePackage, CodePushConstants.RELATIVE_BUNDLE_PATH_KEY, relativeBundlePath);
             }
         } else {
+            CodePushLog.info("Applying full update. zip=false");
             // File is a jsbundle, move it to a folder with the packageHash as its name
             FileUtils.moveFile(downloadFile, newUpdateFolderPath, expectedBundleFileName);
         }
