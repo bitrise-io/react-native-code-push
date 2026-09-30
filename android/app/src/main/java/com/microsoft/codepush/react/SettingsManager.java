@@ -41,7 +41,7 @@ public class SettingsManager {
             return new JSONObject(pendingUpdateString);
         } catch (JSONException e) {
             // Should not happen.
-            CodePushUtils.log("Unable to parse pending update metadata " + pendingUpdateString +
+            CodePushLog.warn("Unable to parse pending update metadata " + pendingUpdateString +
                     " stored in SharedPreferences");
             return null;
         }
@@ -125,7 +125,7 @@ public class SettingsManager {
             return new JSONObject(latestRollbackInfoString);
         } catch (JSONException e) {
             // Should not happen.
-            CodePushUtils.log("Unable to parse latest rollback metadata " + latestRollbackInfoString +
+            CodePushLog.warn("Unable to parse latest rollback metadata " + latestRollbackInfoString +
                     " stored in SharedPreferences");
             return null;
         }
@@ -142,7 +142,7 @@ public class SettingsManager {
                     count = latestRollbackInfo.getInt(CodePushConstants.LATEST_ROLLBACK_COUNT_KEY);
                 }
             } catch (JSONException e) {
-                CodePushUtils.log("Unable to parse latest rollback info.");
+                CodePushLog.warn("Unable to parse latest rollback info.");
             }
         } else {
             latestRollbackInfo = new JSONObject();

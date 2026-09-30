@@ -1,6 +1,5 @@
 package com.microsoft.codepush.react;
 
-import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.NoSuchKeyException;
@@ -201,18 +200,6 @@ public class CodePushUtils {
             // Should not happen
             throw new CodePushMalformedDataException(filePath, jsonException);
         }
-    }
-
-    public static void log(String message) {
-        Log.d(CodePushConstants.REACT_NATIVE_LOG_TAG, "[CodePush] " + message);
-    }
-
-    public static void log(Throwable tr) {
-        Log.e(CodePushConstants.REACT_NATIVE_LOG_TAG, "[CodePush] Exception", tr);
-    }
-
-    public static void logBundleUrl(String path) {
-        log("Loading JS bundle from \"" + path + "\"");
     }
 
     public static void setJSONValueForKey(JSONObject json, String key, Object value) {

@@ -70,7 +70,7 @@ public class CodePushDialog extends BaseJavaModule {
                             throw new CodePushUnknownException("Unknown button ID pressed.");
                     }
                 } catch (Throwable e) {
-                    CodePushUtils.log(e);
+                    CodePushLog.error("Failed to handle the update dialog button press", e);
                 }
             }
         };

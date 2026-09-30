@@ -27,7 +27,7 @@ class CodePushUpdateManagerTest {
 
     @Before
     fun mockAndroidLog() {
-        // CodePushUtils.log() is used deep inside the SDK classes, which isn't stubbed for plain JVM unit tests.
+        // CodePushLog is used deep inside the SDK classes, which isn't stubbed for plain JVM unit tests.
         // We'd rather hack around this single instance (as long as this is the only one) than moving these tests to instrumented Android tests.
         logMock = Mockito.mockStatic(Log::class.java)
     }
