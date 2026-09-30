@@ -16,15 +16,25 @@ React Native CodePush is a native module that enables over-the-air updates for R
 Prefer unit testing what's possible (even though, on iOS, this involves a simulator). Legacy code used E2E tests for everything, which is complex, error-prone, and slow. The existing E2E tests are still useful, but this is not a pattern to follow.
 
 #### E2E Tests
+- `npm run typecheck:tests` - Lints and type-checks `test/`. Mocha runs the `.mts` test sources directly via Node's native TypeScript type-stripping, so this is the only place type errors in `test/` get caught.
 - `npm run test:android` - Run Android-specific tests
 - `npm run test:ios` - Run iOS-specific tests  
 - `npm run test:setup:android` - Set up Android emulator for testing
 - `npm run test:setup:ios` - Set up iOS simulator for testing
 
 ### Build
-- `npm run typecheck:tests`. Mocha runs the `.mts` test sources directly via Node's native TypeScript type-stripping, so this is the only place type errors in `test/` get caught.
-- `npm run build:ts` - Compiles `src/` (currently just the vendored `acquisition-sdk`) to `lib/`, which is what ships to consumers instead of raw `.ts`. Wired into `setup` (so local dev/tests have `lib/` available) and `prepare` (so `npm publish`/`npm pack` always ship a freshly built `lib/`).
-  - This split (a separate `tsconfig.build.json` for `src/` -> `lib/` and `tsconfig.json` for type-checking `test/`) is temporary. Once `CodePush.js` and the rest of this repo's runtime JS are migrated to TypeScript, these should be unified into a single build, and adopting `react-native-builder-bob` (or some other common tool) is worth considering at that point instead of hand-rolled `tsc` + npm script wiring.
+- `npm run typecheck` - Type-checks the library sources in `src/`
+- `npm run build:ts` - Runs `react-native-builder-bob`, which compiles `src/` to `lib/`. `lib/` is what ships to consumers.
+  - Bob writes one folder per target: `lib/commonjs/` (JS, compiled by Babel with the React Native preset from `babel.config.js`) and `lib/typescript/` (`.d.ts` files from `tsc`). `CodePush.js` imports from `lib/commonjs/` today, but that file should be broken up and refactored to TS over time.
+  - Babel only strips types, so `tsc` (`npm run typecheck`) is the only thing that catches type errors in `src/`.
+  - Only `commonjs` is emitted on purpose: it is the module format consumers already get, and this package must not ship breaking changes. Adding a `module` (ESM) target, and possibly an `exports` map, belongs in a future major release.
+  - The public types stay hand-written in `typings/`. The `.d.ts` files bob generates in `lib/typescript/` are not used by consumers today, but we might want to automate this in the future.
+
+### Conventions for writing new code
+
+- Write new runtime code in TypeScript under `src/`, not in `CodePush.js` or other root-level `.js` files. The goal is to migrate the root JS to TypeScript over time, so avoid growing `CodePush.js`. Small changes to existing root JS are fine.
+- Import compiled code from the root JS via `lib/commonjs/...` (for example `./lib/commonjs/acquisition-sdk/acquisition-sdk`).
+- Write new Android-specific code in Kotlin with unit-testing in mind. Do not bloat existing Java files with large additions.
 
 ### Platform Testing
 - Tests run on actual emulators/simulators with real React Native apps

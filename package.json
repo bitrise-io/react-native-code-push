@@ -20,12 +20,21 @@
       "onFail": "error"
     }
   },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "typescript"
+    ]
+  },
   "scripts": {
     "setup": "npm install --quiet --no-progress && npm run build:ts",
-    "build:ts": "tsc -p tsconfig.build.json",
+    "build:ts": "bob build",
     "prepare": "npm run build:ts",
     "check:api-compat": "tsc -p api-compat/tsconfig.json",
-    "typecheck:tests": "npm run tslint && tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json",
+    "typecheck:tests": "npm run tslint && tsc -p test/tsconfig.json",
     "test": "npm run typecheck:tests && npm run test:setup && npm run test:fast",
     "test:android": "npm run typecheck:tests && npm run test:setup:android && npm run test:fast:android",
     "test:ios": "npm run typecheck:tests && npm run test:setup:ios && npm run test:fast:ios",
@@ -55,6 +64,7 @@
     "hoist-non-react-statics": "^3.3.2"
   },
   "devDependencies": {
+    "@react-native/babel-preset": "^0.87.1",
     "@types/assert": "^1.5.2",
     "@types/mkdirp": "^1.0.1",
     "@types/mocha": "^10.0.10",
@@ -69,6 +79,7 @@
     "mocha": "^12.0.2",
     "q": "^1.5.1",
     "react-native": "0.87.0",
+    "react-native-builder-bob": "^0.43.1",
     "run-sequence": "latest",
     "slash": "^3.0.0",
     "tslint": "^6.1.3",

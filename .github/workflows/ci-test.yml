@@ -16,7 +16,9 @@ jobs:
         run: npm install
 
       - name: Lint and type-check
-        run: npm run typecheck:tests
+        run: |
+          npm run typecheck
+          npm run typecheck:tests
 
       - name: Check public API compatibility
         run: npm run check:api-compat
