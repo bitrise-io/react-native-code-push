@@ -166,19 +166,49 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
   }
 }
 
+// Caches the promise, so that concurrent first calls (e.g. the status report
+// and the update check of sync) fetch and log the configuration only once.
+// The log line does not delay the configuration, and cannot make it fail.
 const getConfiguration = (() => {
-  let config;
+  let configPromise;
   return async function getConfiguration() {
-    if (config) {
-      return config;
+    if (configPromise) {
+      return configPromise;
     } else if (testConfig) {
       return testConfig;
     } else {
-      config = await NativeCodePush.getConfiguration();
-      return config;
+      configPromise = NativeCodePush.getConfiguration().then((config) => {
+        logConfiguration(config).catch(() => {});
+        return config;
+      });
+      configPromise.catch(() => { configPromise = null; });
+      return configPromise;
     }
   }
 })();
+
+async function logConfiguration(config) {
+  let activePackage = null;
+  try {
+    activePackage = await NativeCodePush.getUpdateMetadata(NativeCodePush.codePushUpdateStateRunning);
+  } catch (err) {
+    // The running package is only informational here.
+  }
+
+  // Native returns the package on disk with _isDebugOnly when the binary bundle runs instead
+  // (a debug build keeps an outdated update after the binary changed).
+  const isBinaryRunning = !activePackage || activePackage._isDebugOnly;
+
+  log.info(`Configuration: ${logFields({
+    sdkVersion: require("./package.json").version,
+    appVersion: config.appVersion,
+    deltaUpdates: !!config.enableDeltaUpdates,
+    binaryHash: config.packageHash,
+    activePackage: isBinaryRunning ? "fromBinary" : "fromCodePush",
+    activePackageLabel: isBinaryRunning ? undefined : activePackage.versionLabel,
+    packageHash: isBinaryRunning ? undefined : activePackage.packageHash,
+  })}`);
+}
 
 async function getCurrentPackage() {
   return await getUpdateMetadata(CodePush.UpdateState.LATEST);
