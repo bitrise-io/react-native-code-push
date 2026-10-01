@@ -23,8 +23,9 @@ fun applyBinaryDiffPatches(
 
     for ((relativePath, entry) in manifest.patchedFiles) {
         val oldFile = resolveWithin(currentPackageFolder, relativePath)
-        if (sha256Hex(oldFile) != entry.baseHash) {
-            throw BinaryDiffApplyException(relativePath, "baseHash mismatch")
+        val oldFileHash = sha256Hex(oldFile)
+        if (oldFileHash != entry.baseHash) {
+            throw BinaryDiffApplyException(relativePath, "baseHash mismatch: expected ${entry.baseHash}, got $oldFileHash")
         }
 
         val diffFile = resolveWithin(unzippedFolder, entry.patch)
@@ -35,8 +36,9 @@ fun applyBinaryDiffPatches(
             throw BinaryDiffApplyException(relativePath, "patch failed: $result")
         }
 
-        if (sha256Hex(newFile) != entry.targetHash) {
-            throw BinaryDiffApplyException(relativePath, "targetHash mismatch")
+        val newFileHash = sha256Hex(newFile)
+        if (newFileHash != entry.targetHash) {
+            throw BinaryDiffApplyException(relativePath, "targetHash mismatch: expected ${entry.targetHash}, got $newFileHash")
         }
     }
 }

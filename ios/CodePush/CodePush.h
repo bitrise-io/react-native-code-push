@@ -114,6 +114,7 @@
 @property (strong) NSOutputStream *outputFileStream;
 @property long long expectedContentLength;
 @property long long receivedContentLength;
+@property NSInteger statusCode;
 @property dispatch_queue_t operationQueue;
 @property (copy) void (^progressCallback)(long long, long long);
 @property (copy) void (^doneCallback)(BOOL);

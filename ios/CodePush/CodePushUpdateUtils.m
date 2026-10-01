@@ -276,15 +276,11 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
                    expectedHash:(NSString *)expectedHash
                           error:(NSError **)error
 {
-    CPLog(@"Verifying hash for folder path: %@", finalUpdateFolder);
-    
     NSMutableArray *updateContentsManifest = [NSMutableArray array];
     BOOL result = [self addContentsOfFolderToManifest:finalUpdateFolder
                                            pathPrefix:@""
                                              manifest:updateContentsManifest
                                                 error:error];
-    
-    CPLog(@"Manifest string: %@", updateContentsManifest);
     
     if (!result) {
         return NO;
@@ -296,9 +292,15 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
         return NO;
     }
     
-    CPLog(@"Expected hash: %@, actual hash: %@", expectedHash, updateContentsManifestHash);
-    
-    return [updateContentsManifestHash isEqualToString:expectedHash];
+    if (![updateContentsManifestHash isEqualToString:expectedHash]) {
+        // The manifest shows which files differ from the released contents.
+        CPLog(@"Hash mismatch. expectedHash=%@ actualHash=%@ manifest=%@",
+              expectedHash, updateContentsManifestHash,
+              [updateContentsManifest componentsJoinedByString:@","]);
+        return NO;
+    }
+
+    return YES;
 }
 
 // remove BEGIN / END tags and line breaks from public key string
@@ -353,8 +355,6 @@ NSString * const IgnoreCodePushMetadata = @".codepushrelease";
                    withPublicKey:(NSString *)publicKeyString
                            error:(NSError **)error
 {
-    CPLog(@"Verifying signature for folder path: %@", folderPath);
-    
     NSString *publicKey = [self getKeyValueFromPublicKeyString: publicKeyString];
     
     NSError *signatureVerificationError;

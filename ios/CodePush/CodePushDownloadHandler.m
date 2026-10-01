@@ -22,7 +22,8 @@ failCallback:(void (^)(NSError *err))failCallback {
 }
 
 - (void)download:(NSString *)url {
-    self.downloadUrl = url;
+    // Only used in messages. Signed download URLs can have credentials in the query string.
+    self.downloadUrl = [[url componentsSeparatedByString:@"?"] firstObject];
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:url]
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
                                          timeoutInterval:60.0];
@@ -52,6 +53,7 @@ failCallback:(void (^)(NSError *err))failCallback {
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
         NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
+        self.statusCode = statusCode;
         if (statusCode >= 400) {
             [self.outputFileStream close];
             [connection cancel];
@@ -125,6 +127,7 @@ failCallback:(void (^)(NSError *err))failCallback {
     }
 
     BOOL isZip = _header[0] == 'P' && _header[1] == 'K' && _header[2] == 3 && _header[3] == 4;
+    CPLog(@"Downloaded update package. httpStatus=%ld bytes=%lld zip=%@", (long)self.statusCode, self.receivedContentLength, isZip ? @"true" : @"false");
     self.doneCallback(isZip);
 }
 

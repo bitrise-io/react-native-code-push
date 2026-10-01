@@ -69,7 +69,7 @@ class BinaryDiffPatcherTest {
     fun applyBinaryDiffPatches_baseHashMismatch_throwsWithoutInvokingApplier() {
         // Given
         val currentPackageFolder = tempFolder.newFolder("current")
-        File(currentPackageFolder, "index.android.bundle").apply {
+        val oldFile = File(currentPackageFolder, "index.android.bundle").apply {
             parentFile?.mkdirs()
             writeText("old hermes bytecode contents")
         }
@@ -94,6 +94,7 @@ class BinaryDiffPatcherTest {
             fail("expected BinaryDiffApplyException")
         } catch (e: BinaryDiffApplyException) {
             assertEquals("index.android.bundle", e.relativePath)
+            assertTrue(e.message!!.contains("expected wrong-hash, got ${sha256Hex(oldFile)}"))
         }
         assertEquals(0, applier.invocationCount)
     }
@@ -160,6 +161,8 @@ class BinaryDiffPatcherTest {
             fail("expected BinaryDiffApplyException")
         } catch (e: BinaryDiffApplyException) {
             assertEquals("index.android.bundle", e.relativePath)
+            val actualHash = sha256Hex("actual output".toByteArray().inputStream())
+            assertTrue(e.message!!.contains("expected wrong-target-hash, got $actualHash"))
         }
     }
 
