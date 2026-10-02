@@ -1,29 +1,29 @@
-// Type-checks test/ for the mocha-based integration test suite (see package.json's
-// typecheck:tests/test:* scripts). Mocha runs the .mts sources directly via Node's native
-// TypeScript type-stripping, which only strips syntax and doesn't type-check - this config's
-// job is purely `tsc --noEmit`. Deliberately excludes src/ - that's a separate compilation unit
-// with its own config, see tsconfig.build.json for why.
+// Type-checks the library sources in src/. `npm run typecheck` runs it directly with --noEmit;
+// `npm run build:ts` (react-native-builder-bob) reuses it to generate the .d.ts files, and compiles
+// the JS with Babel (see babel.config.js).
 //
-// TODO: once the rest of this repo's runtime JS (CodePush.js, etc.) is migrated to TypeScript,
-// this and tsconfig.build.json should be unified into a single project.
+// The mocha integration tests in test/ have their own config: test/tsconfig.json.
 {
     "compilerOptions": {
-        "target": "es2024",
-        "module": "nodenext",
-        "lib": ["es2024"],
-        "types": ["node", "mocha"],
+        "target": "es2019",
+        "module": "commonjs",
+        // A subset of what RN supports at the oldest supported version (0.76). Widen it only as far as RN's list:
+        // https://github.com/facebook/react-native/blob/0.76-stable/packages/typescript-config/tsconfig.json
+        "lib": ["es2019"],
+        // Only RN's globals (console, fetch, etc.). Other ambient @types/* (e.g. Node) would add their own libs,
+        // and the list above would not be enforced.
+        "types": ["react-native"],
+        // RN's own .d.ts files do not type-check standalone (as in @react-native/typescript-config).
+        "skipLibCheck": true,
         "strict": true,
-        // TODO: The legacy test code is not null-safe, fix one day.
+        // TODO: existing legacy code is not null-safe, fix one day.
         "strictNullChecks": false,
-        // Node's type stripping needs explicit `.mts` import paths and rejects syntax with runtime semantics (enum, etc.).
-        "allowImportingTsExtensions": true,
-        "erasableSyntaxOnly": true,
-        "rootDir": "test",
-        "noEmit": true
+        "moduleResolution": "bundler",
+        // Babel compiles the JS, so the compiler must not choke on syntax that needs whole-program information.
+        "isolatedModules": true,
+        "noEmit": true,
+        "rootDir": "src"
     },
-    "exclude": [
-        "Examples",
-        "src",
-        "api-compat",
-    ]
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/__tests__/**"]
 }

@@ -1,4 +1,4 @@
-import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/acquisition-sdk/acquisition-sdk";
+import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/commonjs/acquisition-sdk/acquisition-sdk";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, NativeEventEmitter, Platform } from "react-native";
