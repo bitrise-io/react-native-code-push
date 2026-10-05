@@ -17,10 +17,8 @@ Prefer unit testing what's possible (even though, on iOS, this involves a simula
 
 #### E2E Tests
 - `npm run typecheck:tests` - Lints and type-checks `test/`. Mocha runs the `.mts` test sources directly via Node's native TypeScript type-stripping, so this is the only place type errors in `test/` get caught.
-- `npm run test:android` - Run Android-specific tests
-- `npm run test:ios` - Run iOS-specific tests  
-- `npm run test:setup:android` - Set up Android emulator for testing
-- `npm run test:setup:ios` - Set up iOS simulator for testing
+
+Use the `verify-codepush` skill (`.agents/skills/verify-codepush/`) to run iOS and Android E2E tests and to prove a behavior end to end. It explains how the harness works, and how to drive and verify one CodePush behavior. Do not duplicate E2E details in this file.
 
 ### Build
 - `npm run typecheck` - Type-checks the library sources in `src/`
@@ -35,11 +33,6 @@ Prefer unit testing what's possible (even though, on iOS, this involves a simula
 - Write new runtime code in TypeScript under `src/`, not in `CodePush.js` or other root-level `.js` files. The goal is to migrate the root JS to TypeScript over time, so avoid growing `CodePush.js`. Small changes to existing root JS are fine.
 - Import compiled code from the root JS via `lib/commonjs/...` (for example `./lib/commonjs/acquisition-sdk/acquisition-sdk`).
 - Write new Android-specific code in Kotlin with unit-testing in mind. Do not bloat existing Java files with large additions.
-
-### Platform Testing
-- Tests run on actual emulators/simulators with real React Native apps
-- Test apps are created dynamically outside the repo, under a system temp `test-run` directory (not inside `test/`)
-- Both old and new React Native architecture testing supported
 
 ## Architecture
 
@@ -60,23 +53,15 @@ Prefer unit testing what's possible (even though, on iOS, this involves a simula
 - **Platform Abstraction**: Unified JavaScript API with platform-specific implementations
 - **Error Handling**: Automatic rollback on failed updates with telemetry
 
-### Testing Framework
-- **Custom Test Runner**: TypeScript-based test framework in `test/`
-- **Real App Testing**: Creates actual React Native apps for integration testing
-- **Scenario Testing**: Update, rollback, and error scenarios
-- **No unit test infra for JS yet**: JS only has the mocha-based integration suite above. `src/acquisition-sdk/__tests__/` contains tests ported from upstream `microsoft/code-push`, kept for future reference - they are deliberately not wired into `npm test` or any runner. Don't assume they're dead/forgotten code, and don't wire them in without setting up real unit test infra first.
-- **Templates**: `test/template/` holds native files (Podfile, AppDelegate, Android app files) and JS scenarios copied over top of a freshly generated RN/Expo app during test setup, overwriting its defaults — edit files here, not the generated project, for changes to persist
-- **`test:ios` vs `test:setup:ios` vs `test:fast:ios`**: `test:ios` is just `test:setup:ios` followed by `test:fast:ios` — the two are meant to be split apart for local iteration.
-  - `test:setup:ios` (mocha `--ios --setup`) boots the simulator and provisions the test app once: copies templates, runs `pod install`, patches Info.plist/AppDelegate. It never builds or runs any test scenario.
-  - `test:fast:ios` (mocha `--ios`) skips provisioning and goes straight to the actual test scenarios: its `before()` hook calls `RNIOS.buildApp` (`xcodebuild` against the already-provisioned `.xcworkspace`) and installs the binary, then runs the update/rollback/error scenarios.
-  - For the fast local loop: run `test:setup:ios` once per template/dependency change, then re-run `test:fast:ios` repeatedly while iterating on test/scenario code — this skips `pod install` and re-provisioning on every iteration.
-  - There's still no "just build, no tests" npm script — for a raw build only, lift the `xcodebuild` invocation out of `RNIOS.buildApp` in `test/test.mts` and run it by hand against the provisioned `TestCodePush.xcworkspace`.
-- When debugging a CI failure, don't trust the first plausible-looking theory from log noise — reproduce the exact failing command locally on matching hardware/toolchain before writing up a root cause. This is faster than iterating against multi-hour CI runs and catches wrong hypotheses early.
-- `npm run test:setup:ios` provisions a full test app outside the repo (under a system temp/`test-run` dir), not inside `test/` — expect to search for it rather than finding it checked into the repo tree.
-- The provisioned test app's `node_modules/@bitrise/code-push-sdk` is a real copy, not a symlink — editing `ios/` (or `android/`) native source in the repo has zero effect on `test:fast:ios` runs until you re-copy those files into that `node_modules` path (or rerun `test:setup:ios`).
+### Testing Notes
+- **No unit test infra for JS yet**: `src/acquisition-sdk/__tests__/` contains tests ported from upstream `microsoft/code-push`, kept for future reference - they are deliberately not wired into `npm test` or any runner. Don't assume they're dead/forgotten code, and don't wire them in without setting up real unit test infra first.
 
 ### Build Integration
 - **Android Gradle Plugin**: Automatically generates bundle hashes and processes assets
 - **iOS CocoaPods**: Manages native dependencies and build configuration
 - **Bundle Processing**: Automated zip creation and hash calculation for OTA updates
 - **`.npmignore` is a blocklist, not an allowlist**: `package.json` has no `files` field, so any new top-level file/dir ships to npm by default unless explicitly excluded. When adding new repo tooling/config, check whether it needs a `.npmignore` entry. Verify with `npm pack --dry-run`.
+
+## Troubleshooting
+
+- When debugging a CI failure, don't trust the first plausible-looking theory from log noise. Reproduce the exact failing command locally on matching hardware/toolchain before writing up a root cause. This is faster than iterating against multi-hour CI runs and catches wrong hypotheses early.
