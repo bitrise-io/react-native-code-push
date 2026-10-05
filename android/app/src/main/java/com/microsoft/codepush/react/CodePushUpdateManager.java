@@ -5,6 +5,7 @@ import android.os.Build;
 import com.microsoft.codepush.react.diffpatch.BinaryDiffPatcher;
 import com.microsoft.codepush.react.diffpatch.DiffManifest;
 import com.microsoft.codepush.react.diffpatch.DiffManifestKt;
+import com.microsoft.codepush.react.diffpatch.UpdateType;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -268,6 +269,11 @@ public class CodePushUpdateManager {
                 } catch (JSONException e) {
                     throw new CodePushMalformedDataException(diffManifestFilePath, e);
                 }
+                // Set before any step that can fail, so that a failed download can report it too.
+                String updateType = diffManifest.getUpdateType();
+                if (updateType != null) {
+                    CodePushUtils.setJSONValueForKey(updatePackage, CodePushConstants.UPDATE_TYPE_KEY, updateType);
+                }
                 CodePushLog.info("Applying diff update. binaryDiff=" + diffManifest.isBinaryDiff()
                         + " patchedFiles=" + diffManifest.getPatchedFiles().size());
                 String currentPackageFolderPath = getCurrentPackageFolderPath();
@@ -276,6 +282,7 @@ public class CodePushUpdateManager {
                 diffManifestFile.delete();
             } else {
                 CodePushLog.info("Applying full update.");
+                CodePushUtils.setJSONValueForKey(updatePackage, CodePushConstants.UPDATE_TYPE_KEY, UpdateType.FULL);
             }
 
             // The patches folder of a binary diff must not end up in the installed package: it is
@@ -347,6 +354,7 @@ public class CodePushUpdateManager {
             }
         } else {
             CodePushLog.info("Applying full update. zip=false");
+            CodePushUtils.setJSONValueForKey(updatePackage, CodePushConstants.UPDATE_TYPE_KEY, UpdateType.FULL);
             // File is a jsbundle, move it to a folder with the packageHash as its name
             FileUtils.moveFile(downloadFile, newUpdateFolderPath, expectedBundleFileName);
         }

@@ -253,4 +253,20 @@ class DiffManifestTest {
         // When / Then (parseDiffManifest is expected to throw)
         parseDiffManifest(json)
     }
+
+    @Test
+    fun updateType_dependsOnManifestVersion() {
+        assertEquals("file_level_diff", DiffManifest(version = 1, deletedFiles = emptyList(), patchedFiles = emptyMap()).updateType)
+        assertEquals("binary_diff", DiffManifest(version = 2, deletedFiles = emptyList(), patchedFiles = emptyMap()).updateType)
+    }
+
+    @Test
+    fun updateType_unsupportedVersion_isNullAndNotBinaryDiff() {
+        for (version in listOf(0, 3)) {
+            val manifest = DiffManifest(version = version, deletedFiles = emptyList(), patchedFiles = emptyMap())
+
+            assertEquals(null, manifest.updateType)
+            assertEquals(false, manifest.isBinaryDiff)
+        }
+    }
 }

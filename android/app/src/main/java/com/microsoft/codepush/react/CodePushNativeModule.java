@@ -344,8 +344,11 @@ public class CodePushNativeModule extends BaseJavaModule {
         AsyncTask<Void, Void, Void> asyncTask = new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
+                // Declared outside the try: the update manager writes the update type into it as soon as it is
+                // known, and the catch blocks read it back to report the type of a failed download too.
+                JSONObject mutableUpdatePackage = null;
                 try {
-                    JSONObject mutableUpdatePackage = CodePushUtils.convertReadableToJsonObject(updatePackage);
+                    mutableUpdatePackage = CodePushUtils.convertReadableToJsonObject(updatePackage);
                     CodePushUtils.setJSONValueForKey(mutableUpdatePackage, CodePushConstants.BINARY_MODIFIED_TIME_KEY, "" + mCodePush.getBinaryResourcesModifiedTime());
                     mUpdateManager.downloadPackage(mutableUpdatePackage, mCodePush.getAssetsBundleFileName(), new DownloadProgressCallback() {
                         private boolean hasScheduledNextFrame = false;
@@ -398,16 +401,16 @@ public class CodePushNativeModule extends BaseJavaModule {
                 } catch (CodePushInvalidUpdateException e) {
                     CodePushLog.error("Downloaded update is invalid", e);
                     mSettingsManager.saveFailedUpdate(CodePushUtils.convertReadableToJsonObject(updatePackage));
-                    promise.reject(e);
+                    rejectDownload(promise, e, mutableUpdatePackage);
                 } catch (IOException | CodePushUnknownException | CodePushMalformedDataException e) {
                     CodePushLog.error("Failed to download update", e);
-                    promise.reject(e);
+                    rejectDownload(promise, e, mutableUpdatePackage);
                 } catch (Exception e) {
                     // Safety net: make sure a download failure always rejects the JS promise
                     // instead of escaping this background task uncaught, which would leave
                     // the promise hanging forever with no error and no log tying it to a cause.
                     CodePushLog.error("Failed to download update", e);
-                    promise.reject(e);
+                    rejectDownload(promise, e, mutableUpdatePackage);
                 }
 
                 return null;
@@ -415,6 +418,19 @@ public class CodePushNativeModule extends BaseJavaModule {
         };
 
         asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    private static void rejectDownload(Promise promise, Exception e, JSONObject updatePackage) {
+        // Not optString: it turns a JSON null into the string "null".
+        Object updateType = updatePackage == null ? null : updatePackage.opt(CodePushConstants.UPDATE_TYPE_KEY);
+        if (!(updateType instanceof String)) {
+            promise.reject(e);
+            return;
+        }
+
+        WritableMap userInfo = Arguments.createMap();
+        userInfo.putString(CodePushConstants.UPDATE_TYPE_KEY, (String) updateType);
+        promise.reject(e, userInfo);
     }
 
     @ReactMethod

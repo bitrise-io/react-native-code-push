@@ -1,6 +1,6 @@
 // Vendored from https://github.com/microsoft/code-push/blob/master/src/script/acquisition-sdk.ts (archived, MIT licensed)
 
-import { UpdateCheckResponse, UpdateCheckRequest, DeploymentStatusReport, DownloadReport, DownloadStatusValue } from "./types";
+import { UpdateCheckResponse, UpdateCheckRequest, DeploymentStatusReport, DownloadReport, DownloadStatusValue, UpdateTypeValue } from "./types";
 import { CodePushHttpError, CodePushDeployStatusError, CodePushPackageError } from "./code-push-error"
 
 export namespace Http {
@@ -27,6 +27,8 @@ export interface Package {
     label: string;
     // Optional because packages persisted by an older SDK have no versionLabel.
     versionLabel?: string;
+    // Optional because packages persisted by an older SDK have no updateType.
+    updateType?: UpdateTypeValue;
     appVersion: string;
     isMandatory: boolean;
     packageHash: string;
@@ -211,6 +213,7 @@ export class AcquisitionManager {
         if (deployedPackage) {
             body.label = deployedPackage.label;
             body.app_version = deployedPackage.appVersion;
+            body.update_type = deployedPackage.updateType;
 
             switch (status) {
                 case AcquisitionStatus.DeploymentSucceeded:
@@ -274,7 +277,8 @@ export class AcquisitionManager {
             package_hash: downloadedPackage.packageHash,
             package_size_bytes: downloadedPackage.packageSize,
             download_duration_ms: downloadedPackage.downloadDurationMs,
-            status: downloadedPackage.status
+            status: downloadedPackage.status,
+            update_type: downloadedPackage.updateType
         };
 
         this._httpRequester.request(Http.Verb.POST, url, JSON.stringify(body), (error: Error, response: Http.Response): void => {
