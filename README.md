@@ -33,7 +33,6 @@ This plugin provides client-side integration for the [CodePush service](https://
 - [Getting Started](#getting-started)
   - [iOS Setup](docs/setup-ios.md)
   - [Android Setup](docs/setup-android.md)
-  - [Windows Setup](docs/setup-windows.md)
 - [Plugin Usage](#plugin-usage)
   - [Store Guideline Compliance](#store-guideline-compliance)
 - [Releasing Updates](#releasing-updates)
@@ -66,7 +65,6 @@ _Note: Any product changes which touch native code (e.g. modifying your `AppDele
 
 - iOS (7+)
 - Android (4.1+) on TLS 1.2 compatible devices
-- Windows (UWP) - Not Tested. We recommend to use [microsoft/code-push-react-native](https://github.com/microsoft/react-native-code-push)
 
 We try our best to maintain backwards compatibility of our plugin with previous versions of React Native, but due to the nature of the platform, and the existence of breaking changes between releases, it is possible that you need to use a specific version of the CodePush plugin in order to support the exact version of React Native you are using. The following table outlines which CodePush plugin versions officially support the respective React Native versions:
 
@@ -124,7 +122,6 @@ Then continue with installing the native module
 
 - [iOS Setup](docs/setup-ios.md)
 - [Android Setup](docs/setup-android.md)
-- [Windows Setup](docs/setup-windows.md)
 
 ## Plugin Usage
 

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-React Native CodePush is a native module that enables over-the-air updates for React Native apps. It consists of native implementations for iOS (Objective-C), Android (Java), and Windows (C++), unified through a JavaScript bridge layer.
+React Native CodePush is a native module that enables over-the-air updates for React Native apps. It consists of native implementations for iOS (Objective-C) and Android (Java), unified through a JavaScript bridge layer.
 
 ## Development Commands
 
@@ -52,7 +52,6 @@ Prefer unit testing what's possible (even though, on iOS, this involves a simula
 ### Platform Structure
 - **iOS**: `ios/` - Objective-C implementation with CocoaPods integration
 - **Android**: `android/` - Java/Kotlin implementation with Gradle plugin
-- **Windows**: `windows/` - C++ implementation for Windows React Native
 - **JavaScript**: Root level - TypeScript definitions and bridge code
 
 ### Key Patterns
