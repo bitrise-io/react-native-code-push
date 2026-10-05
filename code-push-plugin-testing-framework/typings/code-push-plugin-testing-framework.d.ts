@@ -39,13 +39,18 @@ declare module 'code-push-plugin-testing-framework/script/platform' {
 		 */
 		bootEmulator(restartEmulators: boolean): Q.Promise<void>;
 		/**
-		 * Launches an already installed application by app id.
+		 * Launches an already installed application by app id. When the promise resolves, the app process exists,
+		 * or it has already ended.
 		 */
 		launchInstalledApplication(appId: string): Q.Promise<void>;
 		/**
-		 * Ends a running application given its app id.
+		 * Ends a running application given its app id. Resolves when the app has stopped.
 		 */
 		endRunningApplication(appId: string): Q.Promise<void>;
+		/**
+		 * Rejects if the application still runs after maxWaitMs.
+		 */
+		waitForApplicationToStop(appId: string, maxWaitMs: number): Q.Promise<void>;
 		/**
 		 * Restarts an already installed application by app id.
 		 */
@@ -134,13 +139,18 @@ declare module 'code-push-plugin-testing-framework/script/platform' {
 		 */
 		bootEmulator(restartEmulators: boolean): Q.Promise<void>;
 		/**
-		 * Launches an already installed application by app id.
+		 * Launches an already installed application by app id. When the promise resolves, the app process exists,
+		 * or it has already ended.
 		 */
 		launchInstalledApplication(appId: string): Q.Promise<void>;
 		/**
-		 * Ends a running application given its app id.
+		 * Ends a running application given its app id. Resolves when the app has stopped.
 		 */
 		endRunningApplication(appId: string): Q.Promise<void>;
+		/**
+		 * Rejects if the application still runs after maxWaitMs.
+		 */
+		waitForApplicationToStop(appId: string, maxWaitMs: number): Q.Promise<void>;
 		/**
 		 * Restarts an already installed application by app id.
 		 */
@@ -169,13 +179,18 @@ declare module 'code-push-plugin-testing-framework/script/platform' {
 		 */
 		bootEmulator(restartEmulators: boolean): Q.Promise<void>;
 		/**
-		 * Launches an already installed application by app id.
+		 * Launches an already installed application by app id. When the promise resolves, the app process exists,
+		 * or it has already ended.
 		 */
 		launchInstalledApplication(appId: string): Q.Promise<void>;
 		/**
-		 * Ends a running application given its app id.
+		 * Ends a running application given its app id. Resolves when the app has stopped.
 		 */
 		endRunningApplication(appId: string): Q.Promise<void>;
+		/**
+		 * Rejects if the application still runs after maxWaitMs.
+		 */
+		waitForApplicationToStop(appId: string, maxWaitMs: number): Q.Promise<void>;
 		/**
 		 * Restarts an already installed application by app id.
 		 */

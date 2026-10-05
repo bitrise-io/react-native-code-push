@@ -99,18 +99,16 @@ exports.IOS = IOS;
 var emulatorMaxReadyAttempts = 50;
 var emulatorReadyCheckDelayMs = 5 * 1000;
 
+// A stalled adb/simctl would otherwise bypass the deadline in waitForAppToStop.
+var probeTimeoutMs = 30 * 1000;
+
 /**
- * Checks whether an Android app is currently running via "pidof". Exit code 1 means the
- * process wasn't found, which is the expected (non-error) outcome most of the time while
- * polling for teardown - any other failure (e.g. adb/device unavailable) is a genuine
- * problem and must not be silently treated as "the app stopped". Calls child_process
- * directly instead of going through TestUtil.getProcessOutput, since that helper treats
- * every non-zero exit as an error and logs it - which would spam the console with an
- * "error" on every single poll where the app has (expectedly) already stopped.
+ * "pidof" exits with 1 when there is no process. Other failures (for example, no device) must not count as "stopped".
+ * TestUtil.getProcessOutput is not used, because it logs each non-zero exit as an error.
  */
-function isAndroidAppRunning(appId) {
+function isAndroidAppProcessRunning(appId) {
     return new Promise(function (resolve, reject) {
-        child_process.exec("adb shell pidof " + appId, function (error) {
+        child_process.exec("adb shell pidof " + appId, { timeout: probeTimeoutMs }, function (error) {
             if (!error) {
                 resolve(true);
             } else if (error.code === 1) {
@@ -122,16 +120,64 @@ function isAndroidAppRunning(appId) {
     });
 }
 
-async function waitForAndroidAppToStop(appId, maxWaitMs) {
+function escapeRegExp(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * The activity records stay for some hundred milliseconds after the process ends. If the app starts again in that
+ * period, the end of the old task removal can kill the new process ("Destroy timeout of remove-task").
+ */
+function hasAndroidActivityRecords(appId) {
+    var recordPattern = new RegExp("ActivityRecord\\{[0-9a-f]+ u\\d+ " + escapeRegExp(appId) + "/");
+    return new Promise(function (resolve, reject) {
+        child_process.exec("adb shell dumpsys activity activities", { maxBuffer: 64 * 1024 * 1024, timeout: probeTimeoutMs }, function (error, stdout) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(recordPattern.test(stdout));
+            }
+        });
+    });
+}
+
+/**
+ * Both checks are necessary. After a repeated crash, Android shows a crash dialog, and the process stays for some
+ * seconds without an activity record.
+ */
+function isAndroidAppRunning(appId) {
+    return isAndroidAppProcessRunning(appId).then(function (processRunning) {
+        return processRunning || hasAndroidActivityRecords(appId);
+    });
+}
+
+// A running app has a launchd job "UIKitApplication:<appId>[...]" with a numeric PID.
+function isIOSAppRunning(appId) {
+    var jobPattern = new RegExp("^\\d+\\s+\\S+\\s+UIKitApplication:" + escapeRegExp(appId) + "\\[", "m");
+    return new Promise(function (resolve, reject) {
+        child_process.exec("xcrun simctl spawn booted launchctl list", { timeout: probeTimeoutMs }, function (error, stdout) {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(jobPattern.test(stdout));
+            }
+        });
+    });
+}
+
+var appStopTimeoutMs = 30 * 1000;
+
+function waitForAppToStop(isAppRunning, appId, maxWaitMs) {
     var pollIntervalMs = 200;
     var start = Date.now();
-    while (true) {
-        var isRunning = await isAndroidAppRunning(appId);
-        if (!isRunning || Date.now() - start >= maxWaitMs) {
-            return;
+    return Q((async function () {
+        while (await isAppRunning(appId)) {
+            if (Date.now() - start >= maxWaitMs) {
+                throw new Error(appId + " is still running after " + maxWaitMs + "ms");
+            }
+            await new Promise(function (resolve) { setTimeout(resolve, pollIntervalMs); });
         }
-        await new Promise(function (resolve) { setTimeout(resolve, pollIntervalMs); });
-    }
+    })());
 }
 /**
  * Helper function for EmulatorManager implementations to use to boot an emulator with a given platformName and check, start, and kill methods.
@@ -268,7 +314,22 @@ var AndroidEmulatorManager = (function () {
      * Launches an already installed application by app id.
      */
     AndroidEmulatorManager.prototype.launchInstalledApplication = function (appId) {
-        return testUtil_1.TestUtil.getProcessOutput("adb shell monkey -p " + appId + " -c android.intent.category.LAUNCHER 1").then(function () { return null; });
+        // "am start -W" waits until the activity has started. It needs the component, because the launcher activity
+        // can lack the DEFAULT category.
+        return testUtil_1.TestUtil.getProcessOutput("adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER " + appId)
+            .then(function (output) {
+                var component = output.trim().split("\n").pop().trim();
+                if (component.indexOf("/") === -1) {
+                    throw new Error("No launcher activity found for " + appId + ": " + output);
+                }
+                return testUtil_1.TestUtil.getProcessOutput("adb shell am start -W -n " + component + " 2>&1");
+            })
+            .then(function (output) {
+                if (output.indexOf("Error:") !== -1) {
+                    throw new Error("Cannot launch " + appId + ": " + output);
+                }
+                return null;
+            });
     };
     /**
      * Ends a running application given its app id.
@@ -277,10 +338,13 @@ var AndroidEmulatorManager = (function () {
         var t0 = Date.now();
         return testUtil_1.TestUtil.getProcessOutput("adb shell am force-stop " + appId).then(function () {
             var waitStart = Date.now();
-            return waitForAndroidAppToStop(appId, 10000).then(function () {
+            return waitForAppToStop(isAndroidAppRunning, appId, appStopTimeoutMs).then(function () {
                 console.log("[TIMING] android endRunningApplication: force-stop took " + (Date.now() - t0) + "ms, teardown wait took " + (Date.now() - waitStart) + "ms");
             });
         });
+    };
+    AndroidEmulatorManager.prototype.waitForApplicationToStop = function (appId, maxWaitMs) {
+        return waitForAppToStop(isAndroidAppRunning, appId, maxWaitMs);
     };
     /**
      * Restarts an already installed application by app id.
@@ -289,10 +353,6 @@ var AndroidEmulatorManager = (function () {
         var _this = this;
         var t0 = Date.now();
         return this.endRunningApplication(appId)
-            .then(function () {
-                // Wait for a 1 second before restarting.
-                return Q.delay(1000);
-            })
             .then(function () {
                 return _this.launchInstalledApplication(appId);
             })
@@ -401,7 +461,11 @@ var IOSEmulatorManager = (function () {
      * Ends a running application given its app id.
      */
     IOSEmulatorManager.prototype.endRunningApplication = function (appId) {
-        return testUtil_1.TestUtil.getProcessOutput("xcrun simctl terminate booted " + appId, undefined).then(function () { return null; })
+        // "simctl terminate" returns after the process has ended.
+        return testUtil_1.TestUtil.getProcessOutput("xcrun simctl terminate booted " + appId, undefined).then(function () { return null; });
+    };
+    IOSEmulatorManager.prototype.waitForApplicationToStop = function (appId, maxWaitMs) {
+        return waitForAppToStop(isIOSAppRunning, appId, maxWaitMs);
     };
     /**
      * Restarts an already installed application by app id.
@@ -409,10 +473,6 @@ var IOSEmulatorManager = (function () {
     IOSEmulatorManager.prototype.restartApplication = function (appId) {
         var _this = this;
         return this.endRunningApplication(appId)
-            .then(function () {
-                // Wait for a second before restarting.
-                return Q.delay(1000);
-            })
             .then(function () { return _this.launchInstalledApplication(appId); });
     };
     /**
