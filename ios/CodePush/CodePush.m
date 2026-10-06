@@ -17,16 +17,14 @@
 
 #import "CodePush.h"
 #import "CodePushErrorUtils.h"
+#import "CodePushLifecycleRestartPolicy.h"
 
 @interface CodePush () <RCTBridgeModule, RCTFrameUpdateObserver>
 @end
 
 @implementation CodePush {
-    BOOL _hasResumeListener;
     BOOL _isFirstRunAfterUpdate;
-    int _minimumBackgroundDuration;
-    NSDate *_lastResignedDate;
-    CodePushInstallMode _installMode;
+    CodePushLifecycleRestartPolicy *_restartPolicy;
     NSTimer *_appSuspendTimer;
 
     // Used to coordinate the dispatching of download progress events to JS.
@@ -416,6 +414,8 @@ static NSString *const LatestRollbackCountKey = @"count";
 
     self = [super init];
     if (self) {
+        _restartPolicy = [CodePushLifecycleRestartPolicy new];
+        [self registerLifecycleObservers];
         [self registerSettleObserver];
         [self initializeUpdateAfterRestart];
     }
@@ -801,52 +801,58 @@ static NSString *const LatestRollbackCountKey = @"count";
     return @[DownloadProgressEvent];
 }
 
-// Determine how long the app was in the background
-- (int)getDurationInBackground
-{
-    int duration = 0;
-    if (_lastResignedDate) {
-        duration = [[NSDate date] timeIntervalSinceDate:_lastResignedDate];
-    }
-
-    return duration;
-}
-
 #pragma mark - Application lifecycle event handlers
 
-// These three handlers will only be registered when there is
-// a resume-based update still pending installation.
+// These handlers are registered from the start, so that a background which ends
+// before an update gets installed still counts towards minimumBackgroundDuration.
+- (void)registerLifecycleObservers
+{
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self
+               selector:@selector(applicationDidBecomeActive)
+                   name:UIApplicationDidBecomeActiveNotification
+                 object:RCTSharedApplication()];
+    [center addObserver:self
+               selector:@selector(applicationWillEnterForeground)
+                   name:UIApplicationWillEnterForegroundNotification
+                 object:RCTSharedApplication()];
+    [center addObserver:self
+               selector:@selector(applicationDidEnterBackground)
+                   name:UIApplicationDidEnterBackgroundNotification
+                 object:RCTSharedApplication()];
+    [center addObserver:self
+               selector:@selector(applicationWillResignActive)
+                   name:UIApplicationWillResignActiveNotification
+                 object:RCTSharedApplication()];
+}
+
 - (void)applicationDidBecomeActive
 {
-    if (_installMode == CodePushInstallModeOnNextSuspend) {
-        int durationInBackground = [self getDurationInBackground];
-        // We shouldn't use loadBundle in this case, because _appSuspendTimer will call loadBundleOnTick.
-        // We should cancel timer for _appSuspendTimer because otherwise, we would call loadBundle two times.
-        if (durationInBackground < _minimumBackgroundDuration) {
-            [_appSuspendTimer invalidate];
-            _appSuspendTimer = nil;
-        }
+    // We shouldn't use loadBundle in this case, because _appSuspendTimer will call loadBundleOnTick.
+    // We should cancel timer for _appSuspendTimer because otherwise, we would call loadBundle two times.
+    if ([_restartPolicy shouldCancelSuspendRestartOnBecomeActive]) {
+        [_appSuspendTimer invalidate];
+        _appSuspendTimer = nil;
     }
 }
 
 - (void)applicationWillEnterForeground
 {
-    if (_installMode == CodePushInstallModeOnNextResume) {
-        int durationInBackground = [self getDurationInBackground];
-        if (durationInBackground >= _minimumBackgroundDuration) {
-            [self restartAppInternal:NO];
-        }
+    if ([_restartPolicy onWillEnterForeground]) {
+        [self restartAppInternal:YES];
     }
+}
+
+- (void)applicationDidEnterBackground
+{
+    [_restartPolicy onEnterBackground];
 }
 
 - (void)applicationWillResignActive
 {
-    // Save the current time so that when the app is later
-    // resumed, we can detect how long it was in the background.
-    _lastResignedDate = [NSDate date];
-
-    if (_installMode == CodePushInstallModeOnNextSuspend && [[self class] isPendingUpdate:nil]) {
-        _appSuspendTimer = [NSTimer scheduledTimerWithTimeInterval:_minimumBackgroundDuration
+    NSNumber *suspendDelay = [_restartPolicy onResignActive];
+    if (suspendDelay && [[self class] isPendingUpdate:nil]) {
+        _appSuspendTimer = [NSTimer scheduledTimerWithTimeInterval:suspendDelay.doubleValue
                                                          target:self
                                                        selector:@selector(loadBundleOnTick:)
                                                        userInfo:nil
@@ -1062,35 +1068,13 @@ RCT_EXPORT_METHOD(installUpdate:(NSDictionary*)updatePackage
         [self savePendingUpdate:updatePackage[PackageHashKey]
                       isLoading:NO];
 
-        _installMode = installMode;
-        if (_installMode == CodePushInstallModeOnNextResume || _installMode == CodePushInstallModeOnNextSuspend) {
-            _minimumBackgroundDuration = minimumBackgroundDuration;
-
-            if (!_hasResumeListener) {
-                // Ensure we do not add the listener twice.
-                // Register for app resume notifications so that we
-                // can check for pending updates which support "restart on resume"
-                [[NSNotificationCenter defaultCenter] addObserver:self
-                                                         selector:@selector(applicationDidBecomeActive)
-                                                             name:UIApplicationDidBecomeActiveNotification
-                                                           object:RCTSharedApplication()];
-                                                           
-                [[NSNotificationCenter defaultCenter] addObserver:self
-                                                         selector:@selector(applicationWillEnterForeground)
-                                                             name:UIApplicationWillEnterForegroundNotification
-                                                           object:RCTSharedApplication()];
-
-                [[NSNotificationCenter defaultCenter] addObserver:self
-                                                         selector:@selector(applicationWillResignActive)
-                                                             name:UIApplicationWillResignActiveNotification
-                                                           object:RCTSharedApplication()];
-
-                _hasResumeListener = YES;
-            }
-        }
+        // Tells JS to restart now, because the background that would have applied this
+        // update ended before the install finished.
+        BOOL applyNow = [_restartPolicy onInstallWithMode:installMode
+                                minimumBackgroundDuration:minimumBackgroundDuration];
 
         // Signal to JS that the update has been applied.
-        resolve(nil);
+        resolve(@(applyNow));
     }
 }
 
