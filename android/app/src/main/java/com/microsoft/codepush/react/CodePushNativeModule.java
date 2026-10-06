@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +48,15 @@ import java.util.UUID;
 public class CodePushNativeModule extends BaseJavaModule {
     private String mBinaryContentsHash = null;
     private String mClientUniqueId = null;
-    private LifecycleEventListener mLifecycleEventListener = null;
-    private int mMinimumBackgroundDuration = 0;
+    private final LifecycleRestartPolicy mRestartPolicy = new LifecycleRestartPolicy();
+    private final Handler mAppSuspendHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mLoadBundleOnSuspendRunnable = new Runnable() {
+        @Override
+        public void run() {
+            CodePushLog.info("Loading bundle on suspend");
+            restartAppInternal(false);
+        }
+    };
 
     private CodePush mCodePush;
     private SettingsManager mSettingsManager;
@@ -78,6 +84,35 @@ public class CodePushNativeModule extends BaseJavaModule {
             mClientUniqueId = UUID.randomUUID().toString();
             preferences.edit().putString(CodePushConstants.CLIENT_UNIQUE_ID_KEY, mClientUniqueId).apply();
         }
+
+        // Listen from the start, not from the first install, so that a background which ends
+        // before an update gets installed still counts towards minimumBackgroundDuration.
+        reactContext.addLifecycleEventListener(createLifecycleEventListener());
+    }
+
+    private LifecycleEventListener createLifecycleEventListener() {
+        return new LifecycleEventListener() {
+            @Override
+            public void onHostResume() {
+                mAppSuspendHandler.removeCallbacks(mLoadBundleOnSuspendRunnable);
+                if (mRestartPolicy.onResume()) {
+                    CodePushLog.info("Loading bundle on resume");
+                    restartAppInternal(true);
+                }
+            }
+
+            @Override
+            public void onHostPause() {
+                Long suspendDelayMs = mRestartPolicy.onPause();
+                if (suspendDelayMs != null && mSettingsManager.isPendingUpdate(null)) {
+                    mAppSuspendHandler.postDelayed(mLoadBundleOnSuspendRunnable, suspendDelayMs);
+                }
+            }
+
+            @Override
+            public void onHostDestroy() {
+            }
+        };
     }
 
     @Override
@@ -165,7 +200,7 @@ public class CodePushNativeModule extends BaseJavaModule {
     }
 
     private void loadBundle() {
-        clearLifecycleEventListener();
+        clearPendingLifecycleRestart();
 
         try {
             DevSupportManager devSupportManager = null;
@@ -248,12 +283,10 @@ public class CodePushNativeModule extends BaseJavaModule {
         return false;
     }
 
-    private void clearLifecycleEventListener() {
-        // Remove LifecycleEventListener to prevent infinite restart loop
-        if (mLifecycleEventListener != null) {
-            getReactApplicationContext().removeLifecycleEventListener(mLifecycleEventListener);
-            mLifecycleEventListener = null;
-        }
+    private void clearPendingLifecycleRestart() {
+        // Stop the lifecycle listener from restarting again, to prevent an infinite restart loop
+        mRestartPolicy.reset();
+        mAppSuspendHandler.removeCallbacks(mLoadBundleOnSuspendRunnable);
     }
 
     private ReactHost resolveReactHost() throws NoSuchFieldException, IllegalAccessException {
@@ -591,67 +624,11 @@ public class CodePushNativeModule extends BaseJavaModule {
                         mSettingsManager.savePendingUpdate(pendingHash, /* isLoading */false);
                     }
 
-                    if (installMode == CodePushInstallMode.ON_NEXT_RESUME.getValue() ||
-                        // We also add the resume listener if the installMode is IMMEDIATE, because
-                        // if the current activity is backgrounded, we want to reload the bundle when
-                        // it comes back into the foreground.
-                        installMode == CodePushInstallMode.IMMEDIATE.getValue() ||
-                        installMode == CodePushInstallMode.ON_NEXT_SUSPEND.getValue()) {
+                    // Tells JS to restart now, because the background that would have applied this
+                    // update ended before the install finished.
+                    boolean applyNow = mRestartPolicy.onInstall(installMode, minimumBackgroundDuration);
 
-                        // Store the minimum duration on the native module as an instance
-                        // variable instead of relying on a closure below, so that any
-                        // subsequent resume-based installs could override it.
-                        CodePushNativeModule.this.mMinimumBackgroundDuration = minimumBackgroundDuration;
-
-                        if (mLifecycleEventListener == null) {
-                            // Ensure we do not add the listener twice.
-                            mLifecycleEventListener = new LifecycleEventListener() {
-                                private Date lastPausedDate = null;
-                                private Handler appSuspendHandler = new Handler(Looper.getMainLooper());
-                                private Runnable loadBundleRunnable = new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        CodePushLog.info("Loading bundle on suspend");
-                                        restartAppInternal(false);
-                                    }
-                                };
-
-                                @Override
-                                public void onHostResume() {
-                                    appSuspendHandler.removeCallbacks(loadBundleRunnable);
-                                    // As of RN 36, the resume handler fires immediately if the app is in
-                                    // the foreground, so explicitly wait for it to be backgrounded first
-                                    if (lastPausedDate != null) {
-                                        long durationInBackground = (new Date().getTime() - lastPausedDate.getTime()) / 1000;
-                                        if (installMode == CodePushInstallMode.IMMEDIATE.getValue()
-                                                || durationInBackground >= CodePushNativeModule.this.mMinimumBackgroundDuration) {
-                                            CodePushLog.info("Loading bundle on resume");
-                                            restartAppInternal(false);
-                                        }
-                                    }
-                                }
-
-                                @Override
-                                public void onHostPause() {
-                                    // Save the current time so that when the app is later
-                                    // resumed, we can detect how long it was in the background.
-                                    lastPausedDate = new Date();
-
-                                    if (installMode == CodePushInstallMode.ON_NEXT_SUSPEND.getValue() && mSettingsManager.isPendingUpdate(null)) {
-                                        appSuspendHandler.postDelayed(loadBundleRunnable, minimumBackgroundDuration * 1000);
-                                    }
-                                }
-
-                                @Override
-                                public void onHostDestroy() {
-                                }
-                            };
-
-                            getReactApplicationContext().addLifecycleEventListener(mLifecycleEventListener);
-                        }
-                    }
-
-                    promise.resolve("");
+                    promise.resolve(applyNow);
                 } catch (CodePushUnknownException | CodePushMalformedDataException e) {
                     CodePushLog.error("Failed to install update", e);
                     promise.reject(e);
