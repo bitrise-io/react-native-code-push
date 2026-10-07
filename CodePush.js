@@ -217,14 +217,17 @@ async function getCurrentPackage() {
 async function installUpdate(localPackage, installMode = NativeCodePush.codePushInstallModeOnNextRestart, minimumBackgroundDuration = 0, updateInstalledCallback) {
   const localPackageCopy = Object.assign({}, localPackage); // In dev mode, React Native deep freezes any object queued over the bridge
   log.info(`Installing update. ${logFields({ ...packageLogFields(localPackage), installMode: installModeName(installMode), minimumBackgroundDuration })}`);
-  await NativeCodePush.installUpdate(localPackageCopy, installMode, minimumBackgroundDuration);
-  log.info(`Installed update. ${installedUpdateNextStep(installMode, minimumBackgroundDuration)}`);
+  const applyNow = (await NativeCodePush.installUpdate(localPackageCopy, installMode, minimumBackgroundDuration)) === true;
+  log.info(`Installed update. ${applyNow ? "The app's last background was long enough, so it requests an app restart now." : installedUpdateNextStep(installMode, minimumBackgroundDuration)}`);
   updateInstalledCallback && updateInstalledCallback();
   if (installMode == NativeCodePush.codePushInstallModeImmediate) {
     NativeCodePush.restartApp(false);
   } else {
     NativeCodePush.clearPendingRestart();
     localPackage.isPending = true; // Mark the package as pending since it hasn't been applied yet
+    if (applyNow) {
+      NativeCodePush.restartApp(true);
+    }
   }
 }
 

@@ -129,8 +129,11 @@ export interface SyncOptions {
     /**
      * Specifies the minimum number of seconds that the app needs to have been in the background before restarting the app. This property
      * only applies to updates which are installed using `InstallMode.ON_NEXT_RESUME` or `InstallMode.ON_NEXT_SUSPEND`, and can be useful 
-     * for getting your update in front of end users sooner, without being too obtrusive. Defaults to `0`, which has the effect of applying 
-     * the update immediately after a resume or unless the app suspension is long enough to not matter, regardless how long it was in the background.
+     * for getting your update in front of end users sooner, without being too obtrusive. With `ON_NEXT_RESUME`, the update is applied at the
+     * first resume after it is installed, if the app was in the background for at least this long. A `sync` that installs the update during
+     * a resume does not apply it at that resume, unless this is greater than `0` and the app's last background lasted at least that long. Then the app restarts as soon as the install finishes.
+     * Defaults to `0`, which has the effect of applying a pending update at any resume, regardless how long the app was in the background.
+     * With `ON_NEXT_SUSPEND`, `0` applies the update as soon as the app goes to the background.
      */
     minimumBackgroundDuration?: number;
 

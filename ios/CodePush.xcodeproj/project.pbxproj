@@ -12,6 +12,16 @@
 		CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
 		CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
 		0E9314F338AC505D2E33C1A3 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
+		FA3C0351FB8EA411972FA4AF /* CodePushLifecycleRestartPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = FB367461E2E3B8ABC38AB733 /* CodePushLifecycleRestartPolicy.m */; };
+		4D061BB06FCE46F4056F44C1 /* CodePushLifecycleRestartPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = FB367461E2E3B8ABC38AB733 /* CodePushLifecycleRestartPolicy.m */; };
+		34D8C4BC4A652B01C9F1BB9C /* CodePushLifecycleRestartPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = FB367461E2E3B8ABC38AB733 /* CodePushLifecycleRestartPolicy.m */; };
+		CE21FD8526D17E4E200CDCB9 /* CodePushInstallMode.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4677C25A5A60911097E292EE /* CodePushInstallMode.h */; };
+		4ADF52D9EFFD5B209014D48A /* CodePushInstallMode.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4677C25A5A60911097E292EE /* CodePushInstallMode.h */; };
+		278A8BE8957D1A2DD73EB7B0 /* CodePushInstallMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 4677C25A5A60911097E292EE /* CodePushInstallMode.h */; };
+		DD7F715EF0A702649019AD45 /* CodePushLifecycleRestartPolicy.h in Headers */ = {isa = PBXBuildFile; fileRef = 6449A953A26FE3F7EEFF87E0 /* CodePushLifecycleRestartPolicy.h */; };
+		C5E690C0DFEBFF6D4BDEFC00 /* CodePushInstallMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 4677C25A5A60911097E292EE /* CodePushInstallMode.h */; };
+		1E5705313BA0D73C8268A4FF /* CodePushLifecycleRestartPolicy.h in Headers */ = {isa = PBXBuildFile; fileRef = 6449A953A26FE3F7EEFF87E0 /* CodePushLifecycleRestartPolicy.h */; };
+		56BB821BCC0100E9B8140743 /* CodePushLifecycleRestartPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE3E54F74C55C27E52E146FE /* CodePushLifecycleRestartPolicyTests.swift */; };
 		3F6A18E4C1B72D094F5E8A67 /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
 		C11A2DB29D3D814B1A7891DF /* CodePushDiffManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A092598DCE51279CA317823 /* CodePushDiffManifest.h */; };
 		4693408DCB9ACB8E02BF69B1 /* CodePushDiffManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A092598DCE51279CA317823 /* CodePushDiffManifest.h */; };
@@ -182,6 +192,7 @@
 			dstSubfolderSpec = 16;
 			files = (
 				8482F84C1E24C58300F793DB /* CodePush.h in CopyFiles */,
+				CE21FD8526D17E4E200CDCB9 /* CodePushInstallMode.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -192,6 +203,7 @@
 			dstSubfolderSpec = 16;
 			files = (
 				6463C8451EBA0D1F0095B8CD /* CodePush.h in CopyFiles */,
+				4ADF52D9EFFD5B209014D48A /* CodePushInstallMode.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -199,8 +211,12 @@
 
 /* Begin PBXFileReference section */
 		9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushDiffManifestTests.swift; sourceTree = "<group>"; };
+		CE3E54F74C55C27E52E146FE /* CodePushLifecycleRestartPolicyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushLifecycleRestartPolicyTests.swift; sourceTree = "<group>"; };
 		2A092598DCE51279CA317823 /* CodePushDiffManifest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushDiffManifest.h; path = CodePush/CodePushDiffManifest.h; sourceTree = "<group>"; };
 		49166671F067D5F6429B262B /* CodePushDiffManifest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushDiffManifest.m; path = CodePush/CodePushDiffManifest.m; sourceTree = "<group>"; };
+		4677C25A5A60911097E292EE /* CodePushInstallMode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushInstallMode.h; path = CodePush/CodePushInstallMode.h; sourceTree = "<group>"; };
+		6449A953A26FE3F7EEFF87E0 /* CodePushLifecycleRestartPolicy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushLifecycleRestartPolicy.h; path = CodePush/CodePushLifecycleRestartPolicy.h; sourceTree = "<group>"; };
+		FB367461E2E3B8ABC38AB733 /* CodePushLifecycleRestartPolicy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushLifecycleRestartPolicy.m; path = CodePush/CodePushLifecycleRestartPolicy.m; sourceTree = "<group>"; };
 		F42FA68BF21AED765F55E71A /* CodePushBinaryDiffPatcherTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushBinaryDiffPatcherTests.swift; sourceTree = "<group>"; };
 		0F588BE40F9B3092085C5B63 /* CodePushBinaryDiffPatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePushBinaryDiffPatcher.h; path = CodePush/CodePushBinaryDiffPatcher.h; sourceTree = "<group>"; };
 		9414C770C70E1B1319F24B12 /* CodePushBinaryDiffPatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushBinaryDiffPatcher.m; path = CodePush/CodePushBinaryDiffPatcher.m; sourceTree = "<group>"; };
@@ -460,6 +476,9 @@
 				810D4E6C1B96935000B397E9 /* CodePushPackage.m */,
 				2A092598DCE51279CA317823 /* CodePushDiffManifest.h */,
 				49166671F067D5F6429B262B /* CodePushDiffManifest.m */,
+				4677C25A5A60911097E292EE /* CodePushInstallMode.h */,
+				6449A953A26FE3F7EEFF87E0 /* CodePushLifecycleRestartPolicy.h */,
+				FB367461E2E3B8ABC38AB733 /* CodePushLifecycleRestartPolicy.m */,
 				0F588BE40F9B3092085C5B63 /* CodePushBinaryDiffPatcher.h */,
 				9414C770C70E1B1319F24B12 /* CodePushBinaryDiffPatcher.m */,
 				5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */,
@@ -494,6 +513,7 @@
 			children = (
 				95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */,
 				9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */,
+				CE3E54F74C55C27E52E146FE /* CodePushLifecycleRestartPolicyTests.swift */,
 				F42FA68BF21AED765F55E71A /* CodePushBinaryDiffPatcherTests.swift */,
 				E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */,
 				E74D80ECD8DD03C4C0772B7B /* Fixtures */,
@@ -694,6 +714,8 @@
 				3221E4642C8ABE1300268379 /* mz_strm_split.h in Headers */,
 				6463C8471EBA0D290095B8CD /* CodePush.h in Headers */,
 				4693408DCB9ACB8E02BF69B1 /* CodePushDiffManifest.h in Headers */,
+				278A8BE8957D1A2DD73EB7B0 /* CodePushInstallMode.h in Headers */,
+				DD7F715EF0A702649019AD45 /* CodePushLifecycleRestartPolicy.h in Headers */,
 				469472C57F1D5FF7C0274268 /* CodePushBinaryDiffPatcher.h in Headers */,
 				3221E46A2C8ABE1300268379 /* mz_strm.h in Headers */,
 				3221E4782C8ABE1300268379 /* mz_zip_rw.h in Headers */,
@@ -756,6 +778,8 @@
 				3221E4752C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */,
 				8482F84E1E24C66300F793DB /* CodePush.h in Headers */,
 				C11A2DB29D3D814B1A7891DF /* CodePushDiffManifest.h in Headers */,
+				C5E690C0DFEBFF6D4BDEFC00 /* CodePushInstallMode.h in Headers */,
+				1E5705313BA0D73C8268A4FF /* CodePushLifecycleRestartPolicy.h in Headers */,
 				E5C712D353D9164F04A2F456 /* CodePushBinaryDiffPatcher.h in Headers */,
 				F88664711F4AD1EE0036D01B /* JWTCoding+VersionTwo.h in Headers */,
 				F886646B1F4AD1EE0036D01B /* JWTCoding+ResultTypes.h in Headers */,
@@ -927,6 +951,7 @@
 				3221E4612C8ABE1300268379 /* mz_zip_rw.c in Sources */,
 				810D4E6D1B96935000B397E9 /* CodePushPackage.m in Sources */,
 				CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */,
+				FA3C0351FB8EA411972FA4AF /* CodePushLifecycleRestartPolicy.m in Sources */,
 				1993F82DF6330426AC5CBC2E /* CodePushBinaryDiffPatcher.m in Sources */,
 				3221E4552C8ABE1300268379 /* mz_strm_pkcrypt.c in Sources */,
 				F88664531F4AD1EE0036D01B /* JWTAlgorithmESBase.m in Sources */,
@@ -953,6 +978,7 @@
 				3221E46E2C8ABE1300268379 /* mz_crypt.c in Sources */,
 				6463C8321EBA0CFB0095B8CD /* CodePushPackage.m in Sources */,
 				CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */,
+				4D061BB06FCE46F4056F44C1 /* CodePushLifecycleRestartPolicy.m in Sources */,
 				F41E2EFAD0D322F7D14D7125 /* CodePushBinaryDiffPatcher.m in Sources */,
 				6463C8331EBA0CFB0095B8CD /* CodePushTelemetryManager.m in Sources */,
 				6463C8341EBA0CFB0095B8CD /* CodePushUpdateUtils.m in Sources */,
@@ -977,9 +1003,11 @@
 			files = (
 				B5B50F91FAAF80444988E284 /* BSPatchTests.swift in Sources */,
 				BBC7F97A68E454FB38953FC4 /* CodePushDiffManifestTests.swift in Sources */,
+				56BB821BCC0100E9B8140743 /* CodePushLifecycleRestartPolicyTests.swift in Sources */,
 				3643F3729205426163367671 /* CodePushBinaryDiffPatcherTests.swift in Sources */,
 				47F66D5AF3C3185E1A3E3B15 /* bspatch_bridge.c in Sources */,
 				0E9314F338AC505D2E33C1A3 /* CodePushDiffManifest.m in Sources */,
+				34D8C4BC4A652B01C9F1BB9C /* CodePushLifecycleRestartPolicy.m in Sources */,
 				3F6A18E4C1B72D094F5E8A67 /* CodePushErrorUtils.m in Sources */,
 				D5BC8B1BF7D2DA03BB888FCC /* CodePushBinaryDiffPatcher.m in Sources */,
 				DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */,

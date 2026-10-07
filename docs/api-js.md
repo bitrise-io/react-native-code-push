@@ -34,7 +34,7 @@ Integrate CodePush by calling [`sync`](#codepushsync) from a `useEffect` in your
     export default App;
     ```
 
-2. **Silent sync every time the app resumes**. Same as 1, except we check for updates, or apply an update if one exists every time the app returns to the foreground after being "backgrounded".
+2. **Silent sync every time the app resumes**. Same as 1, except we check for updates every time the app returns to the foreground after being "backgrounded". The update is installed during the resume, so with `ON_NEXT_RESUME` it is applied at the *next* resume, not at the one that found it. To apply it sooner, see [`minimumBackgroundDuration`](#codepushoptions) and `InstallMode.IMMEDIATE`.
 
     ```javascript
     import { useEffect } from "react";
@@ -118,7 +118,7 @@ The options object passed to `sync` allows you to customize numerous aspects of 
 
 * __mandatoryInstallMode__ *(codePush.InstallMode)* - Specifies when you would like to install updates which are marked as mandatory. Defaults to `codePush.InstallMode.IMMEDIATE`. Refer to the [`InstallMode`](#installmode) enum reference for a description of the available options and what they do.
 
-* __minimumBackgroundDuration__ *(Number)* - Specifies the minimum number of seconds that the app needs to have been in the background before restarting the app. This property only applies to updates which are installed using `InstallMode.ON_NEXT_RESUME` or `InstallMode.ON_NEXT_SUSPEND`, and can be useful for getting your update in front of end users sooner, without being too obtrusive. Defaults to `0`, which has the effect of applying the update immediately after a resume or unless the app suspension is long enough to not matter, regardless how long it was in the background.
+* __minimumBackgroundDuration__ *(Number)* - Specifies the minimum number of seconds that the app needs to have been in the background before restarting the app. This property only applies to updates which are installed using `InstallMode.ON_NEXT_RESUME` or `InstallMode.ON_NEXT_SUSPEND`, and can be useful for getting your update in front of end users sooner, without being too obtrusive. Refer to the [`InstallMode`](#installmode) enum reference for how it combines with each mode. Defaults to `0`, which has the effect of applying a pending update at any resume, regardless how long the app was in the background. With `ON_NEXT_SUSPEND`, `0` applies the update as soon as the app goes to the background.
 
 * __updateDialog__ *(UpdateDialogOptions)* - An "options" object used to determine whether a confirmation dialog should be displayed to the end user when an update is available, and if so, what strings to use. Defaults to `null`, which has the effect of disabling the dialog completely. Setting this to any truthy value will enable the dialog with the default strings, and passing an object to this parameter allows enabling the dialog as well as overriding one or more of the default strings. Before enabling this option within an App Store-distributed app, please refer to [this note](https://github.com/microsoft/react-native-code-push#app-store).
 
@@ -445,9 +445,8 @@ Example Usage:
 // in the Info.plist file
 codePush.sync({ deploymentKey: "KEY" });
 
-// Download the update silently, but install it on
-// the next resume, as long as at least 5 minutes
-// has passed since the app was put into the background.
+// Download the update silently, and apply it at the first resume
+// that follows a background of at least 5 minutes.
 codePush.sync({ installMode: codePush.InstallMode.ON_NEXT_RESUME, minimumBackgroundDuration: 60 * 5 });
 
 // Download the update silently, and install optional updates
@@ -543,7 +542,7 @@ Contains details about an update that has been downloaded locally or already ins
 
 ###### Methods
 
-- __install(installMode: codePush.InstallMode = codePush.InstallMode.ON_NEXT_RESTART, minimumBackgroundDuration = 0): Promise&lt;void&gt;__: Installs the update by saving it to the location on disk where the runtime expects to find the latest version of the app. The `installMode` parameter controls when the changes are actually presented to the end user. The default value is to wait until the next app restart to display the changes, but you can refer to the [`InstallMode`](#installmode) enum reference for a description of the available options and what they do. If the `installMode` parameter is set to `InstallMode.ON_NEXT_RESUME`, then the `minimumBackgroundDuration` parameter allows you to control how long the app must have been in the background before forcing the install after it is resumed.
+- __install(installMode: codePush.InstallMode = codePush.InstallMode.ON_NEXT_RESTART, minimumBackgroundDuration = 0): Promise&lt;void&gt;__: Installs the update by saving it to the location on disk where the runtime expects to find the latest version of the app. The `installMode` parameter controls when the changes are actually presented to the end user. The default value is to wait until the next app restart to display the changes, but you can refer to the [`InstallMode`](#installmode) enum reference for a description of the available options and what they do. If the `installMode` parameter is set to `InstallMode.ON_NEXT_RESUME`, then the `minimumBackgroundDuration` parameter allows you to control how long the app must have been in the background before it restarts to apply the update. See [`InstallMode`](#installmode) for the details.
 
 ##### RemotePackage
 
@@ -572,6 +571,8 @@ This enum specifies when you would like an installed update to actually be appli
 * __codePush.InstallMode.ON_NEXT_RESTART__ *(1)* - Indicates that you want to install the update, but not forcibly restart the app. When the app is "naturally" restarted (due the OS or end user killing it), the update will be seamlessly picked up. This value is appropriate when performing silent updates, since it would likely be disruptive to the end user if the app suddenly restarted out of nowhere, since they wouldn't have realized an update was even downloaded. This is the default mode used for both the `sync` and `LocalPackage.install` methods.
 
 * __codePush.InstallMode.ON_NEXT_RESUME__ *(2)* - Indicates that you want to install the update, but don't want to restart the app until the next time the end user resumes it from the background. This way, you don't disrupt their current session, but you can get the update in front of them sooner then having to wait for the next natural restart. This value is appropriate for silent installs that can be applied on resume in a non-invasive way.
+
+    The `minimumBackgroundDuration` option (0 seconds by default) is part of this mode. The update is applied at the first resume after it is installed, if the app was in the background for at least that many seconds. The resume during which a `sync` installs the update does not apply it, unless `minimumBackgroundDuration` is greater than `0` and the app's last background lasted at least that long. In that case, the app restarts as soon as the install finishes, however long ago that background ended. `disallowRestart` delays that restart.
 
 * __codePush.InstallMode.ON_NEXT_SUSPEND__ *(3)* - Indicates that you want to install the update _while_ it is in the background, but only after it has been in the background for `minimumBackgroundDuration` seconds (0 by default), so that user context isn't lost unless the app suspension is long enough to not matter.
 
