@@ -15,8 +15,11 @@ React Native CodePush is a native module that enables over-the-air updates for R
 
 Prefer unit testing what's possible (even though, on iOS, this involves a simulator). Legacy code used E2E tests for everything, which is complex, error-prone, and slow. The existing E2E tests are still useful, but this is not a pattern to follow.
 
+#### Lint
+- `npm run lint` (`lint:fix` to autofix)
+
 #### E2E Tests
-- `npm run typecheck:tests` - Lints and type-checks `test/`. Mocha runs the `.mts` test sources directly via Node's native TypeScript type-stripping, so this is the only place type errors in `test/` get caught.
+- `npm run typecheck:tests` - Type-checks `test/`. Mocha runs the `.mts` test sources directly via Node's native TypeScript type-stripping, so this is the only place type errors in `test/` get caught.
 
 Use the `verify-codepush` skill (`.agents/skills/verify-codepush/`) to run iOS and Android E2E tests and to prove a behavior end to end. It explains how the harness works, and how to drive and verify one CodePush behavior. Do not duplicate E2E details in this file.
 

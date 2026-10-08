@@ -1,20 +1,28 @@
-"use strict";
+'use strict';
 
-import crypto from "crypto";
-import fs from "fs";
-import { mkdirp } from "mkdirp";
-import path from "path";
+import {
+  Platform,
+  ProjectManager,
+  ServerUtil,
+  setupUpdateScenario,
+  TestConfig,
+  TestUtil,
+} from 'code-push-plugin-testing-framework';
+import crypto from 'crypto';
+import fs from 'fs';
+import { mkdirp } from 'mkdirp';
+import path from 'path';
 
-import { Platform, ProjectManager, ServerUtil, setupUpdateScenario, TestConfig, TestUtil } from "code-push-plugin-testing-framework";
-
-const CODEPUSH_METADATA_FILE_NAME = ".codepushrelease";
+const CODEPUSH_METADATA_FILE_NAME = '.codepushrelease';
 
 function isHashIgnored(relativePath: string): boolean {
-    return relativePath.startsWith("__MACOSX/")
-        || relativePath === ".DS_Store"
-        || relativePath.endsWith("/.DS_Store")
-        || relativePath === CODEPUSH_METADATA_FILE_NAME
-        || relativePath.endsWith(`/${CODEPUSH_METADATA_FILE_NAME}`);
+  return (
+    relativePath.startsWith('__MACOSX/') ||
+    relativePath === '.DS_Store' ||
+    relativePath.endsWith('/.DS_Store') ||
+    relativePath === CODEPUSH_METADATA_FILE_NAME ||
+    relativePath.endsWith(`/${CODEPUSH_METADATA_FILE_NAME}`)
+  );
 }
 
 /**
@@ -22,37 +30,42 @@ function isHashIgnored(relativePath: string): boolean {
  * can hand back a package_hash that will actually match what the client expects.
  */
 export function computeUpdateContentsHash(folderPath: string): string {
-    const manifest: string[] = [];
+  const manifest: string[] = [];
 
-    const walk = (currentPath: string, relativePrefix: string) => {
-        for (const entryName of fs.readdirSync(currentPath)) {
-            const entryPath = path.join(currentPath, entryName);
-            const relativePath = relativePrefix ? `${relativePrefix}/${entryName}` : entryName;
+  const walk = (currentPath: string, relativePrefix: string) => {
+    for (const entryName of fs.readdirSync(currentPath)) {
+      const entryPath = path.join(currentPath, entryName);
+      const relativePath = relativePrefix ? `${relativePrefix}/${entryName}` : entryName;
 
-            if (isHashIgnored(relativePath)) {
-                continue;
-            }
+      if (isHashIgnored(relativePath)) {
+        continue;
+      }
 
-            if (fs.statSync(entryPath).isDirectory()) {
-                walk(entryPath, relativePath);
-            } else {
-                const fileHash = crypto.createHash("sha256").update(fs.readFileSync(entryPath)).digest("hex");
-                manifest.push(`${relativePath}:${fileHash}`);
-            }
-        }
-    };
+      if (fs.statSync(entryPath).isDirectory()) {
+        walk(entryPath, relativePath);
+      } else {
+        const fileHash = crypto.createHash('sha256').update(fs.readFileSync(entryPath)).digest('hex');
+        manifest.push(`${relativePath}:${fileHash}`);
+      }
+    }
+  };
 
-    walk(folderPath, "");
-    manifest.sort();
+  walk(folderPath, '');
+  manifest.sort();
 
-    return crypto.createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
+  return crypto.createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
 }
 
-const codeSigningPrivateKey = fs.readFileSync(new URL("fixtures/codesigning/test-private-key.pem", import.meta.url), "utf8");
-export const codeSigningPublicKey = fs.readFileSync(new URL("fixtures/codesigning/test-public-key.pem", import.meta.url), "utf8").trim();
+const codeSigningPrivateKey = fs.readFileSync(
+  new URL('fixtures/codesigning/test-private-key.pem', import.meta.url),
+  'utf8',
+);
+export const codeSigningPublicKey = fs
+  .readFileSync(new URL('fixtures/codesigning/test-public-key.pem', import.meta.url), 'utf8')
+  .trim();
 
 function base64UrlEncode(input: Buffer): string {
-    return input.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return input.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
@@ -60,10 +73,12 @@ function base64UrlEncode(input: Buffer): string {
  * archive's "CodePush/" folder.
  */
 function signUpdateContentsHash(contentHash: string): string {
-    const header = base64UrlEncode(Buffer.from(JSON.stringify({ alg: "RS256", typ: "JWT" })));
-    const payload = base64UrlEncode(Buffer.from(JSON.stringify({ contentHash })));
-    const signature = base64UrlEncode(crypto.sign("RSA-SHA256", Buffer.from(`${header}.${payload}`), codeSigningPrivateKey));
-    return `${header}.${payload}.${signature}`;
+  const header = base64UrlEncode(Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
+  const payload = base64UrlEncode(Buffer.from(JSON.stringify({ contentHash })));
+  const signature = base64UrlEncode(
+    crypto.sign('RSA-SHA256', Buffer.from(`${header}.${payload}`), codeSigningPrivateKey),
+  );
+  return `${header}.${payload}.${signature}`;
 }
 
 /**
@@ -71,26 +86,34 @@ function signUpdateContentsHash(contentHash: string): string {
  * server hands back a package_hash that matches what the client's data-integrity check computes.
  */
 export function signAndRecordUpdateArchive(bundleFolder: string, isDiff: boolean): void {
-    // TODO(RA-4875): Diff updates clear it instead, since they are poorly implemented in the entire test harness.
-    // It's going to be a bigger refactor, so for now we just skip signing/hashing to avoid using a stale value in diff tests.
-    if (isDiff) {
-        ServerUtil.setKnownPackageHash(undefined);
-        return;
-    }
+  // TODO(RA-4875): Diff updates clear it instead, since they are poorly implemented in the entire test harness.
+  // It's going to be a bigger refactor, so for now we just skip signing/hashing to avoid using a stale value in diff tests.
+  if (isDiff) {
+    ServerUtil.setKnownPackageHash(undefined);
+    return;
+  }
 
-    const contentHash = computeUpdateContentsHash(bundleFolder);
-    const signatureFolder = path.join(bundleFolder, "CodePush");
-    mkdirp.sync(signatureFolder);
-    fs.writeFileSync(path.join(signatureFolder, CODEPUSH_METADATA_FILE_NAME), signUpdateContentsHash(contentHash));
-    ServerUtil.setKnownPackageHash(contentHash);
+  const contentHash = computeUpdateContentsHash(bundleFolder);
+  const signatureFolder = path.join(bundleFolder, 'CodePush');
+  mkdirp.sync(signatureFolder);
+  fs.writeFileSync(path.join(signatureFolder, CODEPUSH_METADATA_FILE_NAME), signUpdateContentsHash(contentHash));
+  ServerUtil.setKnownPackageHash(contentHash);
 }
 
-export async function setupTamperedSignatureUpdateScenario(projectManager: ProjectManager, targetPlatform: Platform.IPlatform, scenarioJsPath: string, version: string): Promise<string> {
-    const updatePath = await setupUpdateScenario(projectManager, targetPlatform, scenarioJsPath, version);
+export async function setupTamperedSignatureUpdateScenario(
+  projectManager: ProjectManager,
+  targetPlatform: Platform.IPlatform,
+  scenarioJsPath: string,
+  version: string,
+): Promise<string> {
+  const updatePath = await setupUpdateScenario(projectManager, targetPlatform, scenarioJsPath, version);
 
-    const bundleFolder = path.join(TestConfig.updatesDirectory, TestConfig.TestAppName, "CodePush/");
-    const tamperedHash = "0".repeat(64);
-    fs.writeFileSync(path.join(bundleFolder, "CodePush", CODEPUSH_METADATA_FILE_NAME), signUpdateContentsHash(tamperedHash));
+  const bundleFolder = path.join(TestConfig.updatesDirectory, TestConfig.TestAppName, 'CodePush/');
+  const tamperedHash = '0'.repeat(64);
+  fs.writeFileSync(
+    path.join(bundleFolder, 'CodePush', CODEPUSH_METADATA_FILE_NAME),
+    signUpdateContentsHash(tamperedHash),
+  );
 
-    return await TestUtil.archiveFolder(bundleFolder, "", updatePath, false);
+  return await TestUtil.archiveFolder(bundleFolder, '', updatePath, false);
 }

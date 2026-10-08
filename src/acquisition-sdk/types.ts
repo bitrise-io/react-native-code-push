@@ -4,52 +4,52 @@
 
 /*in*/
 export interface DeploymentStatusReport {
-    app_version: string;
-    capabilities?: string[];
-    client_unique_id?: string;
-    deployment_key: string;
-    previous_deployment_key?: string;
-    previous_label_or_app_version?: string;
-    label?: string;
-    status?: string;
+  app_version: string;
+  capabilities?: string[];
+  client_unique_id?: string;
+  deployment_key: string;
+  previous_deployment_key?: string;
+  previous_label_or_app_version?: string;
+  label?: string;
+  status?: string;
 }
 
-export type DownloadStatusValue = "DownloadSucceeded" | "DownloadFailed";
+export type DownloadStatusValue = 'DownloadSucceeded' | 'DownloadFailed';
 
 /*in*/
 export interface DownloadReport {
-    client_unique_id: string;
-    deployment_key: string;
-    label: string;
-    package_hash: string;
-    package_size_bytes: number;
-    download_duration_ms?: number;
-    status: DownloadStatusValue;
+  client_unique_id: string;
+  deployment_key: string;
+  label: string;
+  package_hash: string;
+  package_size_bytes: number;
+  download_duration_ms?: number;
+  status: DownloadStatusValue;
 }
 
 /*out*/
 export interface UpdateCheckResponse {
-    download_url?: string;
-    description?: string;
-    is_available: boolean;
-    is_disabled?: boolean;
-    target_binary_range: string;
-    /*generated*/ label?: string;
-    /*generated*/ version_label?: string;
-    /*generated*/ package_hash?: string;
-    package_size?: number;
-    should_run_binary_version?: boolean;
-    update_app_version?: boolean;
-    is_mandatory?: boolean;
+  download_url?: string;
+  description?: string;
+  is_available: boolean;
+  is_disabled?: boolean;
+  target_binary_range: string;
+  /*generated*/ label?: string;
+  /*generated*/ version_label?: string;
+  /*generated*/ package_hash?: string;
+  package_size?: number;
+  should_run_binary_version?: boolean;
+  update_app_version?: boolean;
+  is_mandatory?: boolean;
 }
 
 /*in*/
 export interface UpdateCheckRequest {
-    app_version: string;
-    capabilities?: string[];
-    client_unique_id?: string;
-    deployment_key: string;
-    is_companion?: boolean;
-    label?: string;
-    package_hash?: string;
+  app_version: string;
+  capabilities?: string[];
+  client_unique_id?: string;
+  deployment_key: string;
+  is_companion?: boolean;
+  label?: string;
+  package_hash?: string;
 }
