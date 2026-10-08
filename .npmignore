@@ -110,4 +110,5 @@ CLAUDE.md
 AGENTS.md
 mise.toml
 tsconfig.json
+eslint.config.mjs
 babel.config.js

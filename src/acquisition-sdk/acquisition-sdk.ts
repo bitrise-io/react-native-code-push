@@ -1,315 +1,363 @@
 // Vendored from https://github.com/microsoft/code-push/blob/master/src/script/acquisition-sdk.ts (archived, MIT licensed)
 
-import { UpdateCheckResponse, UpdateCheckRequest, DeploymentStatusReport, DownloadReport, DownloadStatusValue } from "./types";
-import { CodePushHttpError, CodePushDeployStatusError, CodePushPackageError } from "./code-push-error"
+import { CodePushDeployStatusError, CodePushHttpError, CodePushPackageError } from './code-push-error';
+import {
+  DeploymentStatusReport,
+  DownloadReport,
+  DownloadStatusValue,
+  UpdateCheckRequest,
+  UpdateCheckResponse,
+} from './types';
 
+// Part of the public API (Http.Verb, Http.Requester), so it can't become a module without a breaking change.
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Http {
-    export const enum Verb {
-        GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS, CONNECT, PATCH
-    }
+  export const enum Verb {
+    GET,
+    HEAD,
+    POST,
+    PUT,
+    DELETE,
+    TRACE,
+    OPTIONS,
+    CONNECT,
+    PATCH,
+  }
 
-    export interface Response {
-        statusCode: number;
-        body?: string;
-    }
+  export interface Response {
+    statusCode: number;
+    body?: string;
+  }
 
-    export interface Requester {
-        request(verb: Verb, url: string, callback: Callback<Response>): void;
-        request(verb: Verb, url: string, requestBody: string, callback: Callback<Response>): void;
-    }
+  export interface Requester {
+    request(verb: Verb, url: string, callback: Callback<Response>): void;
+    request(verb: Verb, url: string, requestBody: string, callback: Callback<Response>): void;
+  }
 }
 
 // All fields are non-nullable, except when retrieving the currently running package on the first run of the app,
 // in which case only the appVersion is compulsory
 export interface Package {
-    deploymentKey: string;
-    description: string;
-    label: string;
-    // Optional because packages persisted by an older SDK have no versionLabel.
-    versionLabel?: string;
-    appVersion: string;
-    isMandatory: boolean;
-    packageHash: string;
-    packageSize: number;
+  deploymentKey: string;
+  description: string;
+  label: string;
+  // Optional because packages persisted by an older SDK have no versionLabel.
+  versionLabel?: string;
+  appVersion: string;
+  isMandatory: boolean;
+  packageHash: string;
+  packageSize: number;
 }
 
 export interface RemotePackage extends Package {
-    downloadUrl: string;
+  downloadUrl: string;
 }
 
 export interface DownloadedPackage extends Package {
-    downloadDurationMs?: number;
-    status: DownloadStatusValue;
+  downloadDurationMs?: number;
+  status: DownloadStatusValue;
 }
 
 export interface NativeUpdateNotification {
-    updateAppVersion: boolean;   // Always true
-    appVersion: string;
+  updateAppVersion: boolean; // Always true
+  appVersion: string;
 }
 
 export interface LocalPackage extends Package {
-    localPath: string;
+  localPath: string;
 }
 
-export interface Callback<T> { (error: Error, parameter: T): void; }
+export interface Callback<T> {
+  (error: Error, parameter: T): void;
+}
 
 export interface Configuration {
-    appVersion: string;
-    clientUniqueId: string;
-    deploymentKey: string;
-    serverUrl: string;
-    ignoreAppVersion?: boolean
-    enableDeltaUpdates?: boolean;
+  appVersion: string;
+  clientUniqueId: string;
+  deploymentKey: string;
+  serverUrl: string;
+  ignoreAppVersion?: boolean;
+  enableDeltaUpdates?: boolean;
 }
 
 export class AcquisitionStatus {
-    public static DeploymentSucceeded = "DeploymentSucceeded";
-    public static DeploymentFailed = "DeploymentFailed";
+  public static DeploymentSucceeded = 'DeploymentSucceeded';
+  public static DeploymentFailed = 'DeploymentFailed';
 }
 
 export class DownloadStatus {
-    public static Succeeded: DownloadStatusValue = "DownloadSucceeded";
-    public static Failed: DownloadStatusValue = "DownloadFailed";
+  public static Succeeded: DownloadStatusValue = 'DownloadSucceeded';
+  public static Failed: DownloadStatusValue = 'DownloadFailed';
 }
 
 export class AcquisitionManager {
-    private readonly BASE_URL_PART = "appcenter.ms";
-    private _appVersion: string;
-    private _capabilities: string[];
-    private _clientUniqueId: string;
-    private _deploymentKey: string;
-    private _httpRequester: Http.Requester;
-    private _ignoreAppVersion: boolean;
-    private _serverUrl: string;
-    private _publicPrefixUrl: string = "v0.1/public/codepush/";
-    private _statusCode: number;
-    private static _apiCallsDisabled: boolean = false;
-    constructor(httpRequester: Http.Requester, configuration: Configuration) {
-        this._httpRequester = httpRequester;
+  private readonly BASE_URL_PART = 'appcenter.ms';
+  private _appVersion: string;
+  private _capabilities: string[];
+  private _clientUniqueId: string;
+  private _deploymentKey: string;
+  private _httpRequester: Http.Requester;
+  private _ignoreAppVersion: boolean;
+  private _serverUrl: string;
+  private _publicPrefixUrl: string = 'v0.1/public/codepush/';
+  private _statusCode: number;
+  private static _apiCallsDisabled: boolean = false;
+  constructor(httpRequester: Http.Requester, configuration: Configuration) {
+    this._httpRequester = httpRequester;
 
-        this._serverUrl = configuration.serverUrl;
-        if (this._serverUrl.slice(-1) !== "/") {
-            this._serverUrl += "/";
-        }
-
-        this._appVersion = configuration.appVersion;
-        this._clientUniqueId = configuration.clientUniqueId;
-        this._deploymentKey = configuration.deploymentKey;
-        this._ignoreAppVersion = configuration.ignoreAppVersion;
-
-        // Sent on update_check and report_status/deploy. Must match what the native side will
-        // accept: it rejects binary diffs unless delta updates are enabled in the app config.
-        this._capabilities = configuration.enableDeltaUpdates ? ["binary_diff:bsdiff"] : [];
+    this._serverUrl = configuration.serverUrl;
+    if (this._serverUrl.slice(-1) !== '/') {
+      this._serverUrl += '/';
     }
 
-    private isRecoverable = (statusCode: number): boolean => statusCode >= 500 || statusCode === 408 || statusCode === 429;
+    this._appVersion = configuration.appVersion;
+    this._clientUniqueId = configuration.clientUniqueId;
+    this._deploymentKey = configuration.deploymentKey;
+    this._ignoreAppVersion = configuration.ignoreAppVersion;
 
-    // Logs with console directly: this file is compiled to lib/ separately, and cannot import the root logging.js.
-    // TODO: simplify this once we adopt TypeScript properly in the entire repo.
-    private handleRequestFailure() {
-        if (this._serverUrl.includes(this.BASE_URL_PART) && !this.isRecoverable(this._statusCode) && !AcquisitionManager._apiCallsDisabled) {
-            AcquisitionManager._apiCallsDisabled = true;
-            console.warn(`[CodePush] The server returned HTTP ${this._statusCode}, so all later API calls are disabled for the rest of this app session.`);
-        }
+    // Sent on update_check and report_status/deploy. Must match what the native side will
+    // accept: it rejects binary diffs unless delta updates are enabled in the app config.
+    this._capabilities = configuration.enableDeltaUpdates ? ['binary_diff:bsdiff'] : [];
+  }
+
+  private isRecoverable = (statusCode: number): boolean =>
+    statusCode >= 500 || statusCode === 408 || statusCode === 429;
+
+  // Logs with console directly: this file is compiled to lib/ separately, and cannot import the root logging.js.
+  // TODO: simplify this once we adopt TypeScript properly in the entire repo.
+  private handleRequestFailure() {
+    if (
+      this._serverUrl.includes(this.BASE_URL_PART) &&
+      !this.isRecoverable(this._statusCode) &&
+      !AcquisitionManager._apiCallsDisabled
+    ) {
+      AcquisitionManager._apiCallsDisabled = true;
+      console.warn(
+        `[CodePush] The server returned HTTP ${this._statusCode}, so all later API calls are disabled for the rest of this app session.`,
+      );
+    }
+  }
+
+  public queryUpdateWithCurrentPackage(
+    currentPackage: Package,
+    callback?: Callback<RemotePackage | NativeUpdateNotification>,
+  ): void {
+    if (AcquisitionManager._apiCallsDisabled) {
+      console.log(`[CodePush] API calls are disabled, skipping the update_check request.`);
+      callback(/*error=*/ null, /*remotePackage=*/ null);
+      return;
     }
 
-    public queryUpdateWithCurrentPackage(currentPackage: Package, callback?: Callback<RemotePackage | NativeUpdateNotification>): void {
-        if (AcquisitionManager._apiCallsDisabled) {
-            console.log(`[CodePush] API calls are disabled, skipping the update_check request.`);
-            callback(/*error=*/ null, /*remotePackage=*/ null);
+    if (!currentPackage || !currentPackage.appVersion) {
+      throw new CodePushPackageError('Calling common acquisition SDK with incorrect package'); // Unexpected; indicates error in our implementation
+    }
+
+    var updateRequest: UpdateCheckRequest = {
+      deployment_key: this._deploymentKey,
+      app_version: currentPackage.appVersion,
+      package_hash: currentPackage.packageHash,
+      is_companion: this._ignoreAppVersion,
+      label: currentPackage.label,
+      client_unique_id: this._clientUniqueId,
+      capabilities: this._capabilities,
+    };
+
+    var requestUrl: string = `${this._serverUrl + this._publicPrefixUrl}update_check?${toQueryString(updateRequest)}`;
+
+    this._httpRequester.request(Http.Verb.GET, requestUrl, (error: Error, response: Http.Response) => {
+      if (error) {
+        callback(error, /*remotePackage=*/ null);
+        return;
+      }
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        let errorMessage: string;
+        this._statusCode = response.statusCode;
+        this.handleRequestFailure();
+        if (response.statusCode === 0) {
+          errorMessage = `Couldn't send request to ${requestUrl}, xhr.statusCode = 0 was returned. One of the possible reasons for that might be connection problems. Please, check your internet connection.`;
+        } else {
+          errorMessage = `${response.statusCode}: ${response.body}`;
+        }
+        callback(new CodePushHttpError(errorMessage), /*remotePackage=*/ null);
+        return;
+      }
+      try {
+        var responseObject = JSON.parse(response.body);
+        var updateInfo: UpdateCheckResponse = responseObject.update_info;
+      } catch (error) {
+        callback(error as Error, /*remotePackage=*/ null);
+        return;
+      }
+
+      if (!updateInfo) {
+        callback(error, /*remotePackage=*/ null);
+        return;
+      } else if (updateInfo.update_app_version) {
+        callback(/*error=*/ null, { updateAppVersion: true, appVersion: updateInfo.target_binary_range });
+        return;
+      } else if (!updateInfo.is_available) {
+        callback(/*error=*/ null, /*remotePackage=*/ null);
+        return;
+      }
+
+      var remotePackage: RemotePackage = {
+        deploymentKey: this._deploymentKey,
+        description: updateInfo.description,
+        label: updateInfo.label,
+        versionLabel: updateInfo.version_label,
+        appVersion: updateInfo.target_binary_range,
+        isMandatory: updateInfo.is_mandatory,
+        packageHash: updateInfo.package_hash,
+        packageSize: updateInfo.package_size,
+        downloadUrl: updateInfo.download_url,
+      };
+
+      callback(/*error=*/ null, remotePackage);
+    });
+  }
+
+  // Note: deployedPackage and status are null when reporting a "binary update" (i.e. the app was updated through the app store, not CodePush)
+  public reportStatusDeploy(
+    deployedPackage?: Package,
+    status?: string,
+    previousLabelOrAppVersion?: string,
+    previousDeploymentKey?: string,
+    callback?: Callback<void>,
+  ): void {
+    if (AcquisitionManager._apiCallsDisabled) {
+      console.log(`[CodePush] API calls are disabled, skipping the report_status/deploy request.`);
+      callback(/*error*/ null, /*not used*/ null);
+      return;
+    }
+
+    var url: string = `${this._serverUrl + this._publicPrefixUrl}report_status/deploy`;
+    var body: DeploymentStatusReport = {
+      app_version: this._appVersion,
+      capabilities: this._capabilities,
+      deployment_key: this._deploymentKey,
+    };
+
+    if (this._clientUniqueId) {
+      body.client_unique_id = this._clientUniqueId;
+    }
+
+    if (deployedPackage) {
+      body.label = deployedPackage.label;
+      body.app_version = deployedPackage.appVersion;
+
+      switch (status) {
+        case AcquisitionStatus.DeploymentSucceeded:
+        case AcquisitionStatus.DeploymentFailed:
+          body.status = status;
+          break;
+
+        default:
+          if (callback) {
+            if (!status) {
+              callback(new CodePushDeployStatusError('Missing status argument.'), /*not used*/ null);
+            } else {
+              callback(new CodePushDeployStatusError(`Unrecognized status "${status}".`), /*not used*/ null);
+            }
+          }
+          return;
+      }
+    }
+
+    if (previousLabelOrAppVersion) {
+      body.previous_label_or_app_version = previousLabelOrAppVersion;
+    }
+
+    if (previousDeploymentKey) {
+      body.previous_deployment_key = previousDeploymentKey;
+    }
+
+    // Whichever argument comes last is the callback, so callers can skip the optional parameters before it. Replacing
+    // `arguments` with explicit overloads would fix both rules, but changes the public signature, so it needs its own
+    // change.
+    // eslint-disable-next-line no-param-reassign, prefer-rest-params
+    callback = typeof arguments[arguments.length - 1] === 'function' && arguments[arguments.length - 1];
+
+    this._httpRequester.request(
+      Http.Verb.POST,
+      url,
+      JSON.stringify(body),
+      (error: Error, response: Http.Response): void => {
+        if (callback) {
+          if (error) {
+            callback(error, /*not used*/ null);
             return;
-        }
+          }
 
-        if (!currentPackage || !currentPackage.appVersion) {
-            throw new CodePushPackageError("Calling common acquisition SDK with incorrect package");  // Unexpected; indicates error in our implementation
-        }
-
-        var updateRequest: UpdateCheckRequest = {
-            deployment_key: this._deploymentKey,
-            app_version: currentPackage.appVersion,
-            package_hash: currentPackage.packageHash,
-            is_companion: this._ignoreAppVersion,
-            label: currentPackage.label,
-            client_unique_id: this._clientUniqueId,
-            capabilities: this._capabilities
-        };
-
-        var requestUrl: string = this._serverUrl + this._publicPrefixUrl + "update_check?" + toQueryString(updateRequest);
-
-        this._httpRequester.request(Http.Verb.GET, requestUrl, (error: Error, response: Http.Response) => {
-            if (error) {
-                callback(error, /*remotePackage=*/ null);
-                return;
-            }
-
-            if (response.statusCode < 200 || response.statusCode >= 300) {
-                let errorMessage: any;
-                this._statusCode = response.statusCode;
-                this.handleRequestFailure();
-                if (response.statusCode === 0) {
-                    errorMessage = `Couldn't send request to ${requestUrl}, xhr.statusCode = 0 was returned. One of the possible reasons for that might be connection problems. Please, check your internet connection.`;
-                } else {
-                    errorMessage = `${response.statusCode}: ${response.body}`;
-                }
-                callback(new CodePushHttpError(errorMessage), /*remotePackage=*/ null);
-                return;
-            }
-            try {
-                var responseObject = JSON.parse(response.body);
-                var updateInfo: UpdateCheckResponse = responseObject.update_info;
-            } catch (error) {
-                callback(error as Error, /*remotePackage=*/ null);
-                return;
-            }
-
-            if (!updateInfo) {
-                callback(error, /*remotePackage=*/ null);
-                return;
-            } else if (updateInfo.update_app_version) {
-                callback(/*error=*/ null, { updateAppVersion: true, appVersion: updateInfo.target_binary_range });
-                return;
-            } else if (!updateInfo.is_available) {
-                callback(/*error=*/ null, /*remotePackage=*/ null);
-                return;
-            }
-
-            var remotePackage: RemotePackage = {
-                deploymentKey: this._deploymentKey,
-                description: updateInfo.description,
-                label: updateInfo.label,
-                versionLabel: updateInfo.version_label,
-                appVersion: updateInfo.target_binary_range,
-                isMandatory: updateInfo.is_mandatory,
-                packageHash: updateInfo.package_hash,
-                packageSize: updateInfo.package_size,
-                downloadUrl: updateInfo.download_url
-            };
-
-            callback(/*error=*/ null, remotePackage);
-        });
-    }
-
-    // Note: deployedPackage and status are null when reporting a "binary update" (i.e. the app was updated through the app store, not CodePush)
-    public reportStatusDeploy(deployedPackage?: Package, status?: string, previousLabelOrAppVersion?: string, previousDeploymentKey?: string, callback?: Callback<void>): void {
-        if (AcquisitionManager._apiCallsDisabled) {
-            console.log(`[CodePush] API calls are disabled, skipping the report_status/deploy request.`);
-            callback(/*error*/ null, /*not used*/ null);
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            this._statusCode = response.statusCode;
+            this.handleRequestFailure();
+            callback(new CodePushHttpError(`${response.statusCode}: ${response.body}`), /*not used*/ null);
             return;
+          }
+
+          callback(/*error*/ null, /*not used*/ null);
         }
+      },
+    );
+  }
 
-        var url: string = this._serverUrl + this._publicPrefixUrl + "report_status/deploy";
-        var body: DeploymentStatusReport = {
-            app_version: this._appVersion,
-            capabilities: this._capabilities,
-            deployment_key: this._deploymentKey
-        };
-
-        if (this._clientUniqueId) {
-            body.client_unique_id = this._clientUniqueId;
-        }
-
-        if (deployedPackage) {
-            body.label = deployedPackage.label;
-            body.app_version = deployedPackage.appVersion;
-
-            switch (status) {
-                case AcquisitionStatus.DeploymentSucceeded:
-                case AcquisitionStatus.DeploymentFailed:
-                    body.status = status;
-                    break;
-
-                default:
-                    if (callback) {
-                        if (!status) {
-                            callback(new CodePushDeployStatusError("Missing status argument."), /*not used*/ null);
-                        } else {
-                            callback(new CodePushDeployStatusError("Unrecognized status \"" + status + "\"."), /*not used*/ null);
-                        }
-                    }
-                    return;
-            }
-        }
-
-        if (previousLabelOrAppVersion) {
-            body.previous_label_or_app_version = previousLabelOrAppVersion;
-        }
-
-        if (previousDeploymentKey) {
-            body.previous_deployment_key = previousDeploymentKey;
-        }
-
-        callback = typeof arguments[arguments.length - 1] === "function" && arguments[arguments.length - 1];
-
-        this._httpRequester.request(Http.Verb.POST, url, JSON.stringify(body), (error: Error, response: Http.Response): void => {
-            if (callback) {
-                if (error) {
-                    callback(error, /*not used*/ null);
-                    return;
-                }
-
-                if (response.statusCode < 200 || response.statusCode >= 300) {
-                    this._statusCode = response.statusCode;
-                    this.handleRequestFailure();
-                    callback(new CodePushHttpError(response.statusCode + ": " + response.body), /*not used*/ null);
-                    return;
-                }
-
-                callback(/*error*/ null, /*not used*/ null);
-            }
-        });
+  public reportStatusDownload(downloadedPackage: DownloadedPackage, callback?: Callback<void>): void {
+    if (AcquisitionManager._apiCallsDisabled) {
+      console.log(`[CodePush] API calls are disabled, skipping the report_status/download request.`);
+      callback(/*error*/ null, /*not used*/ null);
+      return;
     }
 
-    public reportStatusDownload(downloadedPackage: DownloadedPackage, callback?: Callback<void>): void {
-        if (AcquisitionManager._apiCallsDisabled) {
-            console.log(`[CodePush] API calls are disabled, skipping the report_status/download request.`);
-            callback(/*error*/ null, /*not used*/ null);
+    var url: string = `${this._serverUrl + this._publicPrefixUrl}report_status/download`;
+    var body: DownloadReport = {
+      client_unique_id: this._clientUniqueId,
+      deployment_key: this._deploymentKey,
+      label: downloadedPackage.label,
+      package_hash: downloadedPackage.packageHash,
+      package_size_bytes: downloadedPackage.packageSize,
+      download_duration_ms: downloadedPackage.downloadDurationMs,
+      status: downloadedPackage.status,
+    };
+
+    this._httpRequester.request(
+      Http.Verb.POST,
+      url,
+      JSON.stringify(body),
+      (error: Error, response: Http.Response): void => {
+        if (callback) {
+          if (error) {
+            callback(error, /*not used*/ null);
             return;
+          }
+
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            this._statusCode = response.statusCode;
+            this.handleRequestFailure();
+            callback(new CodePushHttpError(`${response.statusCode}: ${response.body}`), /*not used*/ null);
+            return;
+          }
+
+          callback(/*error*/ null, /*not used*/ null);
         }
-
-        var url: string = this._serverUrl + this._publicPrefixUrl + "report_status/download";
-        var body: DownloadReport = {
-            client_unique_id: this._clientUniqueId,
-            deployment_key: this._deploymentKey,
-            label: downloadedPackage.label,
-            package_hash: downloadedPackage.packageHash,
-            package_size_bytes: downloadedPackage.packageSize,
-            download_duration_ms: downloadedPackage.downloadDurationMs,
-            status: downloadedPackage.status
-        };
-
-        this._httpRequester.request(Http.Verb.POST, url, JSON.stringify(body), (error: Error, response: Http.Response): void => {
-            if (callback) {
-                if (error) {
-                    callback(error, /*not used*/ null);
-                    return;
-                }
-
-                if (response.statusCode < 200 || response.statusCode >= 300) {
-                    this._statusCode = response.statusCode;
-                    this.handleRequestFailure();
-                    callback(new CodePushHttpError(response.statusCode + ": " + response.body), /*not used*/ null);
-                    return;
-                }
-
-                callback(/*error*/ null, /*not used*/ null);
-            }
-        });
-    }
+      },
+    );
+  }
 }
 
 // Built by hand because RN 0.76-0.79's URLSearchParams polyfill accepts only a plain object,
 // which cannot hold a repeated key. RN 0.80 accepts [key, value] pairs, so this can become
 // `new URLSearchParams(pairs)` once support for RN 0.76-0.79 is dropped.
 function toQueryString(request: UpdateCheckRequest): string {
-    var pairs: string[] = [];
+  var pairs: string[] = [];
 
-    for (var [key, value] of Object.entries(request)) {
-        for (var element of Array.isArray(value) ? value : [value]) {
-            if (element !== null && typeof element !== "undefined") {
-                pairs.push(encodeURIComponent(key) + "=" + encodeURIComponent(String(element)));
-            }
-        }
+  for (var [key, value] of Object.entries(request)) {
+    for (var element of Array.isArray(value) ? value : [value]) {
+      if (element !== null && typeof element !== 'undefined') {
+        pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(element))}`);
+      }
     }
+  }
 
-    return pairs.join("&");
+  return pairs.join('&');
 }
