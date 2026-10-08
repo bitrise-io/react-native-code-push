@@ -1,0 +1,10 @@
+// Type-checks the unit tests in src/**/__tests__, which the root tsconfig.json excludes. They run on Node, so they get
+// Node and mocha types instead of the React Native-only types that src/ is checked against.
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": ["node", "mocha"]
+    },
+    "include": ["src/**/__tests__/**/*.ts"],
+    "exclude": []
+}

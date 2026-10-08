@@ -28,6 +28,9 @@ jobs:
           npm run typecheck
           npm run typecheck:tests
 
+      - name: Run JS unit tests
+        run: npm run test:unit:js
+
       - name: Set version from tag
         run: npm pkg set version="${GITHUB_REF_NAME#v}"
 
