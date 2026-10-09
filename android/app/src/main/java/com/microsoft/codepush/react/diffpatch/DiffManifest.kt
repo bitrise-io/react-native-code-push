@@ -30,7 +30,15 @@ data class DiffManifest(
     // - The modified files included in the ZIP, which are applied on top of the existing files (without any binary patching)
     // - The list of files to delete from the old package
     val isBinaryDiff: Boolean
-        get() = version == 2
+        get() = updateType == UpdateType.BINARY_DIFF
+
+    // Null for a version this client does not support: reporting a guess would be worse than no value.
+    val updateType: String?
+        get() = when (version) {
+            1 -> UpdateType.FILE_LEVEL_DIFF
+            2 -> UpdateType.BINARY_DIFF
+            else -> null
+        }
 }
 
 @Throws(JSONException::class)

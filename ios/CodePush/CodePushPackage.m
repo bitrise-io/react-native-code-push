@@ -19,8 +19,24 @@ static NSString *const StatusFile = @"codepush.json";
 static NSString *const UpdateBundleFileName = @"app.jsbundle";
 static NSString *const UpdateMetadataFileName = @"app.json";
 static NSString *const UnzippedFolderName = @"unzipped";
+static NSString *const UpdateTypeKey = @"updateType";
 
 #pragma mark - Private methods
+
++ (NSError *)error:(NSError *)error withUpdateType:(NSString *)updateType
+{
+    if (updateType == nil) {
+        return error;
+    }
+
+    NSMutableDictionary *userInfo = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+    // A rebuilt error would otherwise lose a description that the system derives from the original error.
+    if (userInfo[NSLocalizedDescriptionKey] == nil) {
+        userInfo[NSLocalizedDescriptionKey] = error.localizedDescription;
+    }
+    userInfo[UpdateTypeKey] = updateType;
+    return [NSError errorWithDomain:error.domain code:error.code userInfo:userInfo];
+}
 
 + (BOOL)validateDiffManifest:(CodePushDiffManifest *)diffManifest
          currentPackageFolder:(NSString *)currentPackageFolderPath
@@ -147,6 +163,10 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                     NSError *error = nil;
                                                     NSString * unzippedFolderPath = [CodePushPackage getUnzippedFolderPath];
                                                     NSMutableDictionary * mutableUpdatePackage = [updatePackage mutableCopy];
+                                                    // Reads the update type at call time, so failures after it is known report it too.
+                                                    void (^fail)(NSError *) = ^(NSError *err) {
+                                                        failCallback([CodePushPackage error:err withUpdateType:mutableUpdatePackage[UpdateTypeKey]]);
+                                                    };
                                                     if (isZip) {
                                                         if ([[NSFileManager defaultManager] fileExistsAtPath:unzippedFolderPath]) {
                                                             // This removes any unzipped download data that could have been left
@@ -154,14 +174,26 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             [[NSFileManager defaultManager] removeItemAtPath:unzippedFolderPath
                                                                                                        error:&error];
                                                             if (error) {
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             }
                                                         }
                                                         
+                                                        // Fails before the update type is set: without a readable archive, the contents (and so the type) are unknown.
+                                                        // The library's own error is passed on, so that a corrupt download is not saved as a failed update.
+                                                        NSError *unzipError = nil;
+                                                        if (![SSZipArchive unzipFileAtPath:downloadFilePath
+                                                                             toDestination:unzippedFolderPath
+                                                                                 overwrite:YES
+                                                                                  password:nil
+                                                                                     error:&unzipError]) {
+                                                            fail(unzipError ?: [NSError errorWithDomain:NSCocoaErrorDomain
+                                                                                                   code:NSFileReadCorruptFileError
+                                                                                               userInfo:@{ NSLocalizedDescriptionKey: @"Failed to unzip the downloaded update." }]);
+                                                            return;
+                                                        }
+
                                                         NSError *nonFailingError = nil;
-                                                        [SSZipArchive unzipFileAtPath:downloadFilePath
-                                                                        toDestination:unzippedFolderPath];
                                                         [[NSFileManager defaultManager] removeItemAtPath:downloadFilePath
                                                                                                    error:&nonFailingError];
                                                         if (nonFailingError) {
@@ -176,13 +208,38 @@ static NSString *const UnzippedFolderName = @"unzipped";
 
                                                         if (!isDiffUpdate) {
                                                             CPLog(@"Applying full update.");
+                                                            mutableUpdatePackage[UpdateTypeKey] = CodePushUpdateTypeFull;
                                                         }
 
                                                         if (isDiffUpdate) {
+                                                            NSString *manifestContent = [NSString stringWithContentsOfFile:diffManifestFilePath
+                                                                                                                  encoding:NSUTF8StringEncoding
+                                                                                                                     error:&error];
+                                                            if (error) {
+                                                                fail(error);
+                                                                return;
+                                                            }
+                                                            
+                                                            NSData *data = [manifestContent dataUsingEncoding:NSUTF8StringEncoding];
+                                                            NSDictionary *manifestJSON = [NSJSONSerialization JSONObjectWithData:data
+                                                                                                                         options:kNilOptions
+                                                                                                                           error:&error];
+                                                            if (error) {
+                                                                fail(error);
+                                                                return;
+                                                            }
+
+                                                            diffManifest = [CodePushDiffManifest manifestFromJSON:manifestJSON error:&error];
+                                                            if (error) {
+                                                                fail(error);
+                                                                return;
+                                                            }
+                                                            mutableUpdatePackage[UpdateTypeKey] = diffManifest.updateType;
+
                                                             // Copy the current package to the new package.
                                                             currentPackageFolderPath = [self getCurrentPackageFolderPath:&error];
                                                             if (error) {
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             }
                                                             
@@ -194,7 +251,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                            attributes:nil
                                                                                                                 error:&error];
                                                                 if (error) {
-                                                                    failCallback(error);
+                                                                    fail(error);
                                                                     return;
                                                                 }
                                                                 
@@ -202,7 +259,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                         toPath:[newUpdateCodePushPath stringByAppendingPathComponent:[CodePushUpdateUtils assetsFolderName]]
                                                                                                          error:&error];
                                                                 if (error) {
-                                                                    failCallback(error);
+                                                                    fail(error);
                                                                     return;
                                                                 }
                                                                 
@@ -210,7 +267,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                         toPath:[newUpdateCodePushPath stringByAppendingPathComponent:[[CodePush binaryBundleURL] lastPathComponent]]
                                                                                                          error:&error];
                                                                 if (error) {
-                                                                    failCallback(error);
+                                                                    fail(error);
                                                                     return;
                                                                 }
                                                             } else {
@@ -218,34 +275,11 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                         toPath:newUpdateFolderPath
                                                                                                          error:&error];
                                                                 if (error) {
-                                                                    failCallback(error);
+                                                                    fail(error);
                                                                     return;
                                                                 }
                                                             }
                                                             
-                                                            NSString *manifestContent = [NSString stringWithContentsOfFile:diffManifestFilePath
-                                                                                                                  encoding:NSUTF8StringEncoding
-                                                                                                                     error:&error];
-                                                            if (error) {
-                                                                failCallback(error);
-                                                                return;
-                                                            }
-                                                            
-                                                            NSData *data = [manifestContent dataUsingEncoding:NSUTF8StringEncoding];
-                                                            NSDictionary *manifestJSON = [NSJSONSerialization JSONObjectWithData:data
-                                                                                                                         options:kNilOptions
-                                                                                                                           error:&error];
-                                                            if (error) {
-                                                                failCallback(error);
-                                                                return;
-                                                            }
-
-                                                            diffManifest = [CodePushDiffManifest manifestFromJSON:manifestJSON error:&error];
-                                                            if (error) {
-                                                                failCallback(error);
-                                                                return;
-                                                            }
-
                                                             CPLog(@"Applying diff update. binaryDiff=%@ patchedFiles=%lu",
                                                                   diffManifest.isBinaryDiff ? @"true" : @"false", (unsigned long)diffManifest.patchedFiles.count);
 
@@ -253,7 +287,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                    currentPackageFolder:currentPackageFolderPath
                                                                                      enableDeltaUpdates:[[CodePushConfig current] enableDeltaUpdates]
                                                                                                   error:&error]) {
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             }
 
@@ -266,14 +300,14 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                                          withinFolder:newUpdateFolderPath
                                                                                                                                 error:&resolveError];
                                                                 if (absoluteDeletedFilePath == nil) {
-                                                                    failCallback([CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest deletedFiles entry \"%@\": %@", deletedFileName, resolveError.localizedDescription]]);
+                                                                    fail([CodePushErrorUtils errorWithMessage:[NSString stringWithFormat:@"Diff manifest deletedFiles entry \"%@\": %@", deletedFileName, resolveError.localizedDescription]]);
                                                                     return;
                                                                 }
                                                                 if ([[NSFileManager defaultManager] fileExistsAtPath:absoluteDeletedFilePath]) {
                                                                     [[NSFileManager defaultManager] removeItemAtPath:absoluteDeletedFilePath
                                                                                                                error:&error];
                                                                     if (error) {
-                                                                        failCallback(error);
+                                                                        fail(error);
                                                                         return;
                                                                     }
                                                                 }
@@ -282,7 +316,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             [[NSFileManager defaultManager] removeItemAtPath:diffManifestFilePath
                                                                                                        error:&error];
                                                             if (error) {
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             }
                                                         }
@@ -296,7 +330,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                   excludingEntry:(diffManifest.isBinaryDiff ? CodePushDiffPatchesFolderName : nil)
                                                                                            error:&error];
                                                         if (error) {
-                                                            failCallback(error);
+                                                            fail(error);
                                                             return;
                                                         }
 
@@ -309,7 +343,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                       unzippedFolder:unzippedFolderPath
                                                                                      newUpdateFolder:newUpdateFolderPath
                                                                                                error:&error]) {
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             }
                                                             if (diffManifest.isBinaryDiff) {
@@ -329,7 +363,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                                              error:&error];
                                                         
                                                         if (error) {
-                                                            failCallback(error);
+                                                            fail(error);
                                                             return;
                                                         }
                                                         
@@ -340,7 +374,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             
                                                             error = [CodePushErrorUtils errorWithMessage:errorMessage];
                                                             
-                                                            failCallback(error);
+                                                            fail(error);
                                                             return;
                                                         }
                                                         
@@ -348,7 +382,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                             [[NSFileManager defaultManager] removeItemAtPath:newUpdateMetadataPath
                                                                                                        error:&error];
                                                             if (error) {
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             }
                                                         }
@@ -365,7 +399,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                      "Possible reasons, why that might happen: \n" \
                                                                      "1. You've been released CodePush bundle update using version of CodePush CLI that is not support code signing.\n" \
                                                                      "2. You've been released CodePush bundle update without providing --privateKeyPath option."];
-                                                            failCallback(error);
+                                                            fail(error);
                                                             return;
                                                         }
 
@@ -384,7 +418,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                 error = [CodePushErrorUtils errorWithMessage:@"The update contents failed the data integrity check."];
                                                             }
 
-                                                            failCallback(error);
+                                                            fail(error);
                                                             return;
                                                         } else {
                                                             CPLog(@"The update contents passed the data integrity check. hash=%@", newUpdateHash);
@@ -400,7 +434,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                 if (!error) {
                                                                     error = [CodePushErrorUtils errorWithMessage:@"The update contents failed code signing check."];
                                                                 }
-                                                                failCallback(error);
+                                                                fail(error);
                                                                 return;
                                                             } else {
                                                                 CPLog(@"The update contents succeeded the code signing check.");
@@ -408,6 +442,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                         }
                                                     } else {
                                                         CPLog(@"Applying full update. zip=false");
+                                                        mutableUpdatePackage[UpdateTypeKey] = CodePushUpdateTypeFull;
                                                         [[NSFileManager defaultManager] createDirectoryAtPath:newUpdateFolderPath
                                                                                   withIntermediateDirectories:YES
                                                                                                    attributes:nil
@@ -416,7 +451,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                                                 toPath:bundleFilePath
                                                                                                  error:&error];
                                                         if (error) {
-                                                            failCallback(error);
+                                                            fail(error);
                                                             return;
                                                         }
                                                     }
@@ -432,7 +467,7 @@ static NSString *const UnzippedFolderName = @"unzipped";
                                                                           encoding:NSUTF8StringEncoding
                                                                              error:&error];
                                                     if (error) {
-                                                        failCallback(error);
+                                                        fail(error);
                                                     } else {
                                                         doneCallback();
                                                     }

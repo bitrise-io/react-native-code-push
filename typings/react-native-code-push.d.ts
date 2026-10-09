@@ -30,6 +30,13 @@ export interface LocalPackage extends Package {
      * @param minimumBackgroundDuration For resume-based installs, this specifies the number of seconds the app needs to be in the background before forcing a restart. Defaults to 0 if unspecified.
      */
     install(installMode: CodePush.InstallMode, minimumBackgroundDuration?: number): Promise<void>;
+
+    /**
+     * How the update was delivered: `"full"` for a complete package, `"file_level_diff"` for a package with only the changed files,
+     * `"binary_diff"` for a package with binary patches against the installed version.
+     * Undefined for updates downloaded by an older SDK version.
+     */
+    updateType?: "full" | "file_level_diff" | "binary_diff";
 }
 
 export interface Package {

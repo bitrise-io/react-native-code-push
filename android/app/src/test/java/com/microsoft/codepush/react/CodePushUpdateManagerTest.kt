@@ -104,6 +104,7 @@ class CodePushUpdateManagerTest {
         val metadata = JSONObject(File(newUpdateMetadataPath).readText())
         assertEquals("hash1", metadata.getString(CodePushConstants.PACKAGE_HASH_KEY))
         assertFalse("raw bundle updates never set a bundlePath", metadata.has(CodePushConstants.RELATIVE_BUNDLE_PATH_KEY))
+        assertEquals("full", metadata.getString(CodePushConstants.UPDATE_TYPE_KEY))
     }
 
     @Test
@@ -129,6 +130,7 @@ class CodePushUpdateManagerTest {
             CodePushUtils.appendPathComponent("sub", "index.android.bundle"),
             metadata.getString(CodePushConstants.RELATIVE_BUNDLE_PATH_KEY),
         )
+        assertEquals("full", metadata.getString(CodePushConstants.UPDATE_TYPE_KEY))
     }
 
     @Test
@@ -243,6 +245,7 @@ class CodePushUpdateManagerTest {
         } catch (e: java.io.IOException) {
             assertTrue(e.message!!.contains("Diff manifest version 3 is not supported by this SDK version"))
         }
+        assertFalse("an unsupported manifest version has no known update type", pkg.has(CodePushConstants.UPDATE_TYPE_KEY))
     }
 
     @Test
@@ -261,6 +264,8 @@ class CodePushUpdateManagerTest {
         } catch (e: java.io.IOException) {
             assertTrue(e.message!!.contains("Received a binary diff update, but delta updates are not enabled on this client."))
         }
+        // The native module reads it back from the in-memory package to report the type of the failed download.
+        assertEquals("binary_diff", pkg.getString(CodePushConstants.UPDATE_TYPE_KEY))
     }
 
     @Test
@@ -312,6 +317,7 @@ class CodePushUpdateManagerTest {
         assertFalse("deletedFiles entry should have been removed", File(newUpdateFolderPath, "old_extra.txt").exists())
         assertEquals("new bundle contents", File(newUpdateFolderPath, "index.android.bundle").readText())
         assertFalse("the manifest itself should not be carried into the installed package", File(newUpdateFolderPath, CodePushConstants.DIFF_MANIFEST_FILE_NAME).exists())
+        assertEquals("file_level_diff", pkg.getString(CodePushConstants.UPDATE_TYPE_KEY))
     }
 
     @Test
@@ -339,5 +345,7 @@ class CodePushUpdateManagerTest {
         assertEquals("kept contents", File(newUpdateFolderPath, "kept.txt").readText())
         assertEquals("new bundle contents", File(newUpdateFolderPath, "index.android.bundle").readText())
         assertFalse(File(newUpdateFolderPath, CodePushConstants.DIFF_PATCHES_FOLDER_NAME).exists())
+        val metadata = JSONObject(File(newUpdateMetadataPath).readText())
+        assertEquals("binary_diff", metadata.getString(CodePushConstants.UPDATE_TYPE_KEY))
     }
 }

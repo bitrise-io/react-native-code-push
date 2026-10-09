@@ -45,10 +45,10 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
   const downloadStartTime = Date.now();
   // Only report a duration on success: on failure, this would be the time until
   // the download broke rather than a completed download's duration, and could be misleading.
-  const reportDownloadStatus = async (status, downloadDurationMs) => {
+  const reportDownloadStatus = async (status, downloadDurationMs, updateType) => {
     if (!reportStatusDownload) return;
     try {
-      await withTimeout(reportStatusDownload({ ...remotePackage, downloadDurationMs, status }), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
+      await withTimeout(reportStatusDownload({ ...remotePackage, downloadDurationMs, status, updateType }), REPORT_STATUS_DOWNLOAD_TIMEOUT_MS);
     } catch (err) {
       log.warn("Failed to report download status.", err);
     }
@@ -64,13 +64,13 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
     try {
       downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
     } catch (err) {
-      await reportDownloadStatus(DownloadStatus.Failed);
+      await reportDownloadStatus(DownloadStatus.Failed, undefined, err?.userInfo?.updateType);
       throw err;
     }
 
     const downloadDurationMs = Date.now() - downloadStartTime;
     log.info(`Downloaded update. ${logFields({ ...packageLogFields(remotePackage), durationMs: downloadDurationMs })}`);
-    await reportDownloadStatus(DownloadStatus.Succeeded, downloadDurationMs);
+    await reportDownloadStatus(DownloadStatus.Succeeded, downloadDurationMs, downloadedPackage.updateType);
 
     return attachLocalPackageMethods({ ...downloadedPackage, isPending: false }); // A freshly downloaded package hasn't been installed yet
   } finally {
@@ -297,7 +297,7 @@ function getPromisifiedSdk(requestFetchAdapter, config) {
   };
 
   sdk.reportStatusDownload = (downloadedPackage) => {
-    log.info(`Reporting download status. ${logFields({ status: downloadedPackage.status, ...packageLogFields(downloadedPackage), durationMs: downloadedPackage.downloadDurationMs })}`);
+    log.info(`Reporting download status. ${logFields({ status: downloadedPackage.status, ...packageLogFields(downloadedPackage), durationMs: downloadedPackage.downloadDurationMs, updateType: downloadedPackage.updateType })}`);
     return new Promise((resolve, reject) => {
       module.exports.AcquisitionSdk.prototype.reportStatusDownload.call(sdk, downloadedPackage, (err) => {
         if (err) {
@@ -348,7 +348,7 @@ async function tryReportStatus(statusReport, retryOnAppResume) {
       const sdk = getPromisifiedSdk(requestFetchAdapter, config);
       await sdk.reportStatusDeploy(/* deployedPackage */ null, /* status */ null, previousLabelOrAppVersion, previousDeploymentKey);
     } else {
-      const fields = logFields({ ...packageLogFields(statusReport.package), previousLabelOrAppVersion, previousDeploymentKey });
+      const fields = logFields({ ...packageLogFields(statusReport.package), updateType: statusReport.package.updateType, previousLabelOrAppVersion, previousDeploymentKey });
       if (statusReport.status === "DeploymentSucceeded") {
         log.info(`Reporting update success. ${fields}`);
       } else {

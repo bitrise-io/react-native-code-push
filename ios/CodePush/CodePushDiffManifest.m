@@ -16,6 +16,10 @@ static NSError *wrongTypedFieldError(NSString *fieldName, NSString *context, id 
 
 NSString *const CodePushDiffPatchesFolderName = @"__hcp_patches";
 
+NSString *const CodePushUpdateTypeFull = @"full";
+NSString *const CodePushUpdateTypeFileLevelDiff = @"file_level_diff";
+NSString *const CodePushUpdateTypeBinaryDiff = @"binary_diff";
+
 // The top-level entry that `relativePath` names under a base folder. Empty and
 // "." components are skipped. The caller rejects ".." components first, so
 // they need no handling here.
@@ -126,7 +130,16 @@ static NSString *canonicalPathAllowingMissingComponents(NSString *path)
 
 - (BOOL)isBinaryDiff
 {
-    return self.version == 2;
+    return [self.updateType isEqualToString:CodePushUpdateTypeBinaryDiff];
+}
+
+- (NSString *)updateType
+{
+    switch (self.version) {
+        case 1: return CodePushUpdateTypeFileLevelDiff;
+        case 2: return CodePushUpdateTypeBinaryDiff;
+        default: return nil;
+    }
 }
 
 + (nullable instancetype)manifestFromJSON:(NSDictionary *)json error:(NSError **)error

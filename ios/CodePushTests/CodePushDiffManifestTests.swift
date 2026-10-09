@@ -2,6 +2,25 @@ import XCTest
 
 final class CodePushDiffManifestTests: XCTestCase {
 
+    func testUpdateType_dependsOnManifestVersion() {
+        let fileLevel = CodePushDiffManifest(version: 1, deletedFiles: [], patchedFiles: [:])
+        let binary = CodePushDiffManifest(version: 2, deletedFiles: [], patchedFiles: [:])
+
+        XCTAssertEqual(fileLevel.updateType, "file_level_diff")
+        XCTAssertFalse(fileLevel.isBinaryDiff)
+        XCTAssertEqual(binary.updateType, "binary_diff")
+        XCTAssertTrue(binary.isBinaryDiff)
+    }
+
+    func testUpdateType_unsupportedVersion_isNilAndNotBinaryDiff() {
+        for version in [0, 3] {
+            let manifest = CodePushDiffManifest(version: version, deletedFiles: [], patchedFiles: [:])
+
+            XCTAssertNil(manifest.updateType)
+            XCTAssertFalse(manifest.isBinaryDiff)
+        }
+    }
+
     func testManifest_missingVersionField_defaultsToOne() throws {
         let manifest = try CodePushDiffManifest(json: [:])
 

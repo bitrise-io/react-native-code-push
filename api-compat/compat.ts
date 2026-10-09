@@ -44,6 +44,7 @@ const _packageSize: number = pkg.packageSize;
 declare let localPackage: LocalPackage;
 localPackage.install(CodePush.InstallMode.IMMEDIATE).then((): void => undefined);
 localPackage.install(CodePush.InstallMode.IMMEDIATE, 5).then((): void => undefined);
+const _updateType: "full" | "file_level_diff" | "binary_diff" | undefined = localPackage.updateType;
 
 declare let remotePackage: RemotePackage;
 const _downloadUrl: string = remotePackage.downloadUrl;

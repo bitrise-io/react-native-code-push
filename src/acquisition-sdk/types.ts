@@ -12,9 +12,13 @@ export interface DeploymentStatusReport {
     previous_label_or_app_version?: string;
     label?: string;
     status?: string;
+    // Set only together with a deployed package. Absent for packages persisted by an older SDK.
+    update_type?: UpdateTypeValue;
 }
 
 export type DownloadStatusValue = "DownloadSucceeded" | "DownloadFailed";
+
+export type UpdateTypeValue = "full" | "file_level_diff" | "binary_diff";
 
 /*in*/
 export interface DownloadReport {
@@ -25,6 +29,8 @@ export interface DownloadReport {
     package_size_bytes: number;
     download_duration_ms?: number;
     status: DownloadStatusValue;
+    // Absent when the native side did not determine it, e.g. a download that failed before the package contents were read.
+    update_type?: UpdateTypeValue;
 }
 
 /*out*/

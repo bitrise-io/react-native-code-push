@@ -28,6 +28,7 @@ public class CodePushConstants {
     public static final String VERSION_LABEL_KEY = "versionLabel";
     public static final String STATUS_FILE = "codepush.json";
     public static final String UNZIPPED_FOLDER_NAME = "unzipped";
+    public static final String UPDATE_TYPE_KEY = "updateType";
     public static final String CODE_PUSH_APK_BUILD_TIME_KEY = "CODE_PUSH_APK_BUILD_TIME";
     public static final String BUNDLE_JWT_FILE = ".codepushrelease";
     public static final String LATEST_ROLLBACK_INFO_KEY = "LATEST_ROLLBACK_INFO";

@@ -5,6 +5,11 @@ NS_ASSUME_NONNULL_BEGIN
 // Folder within the update ZIP that contains the diff patches. Must be in sync with server-side impl.
 extern NSString *const CodePushDiffPatchesFolderName;
 
+// Values of the update_type field of the download and deploy status reports. Must be in sync with the server-side impl.
+extern NSString *const CodePushUpdateTypeFull;
+extern NSString *const CodePushUpdateTypeFileLevelDiff;
+extern NSString *const CodePushUpdateTypeBinaryDiff;
+
 @interface CodePushPatchedFileEntry : NSObject
 
 // The only value this client understands at the moment is "bsdiff".
@@ -33,6 +38,8 @@ extern NSString *const CodePushDiffPatchesFolderName;
 // - The modified files included in the ZIP, which are applied on top of the existing files (without any binary patching)
 // - The list of files to delete from the old package
 @property (nonatomic, readonly, assign) BOOL isBinaryDiff;
+// Nil for a version this client does not support (version validation happens after parsing, this needs to be nil between the two).
+@property (nonatomic, readonly, copy, nullable) NSString *updateType;
 // Relative paths, from the old package, to delete rather than carry over into the new one.
 @property (nonatomic, readonly, copy) NSArray<NSString *> *deletedFiles;
 // Key: file's relative path in the package being installed.
