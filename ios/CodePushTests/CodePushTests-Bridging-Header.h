@@ -2,3 +2,4 @@
 #import "CodePushSha256.h"
 #import "CodePushDiffManifest.h"
 #import "CodePushBinaryDiffPatcher.h"
+#import "CodePushLifecycleRestartPolicy.h"

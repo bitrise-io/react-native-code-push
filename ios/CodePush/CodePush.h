@@ -7,6 +7,7 @@
 #endif
 
 #import <Foundation/Foundation.h>
+#import "CodePushInstallMode.h"
 
 @interface CodePush : RCTEventEmitter
 
@@ -221,13 +222,6 @@ failCallback:(void (^)(NSError *err))failCallback;
 @end
 
 void CPLog(NSString *formatString, ...);
-
-typedef NS_ENUM(NSInteger, CodePushInstallMode) {
-    CodePushInstallModeImmediate,
-    CodePushInstallModeOnNextRestart,
-    CodePushInstallModeOnNextResume,
-    CodePushInstallModeOnNextSuspend
-};
 
 typedef NS_ENUM(NSInteger, CodePushUpdateState) {
     CodePushUpdateStateRunning,

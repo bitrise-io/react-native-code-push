@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
     'shared/third_party/hdiffpatch/bsdiff_wrapper/bspatch_wrapper.{c,h}',
     'shared/third_party/hdiffpatch/file_for_patch.{c,h}',
   ]
-  s.public_header_files = ['ios/CodePush/CodePush.h']
+  s.public_header_files = ['ios/CodePush/CodePush.h', 'ios/CodePush/CodePushInstallMode.h']
   s.pod_target_xcconfig = {
     "DEFINES_MODULE" => "YES",
     # HDiffPatch's bspatch-only usage: no multithreading, no directory diff/patch, and no raw

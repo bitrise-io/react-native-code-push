@@ -639,6 +639,7 @@ const ScenarioRestart = "scenarioRestart.js";
 const ScenarioRestart2x = "scenarioRestart2x.js";
 const ScenarioSyncMandatoryDefault = "scenarioSyncMandatoryDefault.js";
 const ScenarioSyncMandatoryResume = "scenarioSyncMandatoryResume.js";
+const ScenarioSyncMandatoryResumeDelayOnActiveApplyNow = "scenarioSyncMandatoryResumeDelayOnActiveApplyNow.js";
 const ScenarioSyncMandatoryRestart = "scenarioSyncMandatoryRestart.js";
 const ScenarioSyncMandatorySuspend = "scenarioSyncMandatorySuspend.js";
 
@@ -1775,6 +1776,29 @@ PluginTestingFramework.initializeTests(new RNProjectManager(), supportedTargetPl
                                 return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
                             })
                             .done(() => { done(); }, (e) => { done(e); });
+                    });
+
+                TestBuilder.it("applies at once when a sync on resume installs after a background of at least the minimum", false,
+                    async (done: Mocha.Done) => {
+                        try {
+                            const upToDate = ServerUtil.createDefaultResponse();
+                            upToDate.is_available = false;
+                            upToDate.target_binary_range = "0.0.1";
+                            ServerUtil.updateResponse = { update_info: upToDate };
+
+                            await setupTestRunScenario(projectManager, targetPlatform, ScenarioSyncMandatoryResumeDelayOnActiveApplyNow);
+                            ServerUtil.updatePackagePath = await setupUpdateScenario(projectManager, targetPlatform, UpdateDeviceReady, "Update 1 (good update)");
+                            projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
+                            await ServerUtil.expectTestMessages([
+                                new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE])]);
+
+                            ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(true, targetPlatform) };
+                            targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, 8 * 1000);
+                            await ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+                            done();
+                        } catch (e) {
+                            done(e);
+                        }
                     });
 
                 TestBuilder.it("works correctly when update is mandatory and mandatory install mode is Resume", false,
