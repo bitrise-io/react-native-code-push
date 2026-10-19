@@ -20,7 +20,7 @@ This skill covers bare RN only. The Expo variants (`test:setup:expo:*`, `test:fa
    npm run setup          # npm install + build:ts -> lib/
    ```
    Run this again after every rebase or pull. Stale `node_modules` (for example an old TypeScript) makes `npm pack` fail in `build:ts` during `test:setup:*`, and the doctor does not detect it.
-   Mocha runs the `.mts` test sources directly (Node type-stripping), so tests need no build step. An edit to `test/*.mts` takes effect on the next run. `npm run typecheck:tests` (tslint + `tsc --noEmit`) is the only place type errors in `test/` get caught. The harness does not need the local `lib/`, because `npm pack` runs `prepare`, which builds `lib/` again.
+   Mocha runs the `.mts` test sources directly (Node type-stripping), so tests need no build step. An edit to `test/*.mts` takes effect on the next run. `npm run typecheck:tests` (`tsc --noEmit`) is the only place type errors in `test/` get caught. The harness does not need the local `lib/`, because `npm pack` runs `prepare`, which builds `lib/` again.
 
 2. **Provision the test app.** Run one of these commands:
    ```
