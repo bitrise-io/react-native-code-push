@@ -111,4 +111,6 @@ AGENTS.md
 mise.toml
 tsconfig.json
 eslint.config.mjs
+.mocharc.unit.cjs
+tsconfig.unit.json
 babel.config.js

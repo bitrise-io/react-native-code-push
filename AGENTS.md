@@ -10,10 +10,11 @@ React Native CodePush is a native module that enables over-the-air updates for R
 
 #### Unit tests
 
+- `npm run test:unit:js`
 - `npm run test:unit:android`
 - `npm run test:unit:ios`
 
-Prefer unit testing what's possible (even though, on iOS, this involves a simulator). Legacy code used E2E tests for everything, which is complex, error-prone, and slow. The existing E2E tests are still useful, but this is not a pattern to follow.
+Prefer unit testing what's possible (even though, on iOS, this involves a simulator). Keep React Native out of the JS logic under test, prefer `react-native`-free business logic that's naturally unit-testable. Prefer injected dependencies over module mocking. Legacy code used E2E tests for everything, which is complex, error-prone, and slow. The existing E2E tests are still useful, but this is not a pattern to follow.
 
 #### Lint
 - `npm run lint` (`lint:fix` to autofix)
@@ -55,9 +56,6 @@ Use the `verify-codepush` skill (`.agents/skills/verify-codepush/`) to run iOS a
 - **Promise-based Native Bridge**: All native operations return promises
 - **Platform Abstraction**: Unified JavaScript API with platform-specific implementations
 - **Error Handling**: Automatic rollback on failed updates with telemetry
-
-### Testing Notes
-- **No unit test infra for JS yet**: `src/acquisition-sdk/__tests__/` contains tests ported from upstream `microsoft/code-push`, kept for future reference - they are deliberately not wired into `npm test` or any runner. Don't assume they're dead/forgotten code, and don't wire them in without setting up real unit test infra first.
 
 ### Build Integration
 - **Android Gradle Plugin**: Automatically generates bundle hashes and processes assets

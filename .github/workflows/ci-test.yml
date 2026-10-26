@@ -21,6 +21,9 @@ jobs:
           npm run typecheck
           npm run typecheck:tests
 
+      - name: Run JS unit tests
+        run: npm run test:unit:js
+
       - name: Check public API compatibility
         run: npm run check:api-compat
 
