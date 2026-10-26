@@ -121,7 +121,7 @@ jobs:
     needs: lint
     runs-on:
       group: react-native-code-push
-      labels: xcode-27
+      labels: xcode-27-xlarge
     strategy:
       matrix:
         variant: [bare, expo]
