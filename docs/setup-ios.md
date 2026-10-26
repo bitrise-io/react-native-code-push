@@ -46,7 +46,10 @@ Once you've acquired the CodePush plugin, you need to integrate it into the Xcod
       ```
    
    **If you're using Swift:** 
-   1. Open up the `AppDelegate.swift` file, and add an import statement for the CodePush headers: 
+
+   *NOTE: Starting with React Native 0.88, the template sets up React Native in `SceneDelegate.swift`, and `bundleURL()` is in that file. On older versions, it is in `AppDelegate.swift`. Make the changes below in the file that contains `bundleURL()`.*
+
+   1. Open up the `SceneDelegate.swift` (or `AppDelegate.swift`) file, and add an import statement for the CodePush headers: 
       ```swift
       import CodePush
       ```
