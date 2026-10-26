@@ -2,11 +2,7 @@
 #import "CodePushDiffManifest.h"
 #import "CodePushErrorUtils.h"
 #import "CodePushBinaryDiffPatcher.h"
-#if __has_include(<SSZipArchive/SSZipArchive.h>)
 #import <SSZipArchive/SSZipArchive.h>
-#else
-#import "SSZipArchive.h"
-#endif
 
 @implementation CodePushPackage
 
