@@ -1,5 +1,4 @@
 import * as assert from 'assert';
-import * as querystring from 'querystring';
 
 import * as acquisitionSdk from '../acquisition-sdk';
 import * as mockApi from './acquisition-rest-mock';
@@ -62,9 +61,9 @@ describe('Capabilities advertisement', () => {
 
     acquisition.queryUpdateWithCurrentPackage(currentPackage, () => {
       var query = requester.lastUrl.split('?')[1];
-      var params = querystring.parse(query);
+      var params = new URLSearchParams(query);
 
-      assert.strictEqual(params.capabilities, 'binary_diff:bsdiff');
+      assert.deepStrictEqual(params.getAll('capabilities'), ['binary_diff:bsdiff']);
       assert.strictEqual(query.includes('capabilities%5B%5D'), false, 'must not use bracket notation');
       done();
     });
@@ -77,10 +76,10 @@ describe('Capabilities advertisement', () => {
 
     acquisition.queryUpdateWithCurrentPackage(freshInstallPackage, () => {
       var query = requester.lastUrl.split('?')[1];
-      var params = querystring.parse(query);
+      var params = new URLSearchParams(query);
 
-      assert.strictEqual(params.package_hash, undefined);
-      assert.strictEqual(params.label, undefined);
+      assert.strictEqual(params.has('package_hash'), false);
+      assert.strictEqual(params.has('label'), false);
       assert.strictEqual(query.includes('undefined'), false);
       done();
     });
@@ -109,9 +108,9 @@ describe('Capabilities advertisement', () => {
     var acquisition = new acquisitionSdk.AcquisitionManager(requester, deltaUpdatesDisabledConfiguration);
 
     acquisition.queryUpdateWithCurrentPackage(currentPackage, () => {
-      var params = querystring.parse(requester.lastUrl.split('?')[1]);
+      var params = new URLSearchParams(requester.lastUrl.split('?')[1]);
 
-      assert.strictEqual(params.capabilities, undefined);
+      assert.strictEqual(params.has('capabilities'), false);
       done();
     });
   });

@@ -2,7 +2,6 @@
 var archiver = require("archiver");
 var child_process = require("child_process");
 var fs = require("fs");
-var replace = require("replace");
 var Q = require("q");
 var TestUtil = (function () {
     function TestUtil() {
@@ -96,7 +95,8 @@ var TestUtil = (function () {
      */
     TestUtil.replaceString = function (filePath, regex, replacement) {
         console.log("replacing \"" + regex + "\" with \"" + replacement + "\" in " + filePath);
-        replace({ regex: regex, replacement: replacement, recursive: false, silent: true, paths: [filePath] });
+        var contents = fs.readFileSync(filePath, "utf8");
+        fs.writeFileSync(filePath, contents.replace(new RegExp(regex, "g"), replacement));
     };
     /**
      * Copies a file from a given location to another.
