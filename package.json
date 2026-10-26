@@ -74,8 +74,6 @@
     "@babel/register": "^7.29.7",
     "@bitrise/eslint-plugin": "^4.1.0",
     "@react-native/babel-preset": "^0.88.0",
-    "@types/assert": "^1.5.2",
-    "@types/mkdirp": "^1.0.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.19.0",
     "@types/q": "^1.5.4",
@@ -90,7 +88,6 @@
     "q": "^1.5.1",
     "react-native": "0.88.0",
     "react-native-builder-bob": "^0.43.1",
-    "run-sequence": "latest",
     "slash": "^3.0.0",
     "typescript": "^6.0.3"
   }
