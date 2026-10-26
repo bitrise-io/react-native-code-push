@@ -2,9 +2,11 @@
 #import "CodePushErrorUtils.h"
 #import "CodePushSha256.h"
 
-// Cocoapods static library vs framework interop: the generated header lives at a different
-// path depending on whether the pod is built as a static library or as a framework.
-#if __has_include(<CodePush/CodePush-Swift.h>)
+// SwiftPM builds the Swift sources as a separate module. In CocoaPods they are part of the
+// CodePush module, and the generated header path depends on static library vs framework linkage.
+#if SWIFT_PACKAGE
+@import CodePushCore;
+#elif __has_include(<CodePush/CodePush-Swift.h>)
 #import <CodePush/CodePush-Swift.h>
 #else
 #import "CodePush-Swift.h"
