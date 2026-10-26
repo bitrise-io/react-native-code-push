@@ -119,7 +119,9 @@ jobs:
 
   ios-test:
     needs: lint
-    runs-on: bitrise-react-native-code-push-macos-runner
+    runs-on:
+      group: bitrise-react-native-code-push-macos-runner
+      labels: xcode-27
     strategy:
       matrix:
         variant: [bare, expo]
