@@ -120,7 +120,7 @@ jobs:
   ios-test:
     needs: lint
     runs-on:
-      group: bitrise-react-native-code-push-macos-runner
+      group: react-native-code-push
       labels: xcode-27
     strategy:
       matrix:
