@@ -309,6 +309,7 @@ class RNIOS extends Platform.IOS implements RNPlatform {
     const iOSProject: string = path.join(projectDirectory, TestConfig.TestAppName, 'ios');
     const infoPlistPath: string = path.join(iOSProject, TestConfig.TestAppName, 'Info.plist');
     const appDelegatePath: string = path.join(iOSProject, TestConfig.TestAppName, 'AppDelegate.swift');
+    const sceneDelegatePath: string = path.join(iOSProject, TestConfig.TestAppName, 'SceneDelegate.swift');
     const podfilePath: string = path.join(iOSProject, 'Podfile');
 
     if (TestConfig.isExpoApp) {
@@ -345,19 +346,18 @@ class RNIOS extends Platform.IOS implements RNPlatform {
               `PRODUCT_BUNDLE_IDENTIFIER = "${TestConfig.TestNamespace}"`,
             ),
           )
-          // Copy the AppDelegate.mm to the project
           .then(
             TestUtil.copyFile.bind(
               undefined,
-              path.join(TestConfig.templatePath, 'ios', TestConfig.TestAppName, 'AppDelegate.swift'),
-              appDelegatePath,
+              path.join(TestConfig.templatePath, 'ios', TestConfig.TestAppName, 'SceneDelegate.swift'),
+              sceneDelegatePath,
               true,
             ),
           )
           .then(
             TestUtil.replaceString.bind(
               undefined,
-              appDelegatePath,
+              sceneDelegatePath,
               TestUtil.CODE_PUSH_TEST_APP_NAME_PLACEHOLDER,
               TestConfig.TestAppName,
             ),
@@ -585,7 +585,7 @@ class RNProjectManager extends ProjectManager {
       );
     } else {
       return TestUtil.getProcessOutput(
-        `npx @react-native-community/cli init ${appName} --version 0.87.0 --install-pods`,
+        `npx @react-native-community/cli init ${appName} --version 0.88.0 --install-pods`,
         { cwd: projectDirectory, timeout: 30 * 60 * 1000, noLogStdOut: true },
       )
         .then((e) => {
