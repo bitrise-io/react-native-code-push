@@ -7,194 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
 		BBC7F97A68E454FB38953FC4 /* CodePushDiffManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9645879798B46D35D8D824F8 /* CodePushDiffManifestTests.swift */; };
-		CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
-		CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
 		0E9314F338AC505D2E33C1A3 /* CodePushDiffManifest.m in Sources */ = {isa = PBXBuildFile; fileRef = 49166671F067D5F6429B262B /* CodePushDiffManifest.m */; };
 		3F6A18E4C1B72D094F5E8A67 /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
-		C11A2DB29D3D814B1A7891DF /* CodePushDiffManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A092598DCE51279CA317823 /* CodePushDiffManifest.h */; };
-		4693408DCB9ACB8E02BF69B1 /* CodePushDiffManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A092598DCE51279CA317823 /* CodePushDiffManifest.h */; };
 		3643F3729205426163367671 /* CodePushBinaryDiffPatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F42FA68BF21AED765F55E71A /* CodePushBinaryDiffPatcherTests.swift */; };
-		1993F82DF6330426AC5CBC2E /* CodePushBinaryDiffPatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 9414C770C70E1B1319F24B12 /* CodePushBinaryDiffPatcher.m */; };
-		F41E2EFAD0D322F7D14D7125 /* CodePushBinaryDiffPatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 9414C770C70E1B1319F24B12 /* CodePushBinaryDiffPatcher.m */; };
 		D5BC8B1BF7D2DA03BB888FCC /* CodePushBinaryDiffPatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 9414C770C70E1B1319F24B12 /* CodePushBinaryDiffPatcher.m */; };
-		E5C712D353D9164F04A2F456 /* CodePushBinaryDiffPatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F588BE40F9B3092085C5B63 /* CodePushBinaryDiffPatcher.h */; };
-		469472C57F1D5FF7C0274268 /* CodePushBinaryDiffPatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F588BE40F9B3092085C5B63 /* CodePushBinaryDiffPatcher.h */; };
 		0ABCB5DEFE01A7A15552A498 /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
 		0EC08441DDDD08C96DDE851C /* CodePushSha256Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */; };
-		13BE3DEE1AC21097009241FE /* CodePush.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* CodePush.m */; };
-		1B23B9141BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */; };
-		1B762E901C9A5E9A006EF800 /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
-		1BCC09A71CC19EB700DDC0DD /* RCTConvert+CodePushUpdateState.m in Sources */ = {isa = PBXBuildFile; fileRef = 1BCC09A61CC19EB700DDC0DD /* RCTConvert+CodePushUpdateState.m */; };
-		3221E4512C8ABE1300268379 /* ZipArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E42A2C8ABE1300268379 /* ZipArchive.h */; };
-		3221E4522C8ABE1300268379 /* ZipArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E42A2C8ABE1300268379 /* ZipArchive.h */; };
-		3221E4532C8ABE1300268379 /* mz_strm_os_posix.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E42C2C8ABE1300268379 /* mz_strm_os_posix.c */; };
-		3221E4542C8ABE1300268379 /* mz_strm_os_posix.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E42C2C8ABE1300268379 /* mz_strm_os_posix.c */; };
-		3221E4552C8ABE1300268379 /* mz_strm_pkcrypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E42D2C8ABE1300268379 /* mz_strm_pkcrypt.c */; };
-		3221E4562C8ABE1300268379 /* mz_strm_pkcrypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E42D2C8ABE1300268379 /* mz_strm_pkcrypt.c */; };
-		3221E4572C8ABE1300268379 /* mz_strm_wzaes.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E42E2C8ABE1300268379 /* mz_strm_wzaes.h */; };
-		3221E4582C8ABE1300268379 /* mz_strm_wzaes.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E42E2C8ABE1300268379 /* mz_strm_wzaes.h */; };
-		3221E4592C8ABE1300268379 /* mz_compat.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E42F2C8ABE1300268379 /* mz_compat.h */; };
-		3221E45A2C8ABE1300268379 /* mz_compat.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E42F2C8ABE1300268379 /* mz_compat.h */; };
-		3221E45B2C8ABE1300268379 /* mz_strm_zlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4302C8ABE1300268379 /* mz_strm_zlib.c */; };
-		3221E45C2C8ABE1300268379 /* mz_strm_zlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4302C8ABE1300268379 /* mz_strm_zlib.c */; };
-		3221E45D2C8ABE1300268379 /* mz_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4312C8ABE1300268379 /* mz_zip.c */; };
-		3221E45E2C8ABE1300268379 /* mz_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4312C8ABE1300268379 /* mz_zip.c */; };
-		3221E45F2C8ABE1300268379 /* mz_os.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4322C8ABE1300268379 /* mz_os.h */; };
-		3221E4602C8ABE1300268379 /* mz_os.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4322C8ABE1300268379 /* mz_os.h */; };
-		3221E4612C8ABE1300268379 /* mz_zip_rw.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4342C8ABE1300268379 /* mz_zip_rw.c */; };
-		3221E4622C8ABE1300268379 /* mz_zip_rw.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4342C8ABE1300268379 /* mz_zip_rw.c */; };
-		3221E4632C8ABE1300268379 /* mz_strm_split.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4352C8ABE1300268379 /* mz_strm_split.h */; };
-		3221E4642C8ABE1300268379 /* mz_strm_split.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4352C8ABE1300268379 /* mz_strm_split.h */; };
-		3221E4652C8ABE1300268379 /* mz_strm_buf.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4362C8ABE1300268379 /* mz_strm_buf.h */; };
-		3221E4662C8ABE1300268379 /* mz_strm_buf.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4362C8ABE1300268379 /* mz_strm_buf.h */; };
-		3221E4672C8ABE1300268379 /* mz_crypt_apple.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4372C8ABE1300268379 /* mz_crypt_apple.c */; };
-		3221E4682C8ABE1300268379 /* mz_crypt_apple.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4372C8ABE1300268379 /* mz_crypt_apple.c */; };
-		3221E4692C8ABE1300268379 /* mz_strm.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4382C8ABE1300268379 /* mz_strm.h */; };
-		3221E46A2C8ABE1300268379 /* mz_strm.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4382C8ABE1300268379 /* mz_strm.h */; };
-		3221E46B2C8ABE1300268379 /* mz_strm_mem.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4392C8ABE1300268379 /* mz_strm_mem.c */; };
-		3221E46C2C8ABE1300268379 /* mz_strm_mem.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4392C8ABE1300268379 /* mz_strm_mem.c */; };
-		3221E46D2C8ABE1300268379 /* mz_crypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E43A2C8ABE1300268379 /* mz_crypt.c */; };
-		3221E46E2C8ABE1300268379 /* mz_crypt.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E43A2C8ABE1300268379 /* mz_crypt.c */; };
-		3221E46F2C8ABE1300268379 /* mz_strm_wzaes.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E43B2C8ABE1300268379 /* mz_strm_wzaes.c */; };
-		3221E4702C8ABE1300268379 /* mz_strm_wzaes.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E43B2C8ABE1300268379 /* mz_strm_wzaes.c */; };
-		3221E4712C8ABE1300268379 /* mz_strm_zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E43C2C8ABE1300268379 /* mz_strm_zlib.h */; };
-		3221E4722C8ABE1300268379 /* mz_strm_zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E43C2C8ABE1300268379 /* mz_strm_zlib.h */; };
-		3221E4732C8ABE1300268379 /* mz_compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E43D2C8ABE1300268379 /* mz_compat.c */; };
-		3221E4742C8ABE1300268379 /* mz_compat.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E43D2C8ABE1300268379 /* mz_compat.c */; };
-		3221E4752C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E43E2C8ABE1300268379 /* mz_strm_pkcrypt.h */; };
-		3221E4762C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E43E2C8ABE1300268379 /* mz_strm_pkcrypt.h */; };
-		3221E4772C8ABE1300268379 /* mz_zip_rw.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E43F2C8ABE1300268379 /* mz_zip_rw.h */; };
-		3221E4782C8ABE1300268379 /* mz_zip_rw.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E43F2C8ABE1300268379 /* mz_zip_rw.h */; };
-		3221E4792C8ABE1300268379 /* mz_os.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4402C8ABE1300268379 /* mz_os.c */; };
-		3221E47A2C8ABE1300268379 /* mz_os.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4402C8ABE1300268379 /* mz_os.c */; };
-		3221E47B2C8ABE1400268379 /* mz_zip.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4412C8ABE1300268379 /* mz_zip.h */; };
-		3221E47C2C8ABE1400268379 /* mz_zip.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4412C8ABE1300268379 /* mz_zip.h */; };
-		3221E47D2C8ABE1400268379 /* mz_os_posix.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4422C8ABE1300268379 /* mz_os_posix.c */; };
-		3221E47E2C8ABE1400268379 /* mz_os_posix.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4422C8ABE1300268379 /* mz_os_posix.c */; };
-		3221E47F2C8ABE1400268379 /* mz.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4432C8ABE1300268379 /* mz.h */; };
-		3221E4802C8ABE1400268379 /* mz.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4432C8ABE1300268379 /* mz.h */; };
-		3221E4812C8ABE1400268379 /* mz_strm_buf.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4442C8ABE1300268379 /* mz_strm_buf.c */; };
-		3221E4822C8ABE1400268379 /* mz_strm_buf.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4442C8ABE1300268379 /* mz_strm_buf.c */; };
-		3221E4832C8ABE1400268379 /* mz_strm_split.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4452C8ABE1300268379 /* mz_strm_split.c */; };
-		3221E4842C8ABE1400268379 /* mz_strm_split.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4452C8ABE1300268379 /* mz_strm_split.c */; };
-		3221E4852C8ABE1400268379 /* mz_crypt.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4462C8ABE1300268379 /* mz_crypt.h */; };
-		3221E4862C8ABE1400268379 /* mz_crypt.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4462C8ABE1300268379 /* mz_crypt.h */; };
-		3221E4872C8ABE1400268379 /* mz_strm_mem.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4472C8ABE1300268379 /* mz_strm_mem.h */; };
-		3221E4882C8ABE1400268379 /* mz_strm_mem.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4472C8ABE1300268379 /* mz_strm_mem.h */; };
-		3221E4892C8ABE1400268379 /* mz_strm.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4482C8ABE1300268379 /* mz_strm.c */; };
-		3221E48A2C8ABE1400268379 /* mz_strm.c in Sources */ = {isa = PBXBuildFile; fileRef = 3221E4482C8ABE1300268379 /* mz_strm.c */; };
-		3221E48B2C8ABE1400268379 /* mz_strm_os.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4492C8ABE1300268379 /* mz_strm_os.h */; };
-		3221E48C2C8ABE1400268379 /* mz_strm_os.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E4492C8ABE1300268379 /* mz_strm_os.h */; };
-		3221E48D2C8ABE1400268379 /* SSZipArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E44A2C8ABE1300268379 /* SSZipArchive.h */; };
-		3221E48E2C8ABE1400268379 /* SSZipArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E44A2C8ABE1300268379 /* SSZipArchive.h */; };
-		3221E48F2C8ABE1400268379 /* SSZipCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E44E2C8ABE1300268379 /* SSZipCommon.h */; };
-		3221E4902C8ABE1400268379 /* SSZipCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = 3221E44E2C8ABE1300268379 /* SSZipCommon.h */; };
-		3221E4912C8ABE1400268379 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3221E44F2C8ABE1300268379 /* SSZipArchive.m */; };
-		3221E4922C8ABE1400268379 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3221E44F2C8ABE1300268379 /* SSZipArchive.m */; };
 		47F66D5AF3C3185E1A3E3B15 /* bspatch_bridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A430CBE260F09A3233110E28 /* bspatch_bridge.c */; };
-		537831E09276DCD4475752F3 /* CodePushSha256.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F67DC39D49BF136E1C7F041 /* CodePushSha256.m */; };
-		540D20121C7684FE00D6EF41 /* CodePushUpdateUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */; };
-		5421FE311C58AD5A00986A55 /* CodePushTelemetryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */; };
-		5498D8F61D21F14100B5EB43 /* CodePushUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 5498D8F51D21F14100B5EB43 /* CodePushUtils.m */; };
-		54FFEDE01BF550630061DD23 /* CodePushDownloadHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */; };
 		5C6B00FACE8707503D366F7C /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = E74D80ECD8DD03C4C0772B7B /* Fixtures */; };
-		6463C82D1EBA0CFB0095B8CD /* CodePushUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 5498D8F51D21F14100B5EB43 /* CodePushUtils.m */; };
-		6463C82E1EBA0CFB0095B8CD /* CodePush.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* CodePush.m */; };
-		6463C82F1EBA0CFB0095B8CD /* CodePushConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 81D51F391B6181C2000DA084 /* CodePushConfig.m */; };
-		6463C8301EBA0CFB0095B8CD /* CodePushDownloadHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 54FFEDDF1BF550630061DD23 /* CodePushDownloadHandler.m */; };
-		6463C8311EBA0CFB0095B8CD /* CodePushErrorUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B762E8F1C9A5E9A006EF800 /* CodePushErrorUtils.m */; };
-		6463C8321EBA0CFB0095B8CD /* CodePushPackage.m in Sources */ = {isa = PBXBuildFile; fileRef = 810D4E6C1B96935000B397E9 /* CodePushPackage.m */; };
-		6463C8331EBA0CFB0095B8CD /* CodePushTelemetryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 5421FE301C58AD5A00986A55 /* CodePushTelemetryManager.m */; };
-		6463C8341EBA0CFB0095B8CD /* CodePushUpdateUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 540D20111C7684FE00D6EF41 /* CodePushUpdateUtils.m */; };
-		6463C8351EBA0CFB0095B8CD /* RCTConvert+CodePushInstallMode.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */; };
-		6463C8361EBA0CFB0095B8CD /* RCTConvert+CodePushUpdateState.m in Sources */ = {isa = PBXBuildFile; fileRef = 1BCC09A61CC19EB700DDC0DD /* RCTConvert+CodePushUpdateState.m */; };
-		6463C8451EBA0D1F0095B8CD /* CodePush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
-		6463C8471EBA0D290095B8CD /* CodePush.h in Headers */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
-		78E9CECCB820DC4BA09BF09A /* file_for_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 70779807AB59EA4711737F4E /* file_for_patch.c */; };
-		810D4E6D1B96935000B397E9 /* CodePushPackage.m in Sources */ = {isa = PBXBuildFile; fileRef = 810D4E6C1B96935000B397E9 /* CodePushPackage.m */; };
-		81D51F3A1B6181C2000DA084 /* CodePushConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 81D51F391B6181C2000DA084 /* CodePushConfig.m */; };
-		8482F84C1E24C58300F793DB /* CodePush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
-		8482F84E1E24C66300F793DB /* CodePush.h in Headers */ = {isa = PBXBuildFile; fileRef = 13BE3DEC1AC21097009241FE /* CodePush.h */; };
-		A75C1A7A555663186E25AA3D /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
 		A88F11124A2120A8373A8B61 /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
 		B5B50F91FAAF80444988E284 /* BSPatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95D6DD0EACAC8D095880DFD0 /* BSPatchTests.swift */; };
-		D8C294C1D2625E79BC302CCC /* bsdiff_wrapper/bspatch_wrapper.c in Sources */ = {isa = PBXBuildFile; fileRef = 0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */; };
 		DC983F1C71E0E7131BB343C5 /* libHDiffPatch/HPatch/patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 827016DF6E52E356F4B89D18 /* libHDiffPatch/HPatch/patch.c */; };
-		F0CE653CAB93F38FC0C0CAF8 /* CodePushSha256.h in Headers */ = {isa = PBXBuildFile; fileRef = 73A9DD75BE69E8E3A8C3548A /* CodePushSha256.h */; };
-		F85736761F4F03BF00C9C00A /* MF_Base64Additions.h in Headers */ = {isa = PBXBuildFile; fileRef = F85736731F4F03BF00C9C00A /* MF_Base64Additions.h */; };
-		F85736771F4F03BF00C9C00A /* MF_Base64Additions.m in Sources */ = {isa = PBXBuildFile; fileRef = F85736741F4F03BF00C9C00A /* MF_Base64Additions.m */; };
-		F886644D1F4AD1EE0036D01B /* JWTAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664151F4AD1EE0036D01B /* JWTAlgorithm.h */; };
-		F886644E1F4AD1EE0036D01B /* JWTAlgorithmFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664161F4AD1EE0036D01B /* JWTAlgorithmFactory.h */; };
-		F886644F1F4AD1EE0036D01B /* JWTAlgorithmFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664171F4AD1EE0036D01B /* JWTAlgorithmFactory.m */; };
-		F88664501F4AD1EE0036D01B /* JWTAlgorithmNone.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664181F4AD1EE0036D01B /* JWTAlgorithmNone.h */; };
-		F88664511F4AD1EE0036D01B /* JWTAlgorithmNone.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664191F4AD1EE0036D01B /* JWTAlgorithmNone.m */; };
-		F88664521F4AD1EE0036D01B /* JWTAlgorithmESBase.h in Headers */ = {isa = PBXBuildFile; fileRef = F886641B1F4AD1EE0036D01B /* JWTAlgorithmESBase.h */; };
-		F88664531F4AD1EE0036D01B /* JWTAlgorithmESBase.m in Sources */ = {isa = PBXBuildFile; fileRef = F886641C1F4AD1EE0036D01B /* JWTAlgorithmESBase.m */; };
-		F88664541F4AD1EE0036D01B /* JWTAlgorithmDataHolder.h in Headers */ = {isa = PBXBuildFile; fileRef = F886641E1F4AD1EE0036D01B /* JWTAlgorithmDataHolder.h */; };
-		F88664551F4AD1EE0036D01B /* JWTAlgorithmDataHolder.m in Sources */ = {isa = PBXBuildFile; fileRef = F886641F1F4AD1EE0036D01B /* JWTAlgorithmDataHolder.m */; };
-		F88664561F4AD1EE0036D01B /* JWTAlgorithmDataHolderChain.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664201F4AD1EE0036D01B /* JWTAlgorithmDataHolderChain.h */; };
-		F88664571F4AD1EE0036D01B /* JWTAlgorithmDataHolderChain.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664211F4AD1EE0036D01B /* JWTAlgorithmDataHolderChain.m */; };
-		F88664581F4AD1EE0036D01B /* JWTAlgorithmHSBase.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664231F4AD1EE0036D01B /* JWTAlgorithmHSBase.h */; };
-		F88664591F4AD1EE0036D01B /* JWTAlgorithmHSBase.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664241F4AD1EE0036D01B /* JWTAlgorithmHSBase.m */; };
-		F886645A1F4AD1EE0036D01B /* JWTAlgorithmRSBase.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664261F4AD1EE0036D01B /* JWTAlgorithmRSBase.h */; };
-		F886645B1F4AD1EE0036D01B /* JWTAlgorithmRSBase.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664271F4AD1EE0036D01B /* JWTAlgorithmRSBase.m */; };
-		F886645C1F4AD1EE0036D01B /* JWTRSAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664281F4AD1EE0036D01B /* JWTRSAlgorithm.h */; };
-		F886645D1F4AD1EE0036D01B /* JWTCryptoKey.h in Headers */ = {isa = PBXBuildFile; fileRef = F886642A1F4AD1EE0036D01B /* JWTCryptoKey.h */; };
-		F886645E1F4AD1EE0036D01B /* JWTCryptoKey.m in Sources */ = {isa = PBXBuildFile; fileRef = F886642B1F4AD1EE0036D01B /* JWTCryptoKey.m */; };
-		F886645F1F4AD1EE0036D01B /* JWTCryptoKeyExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = F886642C1F4AD1EE0036D01B /* JWTCryptoKeyExtractor.h */; };
-		F88664601F4AD1EE0036D01B /* JWTCryptoKeyExtractor.m in Sources */ = {isa = PBXBuildFile; fileRef = F886642D1F4AD1EE0036D01B /* JWTCryptoKeyExtractor.m */; };
-		F88664611F4AD1EE0036D01B /* JWTCryptoSecurity.h in Headers */ = {isa = PBXBuildFile; fileRef = F886642E1F4AD1EE0036D01B /* JWTCryptoSecurity.h */; };
-		F88664621F4AD1EE0036D01B /* JWTCryptoSecurity.m in Sources */ = {isa = PBXBuildFile; fileRef = F886642F1F4AD1EE0036D01B /* JWTCryptoSecurity.m */; };
-		F88664631F4AD1EE0036D01B /* JWTClaim.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664311F4AD1EE0036D01B /* JWTClaim.h */; };
-		F88664641F4AD1EE0036D01B /* JWTClaim.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664321F4AD1EE0036D01B /* JWTClaim.m */; };
-		F88664651F4AD1EE0036D01B /* JWTClaimsSet.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664331F4AD1EE0036D01B /* JWTClaimsSet.h */; };
-		F88664661F4AD1EE0036D01B /* JWTClaimsSet.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664341F4AD1EE0036D01B /* JWTClaimsSet.m */; };
-		F88664671F4AD1EE0036D01B /* JWTClaimsSetSerializer.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664351F4AD1EE0036D01B /* JWTClaimsSetSerializer.h */; };
-		F88664681F4AD1EE0036D01B /* JWTClaimsSetSerializer.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664361F4AD1EE0036D01B /* JWTClaimsSetSerializer.m */; };
-		F88664691F4AD1EE0036D01B /* JWTClaimsSetVerifier.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664371F4AD1EE0036D01B /* JWTClaimsSetVerifier.h */; };
-		F886646A1F4AD1EE0036D01B /* JWTClaimsSetVerifier.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664381F4AD1EE0036D01B /* JWTClaimsSetVerifier.m */; };
-		F886646B1F4AD1EE0036D01B /* JWTCoding+ResultTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = F886643A1F4AD1EE0036D01B /* JWTCoding+ResultTypes.h */; };
-		F886646C1F4AD1EE0036D01B /* JWTCoding+ResultTypes.m in Sources */ = {isa = PBXBuildFile; fileRef = F886643B1F4AD1EE0036D01B /* JWTCoding+ResultTypes.m */; };
-		F886646D1F4AD1EE0036D01B /* JWTCoding+VersionOne.h in Headers */ = {isa = PBXBuildFile; fileRef = F886643C1F4AD1EE0036D01B /* JWTCoding+VersionOne.h */; };
-		F886646E1F4AD1EE0036D01B /* JWTCoding+VersionOne.m in Sources */ = {isa = PBXBuildFile; fileRef = F886643D1F4AD1EE0036D01B /* JWTCoding+VersionOne.m */; };
-		F886646F1F4AD1EE0036D01B /* JWTCoding+VersionThree.h in Headers */ = {isa = PBXBuildFile; fileRef = F886643E1F4AD1EE0036D01B /* JWTCoding+VersionThree.h */; };
-		F88664701F4AD1EE0036D01B /* JWTCoding+VersionThree.m in Sources */ = {isa = PBXBuildFile; fileRef = F886643F1F4AD1EE0036D01B /* JWTCoding+VersionThree.m */; };
-		F88664711F4AD1EE0036D01B /* JWTCoding+VersionTwo.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664401F4AD1EE0036D01B /* JWTCoding+VersionTwo.h */; };
-		F88664721F4AD1EE0036D01B /* JWTCoding+VersionTwo.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664411F4AD1EE0036D01B /* JWTCoding+VersionTwo.m */; };
-		F88664731F4AD1EE0036D01B /* JWTCoding.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664421F4AD1EE0036D01B /* JWTCoding.h */; };
-		F88664741F4AD1EE0036D01B /* JWTCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664431F4AD1EE0036D01B /* JWTCoding.m */; };
-		F88664751F4AD1EE0036D01B /* JWT.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664451F4AD1EE0036D01B /* JWT.h */; };
-		F88664761F4AD1EE0036D01B /* JWTBase64Coder.h in Headers */ = {isa = PBXBuildFile; fileRef = F88664481F4AD1EE0036D01B /* JWTBase64Coder.h */; };
-		F88664771F4AD1EE0036D01B /* JWTBase64Coder.m in Sources */ = {isa = PBXBuildFile; fileRef = F88664491F4AD1EE0036D01B /* JWTBase64Coder.m */; };
-		F88664781F4AD1EE0036D01B /* JWTDeprecations.h in Headers */ = {isa = PBXBuildFile; fileRef = F886644A1F4AD1EE0036D01B /* JWTDeprecations.h */; };
-		F88664791F4AD1EE0036D01B /* JWTErrorDescription.h in Headers */ = {isa = PBXBuildFile; fileRef = F886644B1F4AD1EE0036D01B /* JWTErrorDescription.h */; };
-		F886647A1F4AD1EF0036D01B /* JWTErrorDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = F886644C1F4AD1EE0036D01B /* JWTErrorDescription.m */; };
 		FD00FBDD4A5916948AAC735D /* CodePushSha256.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F67DC39D49BF136E1C7F041 /* CodePushSha256.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		58B511D91A9E6C8500147676 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = include/CodePush;
-			dstSubfolderSpec = 16;
-			files = (
-				8482F84C1E24C58300F793DB /* CodePush.h in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6463C8221EBA0CB60095B8CD /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)";
-			dstSubfolderSpec = 16;
-			files = (
-				6463C8451EBA0D1F0095B8CD /* CodePush.h in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -206,7 +34,6 @@
 		9414C770C70E1B1319F24B12 /* CodePushBinaryDiffPatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePushBinaryDiffPatcher.m; path = CodePush/CodePushBinaryDiffPatcher.m; sourceTree = "<group>"; };
 		0BF68F85125CF81D7EB65ABB /* bspatch_bridge.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = bspatch_bridge.h; sourceTree = "<group>"; };
 		0DC7989C75C72A774EF3685F /* bsdiff_wrapper/bspatch_wrapper.c */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.c; path = bsdiff_wrapper/bspatch_wrapper.c; sourceTree = "<group>"; };
-		134814201AA4EA6300B7C361 /* libCodePush.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCodePush.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		13BE3DEC1AC21097009241FE /* CodePush.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodePush.h; path = CodePush/CodePush.h; sourceTree = "<group>"; };
 		13BE3DED1AC21097009241FE /* CodePush.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CodePush.m; path = CodePush/CodePush.m; sourceTree = "<group>"; };
 		1B23B9131BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "RCTConvert+CodePushInstallMode.m"; path = "CodePush/RCTConvert+CodePushInstallMode.m"; sourceTree = "<group>"; };
@@ -318,25 +145,10 @@
 		F886644A1F4AD1EE0036D01B /* JWTDeprecations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JWTDeprecations.h; sourceTree = "<group>"; };
 		F886644B1F4AD1EE0036D01B /* JWTErrorDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JWTErrorDescription.h; sourceTree = "<group>"; };
 		F886644C1F4AD1EE0036D01B /* JWTErrorDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JWTErrorDescription.m; sourceTree = "<group>"; };
-		F886647B1F4ADB500036D01B /* libCodePush.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCodePush.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF90DEF92C5A808600CA8692 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		58B511D81A9E6C8500147676 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6463C8211EBA0CB60095B8CD /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		92F210124F3F87350E684641 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -350,7 +162,6 @@
 		134814211AA4EA7D00B7C361 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				134814201AA4EA6300B7C361 /* libCodePush.a */,
 				4AB96C756000A7E833CBA8B7 /* CodePushTests.xctest */,
 			);
 			name = Products;
@@ -471,7 +282,6 @@
 				3221E4282C8ABE1300268379 /* SSZipArchive */,
 				134814211AA4EA7D00B7C361 /* Products */,
 				C31BB4D5018A48D5288C5137 /* Frameworks */,
-				F886647B1F4ADB500036D01B /* libCodePush.a */,
 				2EB4092D590839720984EE01 /* RepoRoot */,
 				C283376E6F60830C5CB41994 /* CodePushTests */,
 				73A9DD75BE69E8E3A8C3548A /* CodePushSha256.h */,
@@ -684,126 +494,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		6463C8461EBA0D230095B8CD /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3221E4662C8ABE1300268379 /* mz_strm_buf.h in Headers */,
-				3221E48E2C8ABE1400268379 /* SSZipArchive.h in Headers */,
-				3221E4762C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */,
-				3221E4642C8ABE1300268379 /* mz_strm_split.h in Headers */,
-				6463C8471EBA0D290095B8CD /* CodePush.h in Headers */,
-				4693408DCB9ACB8E02BF69B1 /* CodePushDiffManifest.h in Headers */,
-				469472C57F1D5FF7C0274268 /* CodePushBinaryDiffPatcher.h in Headers */,
-				3221E46A2C8ABE1300268379 /* mz_strm.h in Headers */,
-				3221E4782C8ABE1300268379 /* mz_zip_rw.h in Headers */,
-				3221E4802C8ABE1400268379 /* mz.h in Headers */,
-				3221E4602C8ABE1300268379 /* mz_os.h in Headers */,
-				3221E4882C8ABE1400268379 /* mz_strm_mem.h in Headers */,
-				3221E4862C8ABE1400268379 /* mz_crypt.h in Headers */,
-				3221E4902C8ABE1400268379 /* SSZipCommon.h in Headers */,
-				3221E4582C8ABE1300268379 /* mz_strm_wzaes.h in Headers */,
-				3221E4522C8ABE1300268379 /* ZipArchive.h in Headers */,
-				3221E4722C8ABE1300268379 /* mz_strm_zlib.h in Headers */,
-				3221E45A2C8ABE1300268379 /* mz_compat.h in Headers */,
-				3221E47C2C8ABE1400268379 /* mz_zip.h in Headers */,
-				3221E48C2C8ABE1400268379 /* mz_strm_os.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8482F84D1E24C65E00F793DB /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3221E4712C8ABE1300268379 /* mz_strm_zlib.h in Headers */,
-				3221E48B2C8ABE1400268379 /* mz_strm_os.h in Headers */,
-				F88664791F4AD1EE0036D01B /* JWTErrorDescription.h in Headers */,
-				F85736761F4F03BF00C9C00A /* MF_Base64Additions.h in Headers */,
-				F88664541F4AD1EE0036D01B /* JWTAlgorithmDataHolder.h in Headers */,
-				F88664501F4AD1EE0036D01B /* JWTAlgorithmNone.h in Headers */,
-				F88664671F4AD1EE0036D01B /* JWTClaimsSetSerializer.h in Headers */,
-				F88664521F4AD1EE0036D01B /* JWTAlgorithmESBase.h in Headers */,
-				F88664781F4AD1EE0036D01B /* JWTDeprecations.h in Headers */,
-				3221E4852C8ABE1400268379 /* mz_crypt.h in Headers */,
-				3221E4512C8ABE1300268379 /* ZipArchive.h in Headers */,
-				F88664631F4AD1EE0036D01B /* JWTClaim.h in Headers */,
-				F886645A1F4AD1EE0036D01B /* JWTAlgorithmRSBase.h in Headers */,
-				F886645F1F4AD1EE0036D01B /* JWTCryptoKeyExtractor.h in Headers */,
-				F88664651F4AD1EE0036D01B /* JWTClaimsSet.h in Headers */,
-				F886644E1F4AD1EE0036D01B /* JWTAlgorithmFactory.h in Headers */,
-				F886645C1F4AD1EE0036D01B /* JWTRSAlgorithm.h in Headers */,
-				F88664731F4AD1EE0036D01B /* JWTCoding.h in Headers */,
-				3221E45F2C8ABE1300268379 /* mz_os.h in Headers */,
-				3221E4872C8ABE1400268379 /* mz_strm_mem.h in Headers */,
-				3221E48D2C8ABE1400268379 /* SSZipArchive.h in Headers */,
-				F88664581F4AD1EE0036D01B /* JWTAlgorithmHSBase.h in Headers */,
-				F886646D1F4AD1EE0036D01B /* JWTCoding+VersionOne.h in Headers */,
-				3221E47F2C8ABE1400268379 /* mz.h in Headers */,
-				F88664761F4AD1EE0036D01B /* JWTBase64Coder.h in Headers */,
-				F88664561F4AD1EE0036D01B /* JWTAlgorithmDataHolderChain.h in Headers */,
-				3221E4592C8ABE1300268379 /* mz_compat.h in Headers */,
-				F886644D1F4AD1EE0036D01B /* JWTAlgorithm.h in Headers */,
-				F88664611F4AD1EE0036D01B /* JWTCryptoSecurity.h in Headers */,
-				3221E48F2C8ABE1400268379 /* SSZipCommon.h in Headers */,
-				F88664751F4AD1EE0036D01B /* JWT.h in Headers */,
-				F886645D1F4AD1EE0036D01B /* JWTCryptoKey.h in Headers */,
-				3221E4692C8ABE1300268379 /* mz_strm.h in Headers */,
-				3221E4772C8ABE1300268379 /* mz_zip_rw.h in Headers */,
-				F886646F1F4AD1EE0036D01B /* JWTCoding+VersionThree.h in Headers */,
-				F88664691F4AD1EE0036D01B /* JWTClaimsSetVerifier.h in Headers */,
-				3221E4572C8ABE1300268379 /* mz_strm_wzaes.h in Headers */,
-				3221E4632C8ABE1300268379 /* mz_strm_split.h in Headers */,
-				3221E4752C8ABE1300268379 /* mz_strm_pkcrypt.h in Headers */,
-				8482F84E1E24C66300F793DB /* CodePush.h in Headers */,
-				C11A2DB29D3D814B1A7891DF /* CodePushDiffManifest.h in Headers */,
-				E5C712D353D9164F04A2F456 /* CodePushBinaryDiffPatcher.h in Headers */,
-				F88664711F4AD1EE0036D01B /* JWTCoding+VersionTwo.h in Headers */,
-				F886646B1F4AD1EE0036D01B /* JWTCoding+ResultTypes.h in Headers */,
-				3221E4652C8ABE1300268379 /* mz_strm_buf.h in Headers */,
-				3221E47B2C8ABE1400268379 /* mz_zip.h in Headers */,
-				F0CE653CAB93F38FC0C0CAF8 /* CodePushSha256.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		58B511DA1A9E6C8500147676 /* CodePush */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 58B511EF1A9E6C8500147676 /* Build configuration list for PBXNativeTarget "CodePush" */;
-			buildPhases = (
-				58B511D71A9E6C8500147676 /* Sources */,
-				58B511D81A9E6C8500147676 /* Frameworks */,
-				58B511D91A9E6C8500147676 /* CopyFiles */,
-				8482F84D1E24C65E00F793DB /* Headers */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = CodePush;
-			productName = RCTDataManager;
-			productReference = 134814201AA4EA6300B7C361 /* libCodePush.a */;
-			productType = "com.apple.product-type.library.static";
-		};
-		6463C8231EBA0CB60095B8CD /* CodePush-tvOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6463C82C1EBA0CB60095B8CD /* Build configuration list for PBXNativeTarget "CodePush-tvOS" */;
-			buildPhases = (
-				6463C8201EBA0CB60095B8CD /* Sources */,
-				6463C8211EBA0CB60095B8CD /* Frameworks */,
-				6463C8221EBA0CB60095B8CD /* CopyFiles */,
-				6463C8461EBA0D230095B8CD /* Headers */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "CodePush-tvOS";
-			productName = "CodePush-tvOS";
-			productReference = F886647B1F4ADB500036D01B /* libCodePush.a */;
-			productType = "com.apple.product-type.library.static";
-		};
 		9750B3DE460E834FF67380BD /* CodePushTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A11B0911B46B588F8C213676 /* Build configuration list for PBXNativeTarget "CodePushTests" */;
@@ -830,13 +523,6 @@
 				LastUpgradeCheck = 1000;
 				ORGANIZATIONNAME = Microsoft;
 				TargetAttributes = {
-					58B511DA1A9E6C8500147676 = {
-						CreatedOnToolsVersion = 6.1.1;
-					};
-					6463C8231EBA0CB60095B8CD = {
-						CreatedOnToolsVersion = 8.3.2;
-						ProvisioningStyle = Automatic;
-					};
 					9750B3DE460E834FF67380BD = {
 						ProvisioningStyle = Automatic;
 					};
@@ -855,8 +541,6 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				58B511DA1A9E6C8500147676 /* CodePush */,
-				6463C8231EBA0CB60095B8CD /* CodePush-tvOS */,
 				9750B3DE460E834FF67380BD /* CodePushTests */,
 			);
 		};
@@ -874,103 +558,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		58B511D71A9E6C8500147676 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				08B8B3B8260E70B7ECA85451 /* bspatch_bridge.c in Sources */,
-				A75C1A7A555663186E25AA3D /* libHDiffPatch/HPatch/patch.c in Sources */,
-				D8C294C1D2625E79BC302CCC /* bsdiff_wrapper/bspatch_wrapper.c in Sources */,
-				78E9CECCB820DC4BA09BF09A /* file_for_patch.c in Sources */,
-				3221E47D2C8ABE1400268379 /* mz_os_posix.c in Sources */,
-				3221E4792C8ABE1300268379 /* mz_os.c in Sources */,
-				F88664621F4AD1EE0036D01B /* JWTCryptoSecurity.m in Sources */,
-				F88664701F4AD1EE0036D01B /* JWTCoding+VersionThree.m in Sources */,
-				540D20121C7684FE00D6EF41 /* CodePushUpdateUtils.m in Sources */,
-				3221E4812C8ABE1400268379 /* mz_strm_buf.c in Sources */,
-				3221E46D2C8ABE1300268379 /* mz_crypt.c in Sources */,
-				F886646E1F4AD1EE0036D01B /* JWTCoding+VersionOne.m in Sources */,
-				1BCC09A71CC19EB700DDC0DD /* RCTConvert+CodePushUpdateState.m in Sources */,
-				F88664661F4AD1EE0036D01B /* JWTClaimsSet.m in Sources */,
-				3221E4892C8ABE1400268379 /* mz_strm.c in Sources */,
-				1B23B9141BF9267B000BB2F0 /* RCTConvert+CodePushInstallMode.m in Sources */,
-				F886645E1F4AD1EE0036D01B /* JWTCryptoKey.m in Sources */,
-				81D51F3A1B6181C2000DA084 /* CodePushConfig.m in Sources */,
-				3221E4732C8ABE1300268379 /* mz_compat.c in Sources */,
-				F886646A1F4AD1EE0036D01B /* JWTClaimsSetVerifier.m in Sources */,
-				3221E45B2C8ABE1300268379 /* mz_strm_zlib.c in Sources */,
-				3221E46B2C8ABE1300268379 /* mz_strm_mem.c in Sources */,
-				54FFEDE01BF550630061DD23 /* CodePushDownloadHandler.m in Sources */,
-				3221E4672C8ABE1300268379 /* mz_crypt_apple.c in Sources */,
-				3221E4912C8ABE1400268379 /* SSZipArchive.m in Sources */,
-				F88664551F4AD1EE0036D01B /* JWTAlgorithmDataHolder.m in Sources */,
-				F88664681F4AD1EE0036D01B /* JWTClaimsSetSerializer.m in Sources */,
-				5421FE311C58AD5A00986A55 /* CodePushTelemetryManager.m in Sources */,
-				F886646C1F4AD1EE0036D01B /* JWTCoding+ResultTypes.m in Sources */,
-				3221E46F2C8ABE1300268379 /* mz_strm_wzaes.c in Sources */,
-				F88664601F4AD1EE0036D01B /* JWTCryptoKeyExtractor.m in Sources */,
-				F88664571F4AD1EE0036D01B /* JWTAlgorithmDataHolderChain.m in Sources */,
-				13BE3DEE1AC21097009241FE /* CodePush.m in Sources */,
-				F85736771F4F03BF00C9C00A /* MF_Base64Additions.m in Sources */,
-				F88664641F4AD1EE0036D01B /* JWTClaim.m in Sources */,
-				F88664741F4AD1EE0036D01B /* JWTCoding.m in Sources */,
-				3221E45D2C8ABE1300268379 /* mz_zip.c in Sources */,
-				1B762E901C9A5E9A006EF800 /* CodePushErrorUtils.m in Sources */,
-				F886645B1F4AD1EE0036D01B /* JWTAlgorithmRSBase.m in Sources */,
-				3221E4832C8ABE1400268379 /* mz_strm_split.c in Sources */,
-				F886647A1F4AD1EF0036D01B /* JWTErrorDescription.m in Sources */,
-				F886644F1F4AD1EE0036D01B /* JWTAlgorithmFactory.m in Sources */,
-				F88664591F4AD1EE0036D01B /* JWTAlgorithmHSBase.m in Sources */,
-				F88664771F4AD1EE0036D01B /* JWTBase64Coder.m in Sources */,
-				F88664511F4AD1EE0036D01B /* JWTAlgorithmNone.m in Sources */,
-				5498D8F61D21F14100B5EB43 /* CodePushUtils.m in Sources */,
-				3221E4612C8ABE1300268379 /* mz_zip_rw.c in Sources */,
-				810D4E6D1B96935000B397E9 /* CodePushPackage.m in Sources */,
-				CED0A6936F6F8C354302F246 /* CodePushDiffManifest.m in Sources */,
-				1993F82DF6330426AC5CBC2E /* CodePushBinaryDiffPatcher.m in Sources */,
-				3221E4552C8ABE1300268379 /* mz_strm_pkcrypt.c in Sources */,
-				F88664531F4AD1EE0036D01B /* JWTAlgorithmESBase.m in Sources */,
-				3221E4532C8ABE1300268379 /* mz_strm_os_posix.c in Sources */,
-				F88664721F4AD1EE0036D01B /* JWTCoding+VersionTwo.m in Sources */,
-				537831E09276DCD4475752F3 /* CodePushSha256.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6463C8201EBA0CB60095B8CD /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3221E47E2C8ABE1400268379 /* mz_os_posix.c in Sources */,
-				3221E46C2C8ABE1300268379 /* mz_strm_mem.c in Sources */,
-				3221E4922C8ABE1400268379 /* SSZipArchive.m in Sources */,
-				3221E4822C8ABE1400268379 /* mz_strm_buf.c in Sources */,
-				3221E45E2C8ABE1300268379 /* mz_zip.c in Sources */,
-				6463C82D1EBA0CFB0095B8CD /* CodePushUtils.m in Sources */,
-				6463C82E1EBA0CFB0095B8CD /* CodePush.m in Sources */,
-				6463C82F1EBA0CFB0095B8CD /* CodePushConfig.m in Sources */,
-				6463C8301EBA0CFB0095B8CD /* CodePushDownloadHandler.m in Sources */,
-				6463C8311EBA0CFB0095B8CD /* CodePushErrorUtils.m in Sources */,
-				3221E46E2C8ABE1300268379 /* mz_crypt.c in Sources */,
-				6463C8321EBA0CFB0095B8CD /* CodePushPackage.m in Sources */,
-				CD32522E04D0F0E86DCC7BBE /* CodePushDiffManifest.m in Sources */,
-				F41E2EFAD0D322F7D14D7125 /* CodePushBinaryDiffPatcher.m in Sources */,
-				6463C8331EBA0CFB0095B8CD /* CodePushTelemetryManager.m in Sources */,
-				6463C8341EBA0CFB0095B8CD /* CodePushUpdateUtils.m in Sources */,
-				3221E45C2C8ABE1300268379 /* mz_strm_zlib.c in Sources */,
-				3221E4682C8ABE1300268379 /* mz_crypt_apple.c in Sources */,
-				3221E4842C8ABE1400268379 /* mz_strm_split.c in Sources */,
-				3221E48A2C8ABE1400268379 /* mz_strm.c in Sources */,
-				6463C8351EBA0CFB0095B8CD /* RCTConvert+CodePushInstallMode.m in Sources */,
-				3221E4742C8ABE1300268379 /* mz_compat.c in Sources */,
-				3221E4542C8ABE1300268379 /* mz_strm_os_posix.c in Sources */,
-				3221E4702C8ABE1300268379 /* mz_strm_wzaes.c in Sources */,
-				3221E4562C8ABE1300268379 /* mz_strm_pkcrypt.c in Sources */,
-				3221E47A2C8ABE1300268379 /* mz_os.c in Sources */,
-				3221E4622C8ABE1300268379 /* mz_zip_rw.c in Sources */,
-				6463C8361EBA0CFB0095B8CD /* RCTConvert+CodePushUpdateState.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		7F757C5E9DC4CC7D30C29506 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1123,118 +710,6 @@
 			};
 			name = Release;
 		};
-		58B511F01A9E6C8500147676 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(inherited)",
-					HAVE_INTTYPES_H,
-					HAVE_PKCRYPT,
-					HAVE_STDINT_H,
-					HAVE_WZAES,
-					HAVE_ZLIB,
-					ZLIB_COMPAT,
-					"_IS_NEED_BLOCK_DEV=0",
-					"_IS_USED_MULTITHREAD=0",
-					"_IS_NEED_DIR_DIFF_PATCH=0",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRC_ROOT)/JWT/**",
-					"$(SRCROOT)/../shared",
-					"$(SRCROOT)/../shared/diffpatch",
-					"$(SRCROOT)/../shared/third_party/hdiffpatch",
-					"$(SRCROOT)/../shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
-				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				OTHER_LDFLAGS = (
-					"-ObjC",
-					"-lz",
-					"-lbz2",
-				);
-				PRODUCT_NAME = CodePush;
-				SKIP_INSTALL = YES;
-			};
-			name = Debug;
-		};
-		58B511F11A9E6C8500147676 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"$(inherited)",
-					HAVE_INTTYPES_H,
-					HAVE_PKCRYPT,
-					HAVE_STDINT_H,
-					HAVE_WZAES,
-					HAVE_ZLIB,
-					ZLIB_COMPAT,
-					"_IS_NEED_BLOCK_DEV=0",
-					"_IS_USED_MULTITHREAD=0",
-					"_IS_NEED_DIR_DIFF_PATCH=0",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRC_ROOT)/JWT/**",
-					"$(SRCROOT)/../shared",
-					"$(SRCROOT)/../shared/diffpatch",
-					"$(SRCROOT)/../shared/third_party/hdiffpatch",
-					"$(SRCROOT)/../shared/third_party/hdiffpatch/libHDiffPatch/HPatch",
-				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				OTHER_LDFLAGS = (
-					"-ObjC",
-					"-lz",
-					"-lbz2",
-				);
-				PRODUCT_NAME = CodePush;
-				SKIP_INSTALL = YES;
-			};
-			name = Release;
-		};
-		6463C82A1EBA0CB60095B8CD /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_TESTABILITY = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
-				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_NAME = CodePush;
-				SDKROOT = appletvos;
-				SKIP_INSTALL = YES;
-				TVOS_DEPLOYMENT_TARGET = 10.2;
-			};
-			name = Debug;
-		};
-		6463C82B1EBA0CB60095B8CD /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_NO_COMMON_BLOCKS = YES;
-				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_NAME = CodePush;
-				SDKROOT = appletvos;
-				SKIP_INSTALL = YES;
-				TVOS_DEPLOYMENT_TARGET = 10.2;
-			};
-			name = Release;
-		};
 		D41A1215D79D9643EC63FA1F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1275,24 +750,6 @@
 			buildConfigurations = (
 				58B511ED1A9E6C8500147676 /* Debug */,
 				58B511EE1A9E6C8500147676 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		58B511EF1A9E6C8500147676 /* Build configuration list for PBXNativeTarget "CodePush" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				58B511F01A9E6C8500147676 /* Debug */,
-				58B511F11A9E6C8500147676 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		6463C82C1EBA0CB60095B8CD /* Build configuration list for PBXNativeTarget "CodePush-tvOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6463C82A1EBA0CB60095B8CD /* Debug */,
-				6463C82B1EBA0CB60095B8CD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
