@@ -95,6 +95,25 @@ function installExpoBundleTooling(projectPath: string): Q.Promise<void> {
   ).then(() => {});
 }
 
+/**
+ * The app can send the messages before the resume relaunches it (e.g. it restarts in the background).
+ * Waiting only for the messages leaves the relaunch pending, and it then starts a stray app during the next test.
+ * This is also true when the messages fail, so this waits for the resume to settle in both cases.
+ */
+async function resumeApplicationAndExpectTestMessages(
+  targetPlatform: Platform.IPlatform,
+  expectedMessages: (string | ServerUtil.AppMessage)[],
+  delayBeforeResumingMs?: number,
+): Promise<void> {
+  const [messages] = await Promise.allSettled([
+    ServerUtil.expectTestMessages(expectedMessages),
+    targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, delayBeforeResumingMs),
+  ]);
+  if (messages.status === 'rejected') {
+    throw messages.reason;
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Create the platforms to run the tests on.
 
@@ -1460,8 +1479,9 @@ PluginTestingFramework.initializeTests(
             })
             .then<void>(() => {
               /* resume the application */
-              targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+              return resumeApplicationAndExpectTestMessages(targetPlatform, [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+              ]);
             })
             .then<void>(() => {
               /* restart to revert it */
@@ -1494,8 +1514,9 @@ PluginTestingFramework.initializeTests(
             })
             .then<void>(() => {
               /* resume the application */
-              targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+              return resumeApplicationAndExpectTestMessages(targetPlatform, [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+              ]);
             })
             .then<void>(() => {
               /* restart to make sure it did not revert */
@@ -1533,8 +1554,9 @@ PluginTestingFramework.initializeTests(
             })
             .then<void>(() => {
               /* resume the application */
-              targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+              return resumeApplicationAndExpectTestMessages(targetPlatform, [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+              ]);
             })
             .then<void>(() => {
               /* restart to revert it */
@@ -1567,8 +1589,9 @@ PluginTestingFramework.initializeTests(
             })
             .then<void>(() => {
               /* resume the application */
-              targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+              return resumeApplicationAndExpectTestMessages(targetPlatform, [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+              ]);
             })
             .then<void>(() => {
               /* restart to make sure it did not revert */
@@ -2200,8 +2223,7 @@ PluginTestingFramework.initializeTests(
             noUpdateResponse.is_available = false;
             noUpdateResponse.target_binary_range = '0.0.1';
             ServerUtil.updateResponse = { update_info: noUpdateResponse };
-            targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-            return ServerUtil.expectTestMessages([
+            return resumeApplicationAndExpectTestMessages(targetPlatform, [
               ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
               new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE]),
             ]);
@@ -2240,11 +2262,14 @@ PluginTestingFramework.initializeTests(
             return targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, 3 * 1000);
           })
           .then(() => {
-            targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, 6 * 1000);
-            return ServerUtil.expectTestMessages([
-              ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
-              new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE]),
-            ]);
+            return resumeApplicationAndExpectTestMessages(
+              targetPlatform,
+              [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+                new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE]),
+              ],
+              6 * 1000,
+            );
           })
           .done(
             () => {
@@ -2277,8 +2302,7 @@ PluginTestingFramework.initializeTests(
             noUpdateResponse.is_available = false;
             noUpdateResponse.target_binary_range = '0.0.1';
             ServerUtil.updateResponse = { update_info: noUpdateResponse };
-            targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-            return ServerUtil.expectTestMessages([
+            return resumeApplicationAndExpectTestMessages(targetPlatform, [
               ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
               new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE]),
             ]);
@@ -2317,11 +2341,14 @@ PluginTestingFramework.initializeTests(
             return targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, 3 * 1000);
           })
           .then(() => {
-            targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, 6 * 1000);
-            return ServerUtil.expectTestMessages([
-              ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
-              new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE]),
-            ]);
+            return resumeApplicationAndExpectTestMessages(
+              targetPlatform,
+              [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+                new ServerUtil.AppMessage(ServerUtil.TestMessage.SYNC_STATUS, [ServerUtil.TestMessage.SYNC_UP_TO_DATE]),
+              ],
+              6 * 1000,
+            );
           })
           .done(
             () => {
@@ -2418,8 +2445,11 @@ PluginTestingFramework.initializeTests(
               noUpdateResponse.is_available = false;
               noUpdateResponse.target_binary_range = '0.0.1';
               ServerUtil.updateResponse = { update_info: noUpdateResponse };
-              targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace, 5 * 1000);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+              return resumeApplicationAndExpectTestMessages(
+                targetPlatform,
+                [ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE],
+                5 * 1000,
+              );
             })
             .done(
               () => {
@@ -2456,8 +2486,9 @@ PluginTestingFramework.initializeTests(
               noUpdateResponse.is_available = false;
               noUpdateResponse.target_binary_range = '0.0.1';
               ServerUtil.updateResponse = { update_info: noUpdateResponse };
-              targetPlatform.getEmulatorManager().resumeApplication(TestConfig.TestNamespace);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
+              return resumeApplicationAndExpectTestMessages(targetPlatform, [
+                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
+              ]);
             })
             .done(
               () => {
