@@ -158,6 +158,11 @@ interface RNPlatform {
    * Builds the binary of the project on this platform.
    */
   buildApp(projectDirectory: string): Q.Promise<void>;
+
+  /**
+   * Whether `prepareEmulatorForTest` already wipes all app data, so an unchanged binary can stay installed between tests.
+   */
+  canReuseInstalledApp(): boolean;
 }
 
 class RNAndroid extends Platform.Android implements RNPlatform {
@@ -283,6 +288,11 @@ class RNAndroid extends Platform.Android implements RNPlatform {
       noLogStdOut: true,
       cwd: androidDirectory,
     }).then(() => {});
+  }
+
+  canReuseInstalledApp(): boolean {
+    // `pm clear` wipes the files dir and shared preferences, which hold all CodePush state.
+    return true;
   }
 }
 
@@ -474,6 +484,12 @@ class RNIOS extends Platform.IOS implements RNPlatform {
       })
       .then(() => {});
   }
+
+  canReuseInstalledApp(): boolean {
+    // Wiping the data container needs `defaults delete` on the container plist (cfprefsd caches it) plus `rm`,
+    // and that costs about as much as a reinstall.
+    return false;
+  }
 }
 
 const supportedTargetPlatforms: Platform.IPlatform[] = [new RNAndroid(), new RNIOS()];
@@ -646,6 +662,9 @@ class RNProjectManager extends ProjectManager {
    *  }
    */
   private static currentScenarioHasBuilt: Record<string, boolean> = {};
+
+  /** Project directories whose latest build is installed on the target. */
+  private static latestBuildIsInstalled: Record<string, boolean> = {};
 
   /**
    * Sets up the scenario for a test in an already existing project.
@@ -859,6 +878,7 @@ class RNProjectManager extends ProjectManager {
         // Build if this scenario has not yet been built.
         if (!RNProjectManager.currentScenarioHasBuilt[projectDirectory]) {
           RNProjectManager.currentScenarioHasBuilt[projectDirectory] = true;
+          RNProjectManager.latestBuildIsInstalled[projectDirectory] = false;
           const buildStart = Date.now();
           return (targetPlatform as unknown as RNPlatform).buildApp(projectDirectory).then(() => {
             console.log(
@@ -868,27 +888,43 @@ class RNProjectManager extends ProjectManager {
         }
       })
       .then(() => {
-        // Uninstall the app so that the installation is clean and no files are left around for each test.
-        const uninstallStart = Date.now();
-        return targetPlatform
-          .getEmulatorManager()
-          .uninstallApplication(TestConfig.TestNamespace)
+        const canReuseInstalledApp = (targetPlatform as unknown as RNPlatform).canReuseInstalledApp();
+        if (canReuseInstalledApp && RNProjectManager.latestBuildIsInstalled[projectDirectory]) {
+          console.log(`Reusing the installed ${targetPlatform.getName()} app`);
+          return;
+        }
+        return Q<void>(null)
           .then(() => {
-            console.log(
-              `[TIMING] ${targetPlatform.getName()} uninstallApplication took ${Date.now() - uninstallStart}ms`,
-            );
+            if (canReuseInstalledApp) {
+              // The data is already wiped, so installing over the old build gives the same clean state.
+              return;
+            }
+            // Uninstall the app so that the installation is clean and no files are left around for each test.
+            const uninstallStart = Date.now();
+            return targetPlatform
+              .getEmulatorManager()
+              .uninstallApplication(TestConfig.TestNamespace)
+              .then(() => {
+                console.log(
+                  `[TIMING] ${targetPlatform.getName()} uninstallApplication took ${Date.now() - uninstallStart}ms`,
+                );
+              });
+          })
+          .then(() => {
+            const installStart = Date.now();
+            return (targetPlatform as unknown as RNPlatform).installApp(projectDirectory).then(() => {
+              RNProjectManager.latestBuildIsInstalled[projectDirectory] = true;
+              console.log(`[TIMING] ${targetPlatform.getName()} installApp took ${Date.now() - installStart}ms`);
+            });
           });
       })
       .then(() => {
-        // Install and launch the app.
-        const installStart = Date.now();
-        return (targetPlatform as unknown as RNPlatform)
-          .installApp(projectDirectory)
-          .then<void>(
-            targetPlatform.getEmulatorManager().launchInstalledApplication.bind(undefined, TestConfig.TestNamespace),
-          )
+        const launchStart = Date.now();
+        return targetPlatform
+          .getEmulatorManager()
+          .launchInstalledApplication(TestConfig.TestNamespace)
           .then(() => {
-            console.log(`[TIMING] ${targetPlatform.getName()} installApp+launch took ${Date.now() - installStart}ms`);
+            console.log(`[TIMING] ${targetPlatform.getName()} launch took ${Date.now() - launchStart}ms`);
           });
       })
       .then(() => {

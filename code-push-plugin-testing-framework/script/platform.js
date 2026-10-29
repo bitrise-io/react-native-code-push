@@ -443,10 +443,18 @@ var IOSEmulatorManager = (function () {
      */
     IOSEmulatorManager.prototype.prepareEmulatorForTest = function (appId) {
         var t0 = Date.now();
-        return this.endRunningApplication(appId).then(function (result) {
-            console.log("[TIMING] ios prepareEmulatorForTest total took " + (Date.now() - t0) + "ms");
-            return result;
-        });
+        return this.endRunningApplication(appId)
+            .catch(function (error) {
+                // `simctl terminate` fails when the app is not running, and that is the state this step wants.
+                if (/found nothing to terminate/.test(String(error && error.message))) {
+                    return null;
+                }
+                throw error;
+            })
+            .then(function (result) {
+                console.log("[TIMING] ios prepareEmulatorForTest total took " + (Date.now() - t0) + "ms");
+                return result;
+            });
     };
     /**
      * Uninstalls the app from the emulator.

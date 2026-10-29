@@ -34,8 +34,7 @@ function describeInternal(func, description, spec, scenarioPath) {
             ServerUtil.testMessageResponse = undefined;
         });
         beforeEach(function () {
-            return TestContext.targetPlatform.getEmulatorManager().prepareEmulatorForTest(TestConfig.TestNamespace)
-                .catch(function () { });
+            return TestContext.targetPlatform.getEmulatorManager().prepareEmulatorForTest(TestConfig.TestNamespace);
         });
         if (scenarioPath) {
             before(function () {
