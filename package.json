@@ -64,6 +64,9 @@
     "type": "git",
     "url": "https://github.com/bitrise-io/react-native-code-push"
   },
+  "swiftpmConfig": {
+    "name": "CodePush"
+  },
   "dependencies": {
     "hoist-non-react-statics": "^3.3.2"
   },

@@ -2,7 +2,11 @@
 #import "CodePushDiffManifest.h"
 #import "CodePushErrorUtils.h"
 #import "CodePushBinaryDiffPatcher.h"
+#if SWIFT_PACKAGE
+@import ZipArchive;
+#else
 #import <SSZipArchive/SSZipArchive.h>
+#endif
 
 @implementation CodePushPackage
 

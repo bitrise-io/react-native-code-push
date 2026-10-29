@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.preserve_paths = '*.js'
   s.libraries      = 'z', 'bz2'
   s.source_files = [
-    'ios/CodePush/*.{h,m,swift}',
+    'ios/CodePush/*.{h,m}',
     'ios/CodePushCore/Sources/CodePushCore/**/*.swift',
     'shared/diffpatch/*.{c,h}',
     'shared/third_party/hdiffpatch/libHDiffPatch/HPatch/patch.{c,h}',
