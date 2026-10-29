@@ -29,8 +29,8 @@ enum RSAPublicKey {
     }
 
     private static func derBytes(from string: String) -> Data? {
-        // Not line by line: the ObjC caller removes every newline but only
-        // the `PUBLIC KEY` markers, so other armor can arrive inline.
+        // Not line by line: the `CodePushPublicKey` Info.plist value can have
+        // the armor and the base64 body on one line.
         let body = string
             .replacingOccurrences(of: "-----[^-]+-----", with: "", options: .regularExpression)
             .filter { !$0.isWhitespace }

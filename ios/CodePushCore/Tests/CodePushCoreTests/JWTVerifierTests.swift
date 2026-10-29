@@ -113,8 +113,7 @@ private enum Fixture {
     -----END PUBLIC KEY-----
     """
 
-    /// What `+[CodePushUpdateUtils getKeyValueFromPublicKeyString:]` passes
-    /// to the verifier.
+    /// The base64 body only, without PEM armor or newlines.
     static var strippedPublicKey: String {
         publicKeyPEM
             .replacingOccurrences(of: "-----BEGIN PUBLIC KEY-----\n", with: "")
@@ -143,8 +142,6 @@ final class JWTVerifierTests: XCTestCase {
     }
 
     func testAcceptsPKCS1PublicKeyOnOneLine() throws {
-        // getKeyValueFromPublicKeyString: removes every newline but keeps the
-        // `RSA PUBLIC KEY` markers.
         let key = Fixture.pkcs1PublicKeyPEM.replacingOccurrences(of: "\n", with: "")
         let payload = try JWTVerifier.verifyAndDecode(Fixture.validToken, publicKey: key)
 
