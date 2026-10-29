@@ -344,7 +344,20 @@ class RNIOS extends Platform.IOS implements RNPlatform {
     if (TestConfig.isExpoApp) {
       // we use hard-coded deployment key and server url in app.json
       return Q.Promise<void>((resolve) => {
-        TestUtil.replaceString(appDelegatePath, '"main"', `"${TestConfig.TestAppName}"`);
+        // Expo's scene delegate starts React Native with the module name it reads from the app
+        // delegate, so the app delegate must override the "main" default.
+        const appDelegateClass = /class AppDelegate:[^{]*\{/;
+        const appDelegate = fs.readFileSync(appDelegatePath, 'utf8');
+        if (!appDelegateClass.test(appDelegate)) {
+          throw new Error(`Could not find the AppDelegate class in ${appDelegatePath}`);
+        }
+        fs.writeFileSync(
+          appDelegatePath,
+          appDelegate.replace(
+            appDelegateClass,
+            `$&\n  var reactNativeFactoryModuleName: String { "${TestConfig.TestAppName}" }\n`,
+          ),
+        );
         resolve(null);
       });
     } else {
@@ -575,7 +588,7 @@ class RNProjectManager extends ProjectManager {
 
     if (TestConfig.isExpoApp) {
       return (
-        TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-57`, {
+        TestUtil.getProcessOutput(`npx create-expo-app@latest ${appName} --template blank@sdk-58`, {
           cwd: projectDirectory,
           timeout: 30 * 60 * 1000,
           noLogStdOut: true,
