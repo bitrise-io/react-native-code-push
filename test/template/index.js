@@ -165,4 +165,10 @@ const styles = StyleSheet.create({
     },
 });
 
-AppRegistry.registerComponent('CODE_PUSH_TEST_APP_NAME', () => CODE_PUSH_TEST_APP_NAME);
+// A scenario can export wrap(app) to put the app inside e.g. <CodePushProvider>.
+function Root() {
+    var app = <CODE_PUSH_TEST_APP_NAME />;
+    return testScenario.wrap ? testScenario.wrap(app) : app;
+}
+
+AppRegistry.registerComponent('CODE_PUSH_TEST_APP_NAME', () => Root);

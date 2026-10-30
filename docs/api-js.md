@@ -10,9 +10,62 @@ The following sections describe the shape and behavior of these APIs in detail:
 
 ### JavaScript API Reference
 
+#### CodePushProvider
+
+```tsx
+import { CodePushProvider } from "@bitrise/code-push-sdk";
+
+<CodePushProvider {...props}>{children}</CodePushProvider>
+```
+
+The recommended way to integrate CodePush. Wrap your app's root in it:
+
+```tsx
+import * as Sentry from "@sentry/react-native";
+import codePush, { CodePushProvider } from "@bitrise/code-push-sdk";
+
+export default function App() {
+  return (
+    <CodePushProvider
+      installMode={codePush.InstallMode.ON_NEXT_RESUME}
+      onError={(error) => Sentry.captureException(error)}
+    >
+      <RootNavigator />
+    </CodePushProvider>
+  );
+}
+```
+
+After the app's first render, the Provider runs the launch step:
+
+- With the default `checkFrequency`, it checks for an update, downloads and installs it according to the props. The check calls [`notifyAppReady`](#codepushnotifyappready) first.
+- With `checkFrequency={codePush.CheckFrequency.MANUAL}`, it only calls [`notifyAppReady`](#codepushnotifyappready).
+
+Either way, CodePush keeps an update that started fine. The Provider catches every failure of the work it starts and passes it to `onError`, so no promise rejection goes unhandled. When it unmounts, it removes its `AppState` listener.
+
+*NOTE: Put the Provider at the app root, outside auth gates, navigation conditions, and screens that render late. The Provider calls `notifyAppReady` when it mounts. If it only mounts after login, and the user closes the app before logging in, CodePush rolls the new update back on the next start.*
+
+Props:
+
+* __checkFrequency__ *(codePush.CheckFrequency)* - When to check for updates. Defaults to `codePush.CheckFrequency.ON_APP_START`.
+
+    * __ON_APP_START__ - Check once, after the first render.
+
+    * __ON_APP_RESUME__ - Check after the first render, and each time the app returns to the foreground.
+
+    * __MANUAL__ - Never check on its own. The Provider only calls `notifyAppReady`. Check for updates yourself, for example from a "Check for updates" button.
+
+* __onError__ *(function(error: Error))* - Called once for each failure of the launch step or of a check on resume. Use it to send errors to a crash reporter. A failed update call that your own code makes rejects its promise instead, and does not reach `onError`. CodePush logs every failure to the console, with or without `onError`.
+
+* __deploymentKey__, __installMode__, __mandatoryInstallMode__, __minimumBackgroundDuration__, __updateDialog__, __rollbackRetryOptions__ - The [update options](#codepushoptions), with the same defaults.
+
+* __children__ - Your app.
+
+If a prop changes after the first render, the next check on resume and the next `onError` call use the new value. The launch step does not run again.
+
 #### codePush
 
-Integrate CodePush by calling [`sync`](#codepushsync) from a `useEffect` in your root component. Below are some examples of ways you can set this up (you can pick one or even use a combination):
+You can also call [`sync`](#codepushsync) from a `useEffect` in your root component instead of using [`CodePushProvider`](#codepushprovider). Below are some examples of ways you can set this up (you can pick one or even use a combination):
 
 1. **Silent sync on app start** *(the simplest, default behavior)*. Your app will automatically download available updates, and apply them the next time the app restarts (like the OS or end user killed it, or the device was restarted). This way, the entire update experience is "silent" to the end user, since they don't see any update prompt and/or "synthetic" app restarts.
 
@@ -168,7 +221,7 @@ The default export, `codePush` above, is a single object. Every API described be
 
 It provides the following methods:
 
-* [sync](#codepushsync): Allows checking for an update, downloading it and installing it, all with a single call. Unless you need custom UI and/or behavior, we recommend most developers to call this method from a `useEffect` in their root component when integrating CodePush into their apps. See the [setup examples](#codepush) above.
+* [sync](#codepushsync): Allows checking for an update, downloading it and installing it, all with a single call. [`CodePushProvider`](#codepushprovider) calls it for you. You can also call it from a `useEffect` in your root component (see the [setup examples](#codepush) above), or from a button.
 
 * [allowRestart](#codepushallowrestart): Re-allows programmatic restarts to occur as a result of an update being installed, and optionally, immediately restarts the app if a pending update had attempted to restart the app while restarts were disallowed. This is an advanced API and is only necessary if your app explicitly disallowed restarts via the `disallowRestart` method.
 
@@ -375,7 +428,7 @@ codePush.notifyAppReady(): Promise<void>;
 
 Notifies the CodePush runtime that a freshly installed update should be considered successful, and therefore, an automatic client-side rollback isn't necessary. It is mandatory to call this function somewhere in the code of the updated bundle. Otherwise, when the app next restarts, the CodePush runtime will assume that the installed update has failed and roll back to the previous version. This behavior exists to help ensure that your end users aren't blocked by a broken update.
 
-If you are using the `sync` function, and doing your update check on app start, then you don't need to manually call `notifyAppReady` since `sync` will call it for you. This behavior exists due to the assumption that the point at which `sync` is called in your app represents a good approximation of a successful startup.
+If you are using [`CodePushProvider`](#codepushprovider), or the `sync` function with your update check on app start, then you don't need to manually call `notifyAppReady` since they call it for you. This behavior exists due to the assumption that the point at which `sync` is called in your app represents a good approximation of a successful startup.
 
 *NOTE: This method is also aliased as `notifyApplicationReady` (for backwards compatibility).*
 

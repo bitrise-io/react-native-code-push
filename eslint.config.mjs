@@ -1,6 +1,6 @@
 import bitrise from '@bitrise/eslint-plugin';
 
-const files = ['src/**/*.ts', 'test/**/*.mts'];
+const files = ['src/**/*.ts', 'src/**/*.tsx', 'test/**/*.mts'];
 
 export default [
   { ...bitrise.react, files },
