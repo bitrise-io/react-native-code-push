@@ -1,4 +1,5 @@
 import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/commonjs/acquisition-sdk/acquisition-sdk";
+import { onceUntilRejected } from "./lib/commonjs/once-until-rejected";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, NativeEventEmitter, Platform } from "react-native";
@@ -312,18 +313,8 @@ function getPromisifiedSdk(requestFetchAdapter, config) {
   return sdk;
 }
 
-// This ensures that notifyApplicationReadyInternal is only called once
-// in the lifetime of this module instance.
-const notifyApplicationReady = (() => {
-  let notifyApplicationReadyPromise;
-  return () => {
-    if (!notifyApplicationReadyPromise) {
-      notifyApplicationReadyPromise = notifyApplicationReadyInternal();
-    }
-
-    return notifyApplicationReadyPromise;
-  };
-})();
+// Succeeds once per module instance; a failed call is retried by the next caller (e.g. sync()).
+const notifyApplicationReady = onceUntilRejected(notifyApplicationReadyInternal);
 
 async function notifyApplicationReadyInternal() {
   await NativeCodePush.notifyApplicationReady();
