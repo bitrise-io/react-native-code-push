@@ -1,5 +1,7 @@
 import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/commonjs/acquisition-sdk/acquisition-sdk";
 import { createCodePushProvider } from "./lib/commonjs/react/code-push-provider";
+import { useCodePush } from "./lib/commonjs/react/use-code-push";
+import { createUpdateStore } from "./lib/commonjs/update-state/update-store";
 import { onceUntilRejected } from "./lib/commonjs/once-until-rejected";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
@@ -80,7 +82,32 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
   }
 }
 
+// The state that useCodePush() returns. It lives at module level, outside React, because the legacy public functions
+// (checkForUpdate(), sync(), the codePush() HOC) must keep updating it. sync() and the HOC check through
+// checkForUpdate(), so reporting here covers every check.
+const updateStore = createUpdateStore();
+
 async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchCallback = null) {
+  updateStore.dispatch({ type: "checkStarted" });
+  try {
+    // The legacy API reports a binary mismatch only through this callback (the check resolves to null), so it is
+    // wrapped to also capture it for the state.
+    let incompatibleUpdate;
+    const update = await queryUpdate(deploymentKey, (mismatch) => {
+      incompatibleUpdate = { targetBinaryVersion: mismatch.appVersion };
+      if (typeof handleBinaryVersionMismatchCallback === "function") {
+        handleBinaryVersionMismatchCallback(mismatch);
+      }
+    });
+    updateStore.dispatch({ type: "checkCompleted", update, incompatibleUpdate });
+    return update;
+  } catch (error) {
+    updateStore.dispatch({ type: "checkFailed", error });
+    throw error;
+  }
+}
+
+async function queryUpdate(deploymentKey, handleBinaryVersionMismatchCallback) {
   /*
    * Before we ask the server if an update exists, we
    * need to retrieve three pieces of information from the
@@ -797,5 +824,15 @@ if (NativeCodePush) {
     notifyAppReady: () => CodePush.notifyAppReady(),
     appState: AppState,
     CheckFrequency: CodePush.CheckFrequency,
+  }, {
+    store: updateStore,
+    // Narrower than the legacy functions they wrap: the hook takes no positional callbacks, and reports through the
+    // state instead.
+    actions: {
+      checkForUpdate: (options = {}) => checkForUpdate(options.deploymentKey),
+      sync: (options) => sync(options),
+      restartApp,
+    },
   });
+  module.exports.useCodePush = useCodePush;
 }
