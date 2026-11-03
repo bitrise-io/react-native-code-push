@@ -80,15 +80,12 @@
     "archiver": "latest",
     "body-parser": "latest",
     "code-push-plugin-testing-framework": "file:./code-push-plugin-testing-framework",
-    "del": "v6.0.0",
     "eslint": "^9.39.5",
     "express": "latest",
-    "mkdirp": "latest",
     "mocha": "^12.0.2",
     "q": "^1.5.1",
     "react-native": "0.88.0",
     "react-native-builder-bob": "^0.43.1",
-    "slash": "^3.0.0",
     "typescript": "^6.0.3"
   }
 }

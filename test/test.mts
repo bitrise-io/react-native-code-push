@@ -13,13 +13,10 @@ import {
   TestConfig,
   TestUtil,
 } from 'code-push-plugin-testing-framework';
-import del from 'del';
 import * as fs from 'fs';
-import * as mkdirp from 'mkdirp';
 import * as os from 'os';
 import * as path from 'path';
 import Q from 'q';
-import slash from 'slash';
 import { promisify } from 'util';
 
 import { codeSigningPublicKey, setupTamperedSignatureUpdateScenario, signAndRecordUpdateArchive } from './codesign.mts';
@@ -229,9 +226,9 @@ class RNAndroid extends Platform.Android implements RNPlatform {
       });
     }
 
-    const gradleContent: string = slash(
-      path.join(innerprojectDirectory, 'node_modules', '@bitrise/code-push-sdk', 'android', 'codepush.gradle'),
-    );
+    const gradleContent = path
+      .join(innerprojectDirectory, 'node_modules', '@bitrise/code-push-sdk', 'android', 'codepush.gradle')
+      .replace(/\\/g, '/');
 
     //// Set up gradle to build CodePush with the app
     // Add CodePush to android/app/build.gradle
@@ -558,7 +555,7 @@ class RNProjectManager extends ProjectManager {
           promises.push(TestUtil.copyFile(fileInFrom, fileInTo, true));
         } else {
           // If it is a directory, create the directory if it doesn't exist on the target and then copy over
-          if (!fs.existsSync(fileInTo)) mkdirp.sync(fileInTo);
+          fs.mkdirSync(fileInTo, { recursive: true });
           promises.push(copyDirectoryRecursively(fileInFrom, fileInTo));
         }
       });
@@ -581,10 +578,8 @@ class RNProjectManager extends ProjectManager {
     _appNamespace: string,
     _version?: string,
   ): Q.Promise<void> {
-    if (fs.existsSync(projectDirectory)) {
-      del.sync([projectDirectory], { force: true });
-    }
-    mkdirp.sync(projectDirectory);
+    fs.rmSync(projectDirectory, { recursive: true, force: true });
+    fs.mkdirSync(projectDirectory, { recursive: true });
 
     if (TestConfig.isExpoApp) {
       return (
@@ -760,8 +755,8 @@ class RNProjectManager extends ProjectManager {
     const bundlePath: string = path.join(bundleFolder, bundleName);
     const deferred = Q.defer<string>();
     fs.exists(bundleFolder, (exists) => {
-      if (exists) del.sync([bundleFolder], { force: true });
-      mkdirp.sync(bundleFolder);
+      if (exists) fs.rmSync(bundleFolder, { recursive: true, force: true });
+      fs.mkdirSync(bundleFolder, { recursive: true });
       deferred.resolve(undefined);
     });
 
@@ -1114,7 +1109,7 @@ afterEach(function () {
     return;
   }
 
-  mkdirp.sync(crashLogsOutputDir);
+  fs.mkdirSync(crashLogsOutputDir, { recursive: true });
   newCrashReports.forEach((fileName) => {
     fs.copyFileSync(path.join(crashReportsDir, fileName), path.join(crashLogsOutputDir, fileName));
     seenCrashReports.add(fileName);

@@ -16,8 +16,7 @@
   "license": "MIT",
   "homepage": "https://microsoft.github.io/code-push",
   "dependencies": {
-    "q": "^1.5.1",
-    "replace": "latest"
+    "q": "^1.5.1"
   },
   "bugs": {
     "url": "https://github.com/microsoft/code-push/issues"

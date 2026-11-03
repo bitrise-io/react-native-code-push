@@ -10,7 +10,6 @@ import {
 } from 'code-push-plugin-testing-framework';
 import crypto from 'crypto';
 import fs from 'fs';
-import { mkdirp } from 'mkdirp';
 import path from 'path';
 
 const CODEPUSH_METADATA_FILE_NAME = '.codepushrelease';
@@ -95,7 +94,7 @@ export function signAndRecordUpdateArchive(bundleFolder: string, isDiff: boolean
 
   const contentHash = computeUpdateContentsHash(bundleFolder);
   const signatureFolder = path.join(bundleFolder, 'CodePush');
-  mkdirp.sync(signatureFolder);
+  fs.mkdirSync(signatureFolder, { recursive: true });
   fs.writeFileSync(path.join(signatureFolder, CODEPUSH_METADATA_FILE_NAME), signUpdateContentsHash(contentHash));
   ServerUtil.setKnownPackageHash(contentHash);
 }

@@ -1,7 +1,5 @@
 // Ported from https://github.com/microsoft/code-push/blob/master/src/test/acquisition-rest-mock.ts (archived, MIT licensed)
 
-import * as querystring from 'querystring';
-
 import * as acquisitionSdk from '../acquisition-sdk';
 import * as types from '../types';
 
@@ -54,7 +52,7 @@ export class HttpRequester implements acquisitionSdk.Http.Requester {
     const responseCallback = callback ?? <acquisitionSdk.Callback<acquisitionSdk.Http.Response>>requestBodyOrCallback;
 
     if (verb === acquisitionSdk.Http.Verb.GET && url.indexOf(updateCheckUrl) === 0) {
-      var params = querystring.parse(url.substring(updateCheckUrl.length)) as Record<string, string>;
+      var params = Object.fromEntries(new URLSearchParams(url.substring(updateCheckUrl.length)));
       Server.onUpdateCheck(params, responseCallback, this.expectedStatusCode);
     } else if (verb === acquisitionSdk.Http.Verb.POST && url === reportStatusDeployUrl) {
       Server.onReportStatus(responseCallback, this.expectedStatusCode);
