@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CodePush resolves these resources by name through Resources.getIdentifier
+  (CODE_PUSH_APK_BUILD_TIME from codepush.gradle, CodePush<Property> strings
+  and bools from the app's own resources). The resource shrinker cannot trace
+  getIdentifier calls, and the optimized shrinker that Android Gradle plugin 9
+  enables by default no longer keeps resources whose names appear as string
+  constants, so without this keep they are removed from release builds.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/CODE_PUSH_APK_BUILD_TIME,@string/CodePush*,@bool/CodePush*" />
