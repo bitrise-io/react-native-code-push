@@ -1,8 +1,9 @@
 "use strict";
 // IMPORTS
 var assert = require("assert");
-var bodyParser = require("body-parser");
-var express = require("express");
+var fs = require("fs");
+var http = require("http");
+var path = require("path");
 var Q = require("q");
 //////////////////////////////////////////////////////////////////////////////////////////
 // Use these functions to set up and shut down the server.
@@ -11,52 +12,109 @@ var Q = require("q");
  */
 function setupServer(targetPlatform) {
     console.log("Setting up server at " + targetPlatform.getServerUrl());
-    var app = express();
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
-    app.use(function (req, res, next) {
+    var routes = {
+        "GET /v0.1/public/codepush/update_check": function (req, res) {
+            exports.updateCheckCallback && exports.updateCheckCallback(req);
+            applyKnownPackageHash();
+            sendJson(res, exports.updateResponse);
+            console.log("Update check called from the app.");
+            console.log("Request: " + JSON.stringify(req.query));
+            console.log("Response: " + JSON.stringify(exports.updateResponse));
+        },
+        "GET /v0.1/public/codepush/report_status/download": function (req, res) {
+            console.log("Application downloading the package.");
+            sendFile(res, exports.updatePackagePath);
+        },
+        "POST /v0.1/public/codepush/report_status/download": function (req, res) {
+            console.log("Application reported download status.");
+            console.log("Body: " + JSON.stringify(req.body));
+            sendText(res, 200, "OK");
+        },
+        "POST /v0.1/public/codepush/report_status/deploy": function (req, res) {
+            console.log("Application reported deployment status.");
+            console.log("Body: " + JSON.stringify(req.body));
+            sendText(res, 200, "OK");
+        },
+        "POST /reportTestMessage": function (req, res) {
+            console.log("Application reported a test message.");
+            console.log("Body: " + JSON.stringify(req.body));
+            if (!exports.testMessageResponse) {
+                console.log("Sending OK");
+                sendText(res, 200, "OK");
+            }
+            else {
+                console.log("Sending body: " + exports.testMessageResponse);
+                sendText(res, 200, exports.testMessageResponse);
+            }
+            exports.testMessageCallback && exports.testMessageCallback(req.body);
+        }
+    };
+    var serverPortRegEx = /:([0-9]+)/;
+    exports.server = http.createServer(function (req, res) {
         res.setHeader("Access-Control-Allow-Origin", "*");
         res.setHeader("Access-Control-Allow-Methods", "*");
         res.setHeader("Access-Control-Allow-Headers", "origin, content-type, accept, X-CodePush-SDK-Version");
-        next();
-    });
-    app.get("/v0.1/public/codepush/update_check", function (req, res) {
-        exports.updateCheckCallback && exports.updateCheckCallback(req);
-        applyKnownPackageHash();
-        res.send(exports.updateResponse);
-        console.log("Update check called from the app.");
-        console.log("Request: " + JSON.stringify(req.query));
-        console.log("Response: " + JSON.stringify(exports.updateResponse));
-    });
-    app.get("/v0.1/public/codepush/report_status/download", function (req, res) {
-        console.log("Application downloading the package.");
-        res.download(exports.updatePackagePath);
-    });
-    app.post("/v0.1/public/codepush/report_status/download", function (req, res) {
-        console.log("Application reported download status.");
-        console.log("Body: " + JSON.stringify(req.body));
-        res.sendStatus(200);
-    });
-    app.post("/v0.1/public/codepush/report_status/deploy", function (req, res) {
-        console.log("Application reported deployment status.");
-        console.log("Body: " + JSON.stringify(req.body));
-        res.sendStatus(200);
-    });
-    app.post("/reportTestMessage", function (req, res) {
-        console.log("Application reported a test message.");
-        console.log("Body: " + JSON.stringify(req.body));
-        if (!exports.testMessageResponse) {
-            console.log("Sending OK");
-            res.sendStatus(200);
+        var url = new URL(req.url, "http://localhost");
+        var route = routes[req.method + " " + url.pathname];
+        if (!route) {
+            sendText(res, 404, "Not Found");
+            return;
         }
-        else {
-            console.log("Sending body: " + exports.testMessageResponse);
-            res.status(200).send(exports.testMessageResponse);
-        }
-        exports.testMessageCallback && exports.testMessageCallback(req.body);
+        req.query = Object.fromEntries(url.searchParams);
+        var chunks = [];
+        req.on("data", function (chunk) { chunks.push(chunk); });
+        req.on("end", function () {
+            var body = Buffer.concat(chunks).toString("utf8");
+            try {
+                var isJson = (req.headers["content-type"] || "").indexOf("json") !== -1;
+                req.body = isJson && body ? JSON.parse(body) : {};
+            }
+            catch (e) {
+                sendText(res, 400, "Invalid JSON body");
+                return;
+            }
+            route(req, res);
+        });
     });
-    var serverPortRegEx = /:([0-9]+)/;
-    exports.server = app.listen(+targetPlatform.getServerUrl().match(serverPortRegEx)[1]);
+    exports.server.listen(+targetPlatform.getServerUrl().match(serverPortRegEx)[1]);
+}
+function sendText(res, status, text) {
+    res.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
+    res.end(text);
+}
+function sendJson(res, value) {
+    // Tests set a string to send a raw body, for example malformed JSON.
+    if (typeof value === "string") {
+        sendText(res, 200, value);
+        return;
+    }
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(value === undefined ? "" : JSON.stringify(value));
+}
+function sendFile(res, filePath) {
+    var stats;
+    try {
+        stats = fs.statSync(filePath);
+    }
+    catch (e) {
+        sendText(res, 404, "Not Found");
+        return;
+    }
+    // The native downloaders compare the received byte count with Content-Length.
+    res.writeHead(200, {
+        "Content-Type": "application/octet-stream",
+        "Content-Length": stats.size,
+        "Content-Disposition": "attachment; filename=\"" + path.basename(filePath) + "\""
+    });
+    var stream = fs.createReadStream(filePath);
+    // The file can vanish after statSync. Without a handler the stream's error would crash the test runner.
+    stream.on("error", function (e) {
+        console.log("Failed to read " + filePath + ": " + e);
+        res.destroy();
+    });
+    // Release the file when the client aborts the download.
+    res.on("close", function () { stream.destroy(); });
+    stream.pipe(res);
 }
 exports.setupServer = setupServer;
 /**
