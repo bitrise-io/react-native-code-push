@@ -250,6 +250,20 @@ class RNAndroid extends Platform.Android implements RNPlatform {
       'android:versionName="1.0.0"',
     );
 
+    //// Build the release APK with R8 and resource shrinking, like a production app.
+    // The SDK looks up some resources by name (Resources.getIdentifier), which the shrinker cannot trace.
+    // Without a keep rule shipped by the SDK, they are removed and the tests fail.
+    TestUtil.replaceString(
+      buildGradle,
+      'def enableProguardInReleaseBuilds = false',
+      'def enableProguardInReleaseBuilds = true',
+    );
+    TestUtil.replaceString(
+      buildGradle,
+      'minifyEnabled enableProguardInReleaseBuilds',
+      'minifyEnabled enableProguardInReleaseBuilds\n            shrinkResources true',
+    );
+
     //// Replace the MainApplication.java with the correct server url and deployment key
     const string = path.join(innerprojectDirectory, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml');
     TestUtil.replaceString(string, TestUtil.SERVER_URL_PLACEHOLDER, this.getServerUrl());
