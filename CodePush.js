@@ -3,7 +3,7 @@ import { buildQueryPackage } from "./lib/commonjs/build-query-package";
 import { onceUntilRejected } from "./lib/commonjs/once-until-rejected";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
-import { AppState, NativeEventEmitter, Platform } from "react-native";
+import { AppState, NativeEventEmitter } from "react-native";
 import log, { logFields, packageLogFields, redactUrl } from "./logging";
 import hoistStatics from 'hoist-non-react-statics';
 
