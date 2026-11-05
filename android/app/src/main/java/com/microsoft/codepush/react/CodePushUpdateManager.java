@@ -224,7 +224,10 @@ public class CodePushUpdateManager {
                 progressCallback.call(new DownloadProgress(totalBytes, receivedBytes));
             }
 
-            if (totalBytes != receivedBytes) {
+            // getContentLength() returns -1 when the response has no Content-Length (e.g. a proxy
+            // re-chunked it), so only compare when the length is known. A truncated chunked
+            // response still fails with an IOException in the read loop above.
+            if (totalBytes >= 0 && totalBytes != receivedBytes) {
                 throw new CodePushUnknownException("Received " + receivedBytes + " bytes, expected " + totalBytes);
             }
 
