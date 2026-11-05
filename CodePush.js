@@ -1,4 +1,5 @@
 import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/commonjs/acquisition-sdk/acquisition-sdk";
+import { buildQueryPackage } from "./lib/commonjs/build-query-package";
 import { onceUntilRejected } from "./lib/commonjs/once-until-rejected";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
@@ -111,15 +112,7 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    * to send the app version to the server, since we are interested
    * in any updates for current binary version, regardless of hash.
    */
-  let queryPackage;
-  if (localPackage) {
-    queryPackage = localPackage;
-  } else {
-    queryPackage = { appVersion: config.appVersion };
-    if (Platform.OS === "ios" && config.packageHash) {
-      queryPackage.packageHash = config.packageHash;
-    }
-  }
+  const queryPackage = buildQueryPackage(localPackage, config);
 
   log.info(`Checking for update. ${logFields({ appVersion: queryPackage.appVersion, ...packageLogFields(queryPackage), deploymentKey: config.deploymentKey })}`);
   const update = await sdk.queryUpdateWithCurrentPackage(queryPackage);
@@ -137,10 +130,8 @@ async function checkForUpdate(deploymentKey = null, handleBinaryVersionMismatchC
    *    bug in the server, but we're adding this check just to double-check that the
    *    client app is resilient to a potential issue with the update check.
    * 4) The server said there is an update, but the update's hash is the same as that
-   *    of the binary's currently running version. This should only happen in Android -
-   *    unlike iOS, we don't attach the binary's hash to the updateCheck request
-   *    because we want to avoid having to install diff updates against the binary's
-   *    version, which we can't do yet on Android.
+   *    of the binary's currently running version. The binary's hash is sent in the
+   *    updateCheck request, so the server can answer with the binary itself.
    */
   if (!update) {
     log.info("No update available.");
