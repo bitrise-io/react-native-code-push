@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react';
 
 import type { CodePushProviderProps } from '../../typings/react-native-code-push';
 import { AppLifecycleDeps, startAppLifecycle } from '../app-lifecycle/app-lifecycle';
+import { CodePushContextValue, StoreContext } from './store-context';
 
-export function createCodePushProvider(deps: AppLifecycleDeps) {
+// The context value never changes, so state changes re-render only the components that call useCodePush().
+export function createCodePushProvider(deps: AppLifecycleDeps, contextValue: CodePushContextValue) {
   function CodePushProvider({ children, checkFrequency, onError, ...syncOptions }: CodePushProviderProps) {
     const latest = useRef({ checkFrequency, onError, syncOptions });
 
@@ -17,7 +19,7 @@ export function createCodePushProvider(deps: AppLifecycleDeps) {
     // Prop changes do not run the launch step again.
     useEffect(() => startAppLifecycle(deps, () => latest.current), []);
 
-    return <>{children}</>;
+    return <StoreContext.Provider value={contextValue}>{children}</StoreContext.Provider>;
   }
 
   return CodePushProvider;

@@ -41,7 +41,7 @@ After the app's first render, the Provider runs the launch step:
 - With the default `checkFrequency`, it checks for an update, downloads and installs it according to the props. The check calls [`notifyAppReady`](#codepushnotifyappready) first.
 - With `checkFrequency={codePush.CheckFrequency.MANUAL}`, it only calls [`notifyAppReady`](#codepushnotifyappready).
 
-Either way, CodePush keeps an update that started fine. The Provider catches every failure of the work it starts and passes it to `onError`, so no promise rejection goes unhandled. When it unmounts, it removes its `AppState` listener.
+Either way, CodePush keeps an update that started fine. The Provider catches every failure of the work it starts and passes it to `onError`, so no promise rejection goes unhandled. When it unmounts, it removes its `AppState` listener. Components inside it can read the update state with [`useCodePush`](#usecodepush).
 
 *NOTE: Put the Provider at the app root, outside auth gates, navigation conditions, and screens that render late. The Provider calls `notifyAppReady` when it mounts. If it only mounts after login, and the user closes the app before logging in, CodePush rolls the new update back on the next start.*
 
@@ -62,6 +62,59 @@ Props:
 * __children__ - Your app.
 
 If a prop changes after the first render, the next check on resume and the next `onError` call use the new value. The launch step does not run again.
+
+#### useCodePush
+
+```tsx
+import { useCodePush } from "@bitrise/code-push-sdk";
+
+const { isChecking, isUpdateAvailable, availableUpdate, incompatibleUpdate, checkError, checkForUpdate, sync, restartApp } = useCodePush();
+```
+
+Returns the update state, and re-renders the component when it changes. Call it in any component inside [`CodePushProvider`](#codepushprovider). It throws outside the Provider, because without the Provider nothing calls [`notifyAppReady`](#codepushnotifyappready), and every update rolls back.
+
+The state shows every update check: the Provider's, and those of [`checkForUpdate`](#codepushcheckforupdate), [`sync`](#codepushsync) and the `codePush()` higher-order component. It starts empty each time the app starts.
+
+* __isChecking__ *(Boolean)* - A check for an update runs.
+
+* __isUpdateAvailable__ *(Boolean)* - The last check found an update that did not fail to install before.
+
+* __availableUpdate__ *([RemotePackage](#remotepackage))* - The update that the last check found, if `isUpdateAvailable`.
+
+* __incompatibleUpdate__ *({ targetBinaryVersion?: String })* - A release that the last check found, but that this binary cannot install. For example, show a banner that asks the user to update the app from the store. `targetBinaryVersion` is the semver range the release targets (e.g. `"^2.0.0"`), when that range is why it is incompatible. Check `incompatibleUpdate` itself, not `targetBinaryVersion`, to decide whether to show the banner.
+
+* __checkError__ *(Error)* - Why the last check failed. A new check clears it.
+
+* __checkForUpdate__ *(options?: { deploymentKey?: String })* - Like [`codePush.checkForUpdate`](#codepushcheckforupdate).
+
+* __sync__ *(options?: [SyncOptions](#codepushoptions))* - Like [`codePush.sync`](#codepushsync).
+
+* __restartApp__ *(onlyIfUpdateIsPending?)* - The same as [`codePush.restartApp`](#codepushrestartapp).
+
+The `sync` and `checkForUpdate` of the hook take no callbacks. If you need a status or progress callback, call `codePush.sync` directly: its checks show in the state too.
+
+Example: a "Check for updates" button on a settings screen.
+
+```tsx
+import codePush, { useCodePush } from "@bitrise/code-push-sdk";
+import { Button, Text, View } from "react-native";
+
+function CheckForUpdatesButton() {
+  const { isChecking, checkError, sync } = useCodePush();
+
+  return (
+    <View>
+      <Button
+        title={isChecking ? "Checking for updates..." : "Check for updates"}
+        disabled={isChecking}
+        // sync() logs its failures, and checkError shows a failed check.
+        onPress={() => sync({ updateDialog: true, installMode: codePush.InstallMode.IMMEDIATE }).catch(() => {})}
+      />
+      {checkError && <Text>Could not check for updates. Try again later.</Text>}
+    </View>
+  );
+}
+```
 
 #### codePush
 

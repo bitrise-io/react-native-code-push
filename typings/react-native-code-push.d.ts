@@ -494,4 +494,61 @@ export interface CodePushProviderProps extends SyncOptions {
  */
 export function CodePushProvider(props: CodePushProviderProps): React.ReactElement | null;
 
+export interface CodePushState {
+    /**
+     * Whether an update check is currently running.
+     */
+    isChecking: boolean;
+
+    /**
+     * Whether an update is available.
+     * Note: updates that previously failed to install are not considered here.
+     */
+    isUpdateAvailable: boolean;
+
+    availableUpdate?: RemotePackage;
+
+    /**
+     * A release that the last check found but this binary cannot install.
+     * Can be used to show a banner that asks the user to update from the store.
+     */
+    incompatibleUpdate?: IncompatibleUpdate;
+
+    /**
+     * Why the last check failed. A new check clears it.
+     */
+    checkError?: Error;
+}
+
+export interface IncompatibleUpdate {
+    /**
+     * The binary versions the release targets, as a semver range (e.g. "^2.0.0"), when the release is incompatible
+     * because of that range. Optional, so other reasons for incompatibility can be added without a breaking change.
+     */
+    targetBinaryVersion?: string;
+}
+
+export interface UseCodePushResult extends CodePushState {
+    /**
+     * Asks the CodePush service whether the configured app deployment has an update available.
+     *
+     * @param options.deploymentKey Overrides the deployment key configured in the native app.
+     */
+    checkForUpdate: (options?: { deploymentKey?: string }) => Promise<RemotePackage | null>;
+
+    /**
+     * Checks for an update, downloads it and installs it, all with a single call.
+     *
+     * @param options Configures the end-user update experience (e.g. show a prompt?, install the update immediately?).
+     */
+    sync: (options?: SyncOptions) => Promise<CodePush.SyncStatus>;
+
+    restartApp: typeof CodePush.restartApp;
+}
+
+/**
+ * Returns the update state, and re-renders the component when it changes. Throws outside `CodePushProvider`.
+ */
+export function useCodePush(): UseCodePushResult;
+
 export default CodePush;
