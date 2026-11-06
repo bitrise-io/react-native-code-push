@@ -57,7 +57,7 @@
     "test:unit:ios": "npm run test:unit:ios:codepush && npm run test:unit:ios:core",
     "test:unit:ios:codepush": "xcodebuild test -project ios/CodePush.xcodeproj -scheme CodePushTests -destination \"platform=iOS Simulator,id=$(xcrun simctl list devices available | grep -m1 iPhone | grep -oE '[0-9A-F-]{36}')\"",
     "test:unit:ios:core": "cd ios/CodePushCore && xcodebuild test -scheme CodePushCore -destination \"platform=iOS Simulator,id=$(xcrun simctl list devices available | grep -m1 iPhone | grep -oE '[0-9A-F-]{36}')\"",
-    "lint": "eslint --max-warnings 0 'src/**/*.ts' 'test/**/*.mts'",
+    "lint": "eslint --max-warnings 0 'src/**/*.ts' 'src/**/*.tsx' 'test/**/*.mts'",
     "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
@@ -70,6 +70,9 @@
   "dependencies": {
     "hoist-non-react-statics": "^3.3.2"
   },
+  "peerDependencies": {
+    "react": ">=18.2.0"
+  },
   "devDependencies": {
     "@babel/register": "^7.29.7",
     "@bitrise/eslint-plugin": "^4.1.0",
@@ -77,6 +80,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.19.0",
     "@types/q": "^1.5.4",
+    "@types/react": "^19.1.1",
     "archiver": "latest",
     "code-push-plugin-testing-framework": "file:./code-push-plugin-testing-framework",
     "eslint": "^9.39.5",

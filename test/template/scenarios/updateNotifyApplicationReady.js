@@ -1,10 +1,18 @@
-var CodePushWrapper = require("../codePushWrapper.js");
-import CodePush from "@bitrise/code-push-sdk";
+import React from "react";
+import CodePush, { CodePushProvider } from "@bitrise/code-push-sdk";
 
 module.exports = {
     startTest: function (testApp) {
         testApp.readyAfterUpdate();
-        CodePush.notifyAppReady();
+    },
+
+    // The Provider's MANUAL launch step calls notifyAppReady(), so the update is kept. Without it, it rolls back.
+    wrap: function (app) {
+        return (
+            <CodePushProvider checkFrequency={CodePush.CheckFrequency.MANUAL}>
+                {app}
+            </CodePushProvider>
+        );
     },
 
     getScenarioName: function () {

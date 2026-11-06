@@ -1,3 +1,5 @@
+import type * as React from "react";
+
 export type DownloadProgressCallback = (progress: DownloadProgress) => void;
 export type SyncStatusChangedCallback = (status: CodePush.SyncStatus) => void;
 export type HandleBinaryVersionMismatchCallback = (update: RemotePackage) => void;
@@ -464,5 +466,32 @@ declare namespace CodePush {
         MANUAL
     }
 }
+
+export interface CodePushProviderProps extends SyncOptions {
+    /**
+     * Specifies when you would like to synchronize updates with the CodePush server.
+     * Defaults to codePush.CheckFrequency.ON_APP_START. With codePush.CheckFrequency.MANUAL, the Provider
+     * only calls notifyAppReady().
+     */
+    checkFrequency?: CodePush.CheckFrequency;
+
+    /**
+     * Called once for each failure of the work that the Provider starts (the launch step and the checks on resume).
+     * Errors from update calls that your own code makes reject their promise instead.
+     */
+    onError?: (error: Error) => void;
+
+    children?: React.ReactNode;
+}
+
+/**
+ * Starts CodePush for the app: checks for updates when it mounts (and on resume, with
+ * `checkFrequency={CheckFrequency.ON_APP_RESUME}`), always calls notifyAppReady() so good updates are kept, and reports
+ * failures to `onError`. Place it at the app root, outside auth gates and screens that render late.
+ *
+ * Takes the same options as `CodePushOptions`, minus `checkFrequency`, which is optional here. Prop changes apply to
+ * the next check on resume.
+ */
+export function CodePushProvider(props: CodePushProviderProps): React.ReactElement | null;
 
 export default CodePush;

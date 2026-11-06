@@ -1,9 +1,10 @@
 import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/commonjs/acquisition-sdk/acquisition-sdk";
+import { createCodePushProvider } from "./lib/commonjs/react/code-push-provider";
 import { onceUntilRejected } from "./lib/commonjs/once-until-rejected";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, NativeEventEmitter, Platform } from "react-native";
-import log, { logFields, packageLogFields, redactUrl } from "./logging";
+import log, { logFields, packageLogFields, redactUrl } from "./lib/commonjs/logging";
 import hoistStatics from 'hoist-non-react-statics';
 
 let NativeCodePush = require("react-native").NativeModules.CodePush;
@@ -317,11 +318,16 @@ function getPromisifiedSdk(requestFetchAdapter, config) {
 const notifyApplicationReady = onceUntilRejected(notifyApplicationReadyInternal);
 
 async function notifyApplicationReadyInternal() {
-  await NativeCodePush.notifyApplicationReady();
-  const statusReport = await NativeCodePush.getNewStatusReport();
-  statusReport && tryReportStatus(statusReport); // Don't wait for this to complete.
+  try {
+    await NativeCodePush.notifyApplicationReady();
+    const statusReport = await NativeCodePush.getNewStatusReport();
+    statusReport && tryReportStatus(statusReport); // Don't wait for this to complete.
 
-  return statusReport;
+    return statusReport;
+  } catch (error) {
+    log.error("notifyAppReady failed.", error);
+    throw error;
+  }
 }
 
 async function tryReportStatus(statusReport, retryOnAppResume) {
@@ -512,7 +518,9 @@ async function syncInternal(options = {}, syncStatusChangeCallback, downloadProg
     mandatoryInstallMode: CodePush.InstallMode.IMMEDIATE,
     minimumBackgroundDuration: 0,
     updateDialog: null,
-    ...options
+    // A key set to undefined would replace its default (for example `mandatoryInstallMode: undefined`
+    // would turn IMMEDIATE into ON_NEXT_RESTART).
+    ...Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined))
   };
 
   // The outcomes are logged below and in the API functions, whether or not a custom callback is passed.
@@ -780,3 +788,14 @@ if (NativeCodePush) {
 }
 
 module.exports = CodePush;
+
+// Named exports, outside the legacy Object.assign namespace. In CommonJS they are still properties of the CodePush
+// function, so they need the same native-module check (module.exports is undefined without it).
+if (NativeCodePush) {
+  module.exports.CodePushProvider = createCodePushProvider({
+    sync: (options) => CodePush.sync(options),
+    notifyAppReady: () => CodePush.notifyAppReady(),
+    appState: AppState,
+    CheckFrequency: CodePush.CheckFrequency,
+  });
+}

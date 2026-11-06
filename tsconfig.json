@@ -22,8 +22,10 @@
         // Babel compiles the JS, so the compiler must not choke on syntax that needs whole-program information.
         "isolatedModules": true,
         "noEmit": true,
-        "rootDir": "src"
+        "rootDir": "src",
+        // The automatic runtime (react/jsx-runtime), as in @react-native/babel-preset that compiles the JS.
+        "jsx": "react-jsx"
     },
-    "include": ["src/**/*.ts"],
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
     "exclude": ["src/**/__tests__/**"]
 }
