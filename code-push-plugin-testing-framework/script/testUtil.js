@@ -125,7 +125,7 @@ var TestUtil = (function () {
     /**
      * Archives the contents of sourceFolder and puts it in an archive at archivePath in targetFolder.
      */
-    TestUtil.archiveFolder = function (sourceFolder, targetFolder, archivePath, isDiff) {
+    TestUtil.archiveFolder = function (sourceFolder, targetFolder, archivePath) {
         var deferred = Q.defer();
         var archive = archiver.create("zip", {});
         console.log("Creating an update archive at: " + archivePath);
@@ -139,9 +139,6 @@ var TestUtil = (function () {
         archive.on("error", function (e) {
             deferred.reject(e);
         });
-        if (isDiff) {
-            archive.append("{\"deletedFiles\":[]}", { name: "hotcodepush.json" });
-        }
         archive.directory(sourceFolder, targetFolder);
         archive.pipe(writeStream);
         archive.finalize();

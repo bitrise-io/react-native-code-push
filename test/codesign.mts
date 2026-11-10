@@ -84,14 +84,7 @@ function signUpdateContentsHash(contentHash: string): string {
  * Code-signs the update contents with the test key pair and records the real hash, so the mock
  * server hands back a package_hash that matches what the client's data-integrity check computes.
  */
-export function signAndRecordUpdateArchive(bundleFolder: string, isDiff: boolean): void {
-  // TODO(RA-4875): Diff updates clear it instead, since they are poorly implemented in the entire test harness.
-  // It's going to be a bigger refactor, so for now we just skip signing/hashing to avoid using a stale value in diff tests.
-  if (isDiff) {
-    ServerUtil.setKnownPackageHash(undefined);
-    return;
-  }
-
+export function signAndRecordUpdateArchive(bundleFolder: string): void {
   const contentHash = computeUpdateContentsHash(bundleFolder);
   const signatureFolder = path.join(bundleFolder, 'CodePush');
   fs.mkdirSync(signatureFolder, { recursive: true });
@@ -114,5 +107,5 @@ export async function setupTamperedSignatureUpdateScenario(
     signUpdateContentsHash(tamperedHash),
   );
 
-  return await TestUtil.archiveFolder(bundleFolder, '', updatePath, false);
+  return await TestUtil.archiveFolder(bundleFolder, '', updatePath);
 }

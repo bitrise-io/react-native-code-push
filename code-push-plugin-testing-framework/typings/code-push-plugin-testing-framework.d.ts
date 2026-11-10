@@ -228,7 +228,7 @@ declare module 'code-push-plugin-testing-framework/script/projectManager' {
 		 *
 		 * Overwrite this in your implementation!
 		 */
-		createUpdateArchive(projectDirectory: string, targetPlatform: platform.IPlatform, isDiff?: boolean): Q.Promise<string>;
+		createUpdateArchive(projectDirectory: string, targetPlatform: platform.IPlatform): Q.Promise<string>;
 		/**
 		 * Prepares a specific platform for tests.
 		 *
@@ -474,7 +474,7 @@ declare module 'code-push-plugin-testing-framework/script/testUtil' {
 	    /**
 	     * Archives the contents of sourceFolder and puts it in an archive at archivePath in targetFolder.
 	     */
-	    static archiveFolder(sourceFolder: string, targetFolder: string, archivePath: string, isDiff: boolean): Q.Promise<string>;
+	    static archiveFolder(sourceFolder: string, targetFolder: string, archivePath: string): Q.Promise<string>;
 	}
 
 }
