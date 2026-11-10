@@ -30,14 +30,9 @@ failCallback:(void (^)(NSError *err))failCallback {
     NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request
                                                                   delegate:self
                                                           startImmediately:NO];
-    if ([NSOperationQueue instancesRespondToSelector:@selector(setUnderlyingQueue:)]) {
-        NSOperationQueue *delegateQueue = [NSOperationQueue new];
-        delegateQueue.underlyingQueue = self.operationQueue;
-        [connection setDelegateQueue:delegateQueue];
-    } else {
-        [connection scheduleInRunLoop:[NSRunLoop mainRunLoop]
-                              forMode:NSDefaultRunLoopMode];
-    }
+    NSOperationQueue *delegateQueue = [NSOperationQueue new];
+    delegateQueue.underlyingQueue = self.operationQueue;
+    [connection setDelegateQueue:delegateQueue];
 
     [connection start];
 }
@@ -124,6 +119,12 @@ failCallback:(void (^)(NSError *err))failCallback {
     if (self.expectedContentLength > 0) {
         // We should have received all of the bytes if this is called.
         assert(self.receivedContentLength == self.expectedContentLength);
+    }
+    // Progress consumers rely on the last event having received == expected to send it unthrottled.
+    // Asserts are compiled out in release, so a mismatched Content-Length also lands here.
+    if (self.receivedContentLength != self.expectedContentLength) {
+        self.expectedContentLength = self.receivedContentLength;
+        self.progressCallback(self.expectedContentLength, self.receivedContentLength);
     }
 
     BOOL isZip = _header[0] == 'P' && _header[1] == 'K' && _header[2] == 3 && _header[3] == 4;
