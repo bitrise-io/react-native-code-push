@@ -1,20 +1,35 @@
 import * as assert from 'assert';
 
 import type { RemotePackage } from '../../../typings/react-native-code-push';
-import { initialState, reduce, StoreState, UpdateEvent } from '../update-state';
+import { initialState, PendingUpdate, reduce, StoreState, UpdateEvent } from '../update-state';
 
 function reduceAll(events: UpdateEvent[], state: StoreState = initialState): StoreState {
   return events.reduce(reduce, state);
 }
 
-const update = { label: 'v2', packageHash: 'hash', failedInstall: false } as RemotePackage;
+const update = {
+  label: 'v2',
+  packageHash: 'hash',
+  failedInstall: false,
+} as RemotePackage;
+const installed = {
+  label: 'v2',
+  packageHash: 'hash',
+  isPending: true,
+} as PendingUpdate;
 const started: UpdateEvent = { type: 'checkStarted' };
+const downloadStarted: UpdateEvent = { type: 'downloadStarted' };
 
 describe('reduce', () => {
-  it('starts idle, with no update and no error', () => {
+  it('starts idle, with no update, no download and no error', () => {
     assert.deepStrictEqual(initialState, {
       runningChecks: 0,
-      snapshot: { isChecking: false, isUpdateAvailable: false },
+      runningDownloads: 0,
+      snapshot: {
+        isChecking: false,
+        isUpdateAvailable: false,
+        isDownloading: false,
+      },
     });
   });
 
@@ -128,17 +143,23 @@ describe('reduce', () => {
     const { snapshot } = reduceAll([
       started,
       { type: 'checkCompleted', update },
-      { type: 'updateInstalled', packageHash: 'hash' },
+      { type: 'updateInstalled', update: installed },
     ]);
 
     assert.strictEqual(snapshot.isUpdateAvailable, false);
     assert.strictEqual(snapshot.availableUpdate, undefined);
   });
 
-  it('installing another update keeps the available one', () => {
-    const found = reduceAll([started, { type: 'checkCompleted', update }]);
+  it('installing another update keeps the available one, and makes the installed one pending', () => {
+    const other = { ...installed, packageHash: 'other' };
+    const { snapshot } = reduceAll([
+      started,
+      { type: 'checkCompleted', update },
+      { type: 'updateInstalled', update: other },
+    ]);
 
-    assert.strictEqual(reduce(found, { type: 'updateInstalled', packageHash: 'other' }), found);
+    assert.strictEqual(snapshot.availableUpdate, update);
+    assert.strictEqual(snapshot.pendingUpdate, other);
   });
 
   it('does not change the state it is given', () => {
@@ -146,5 +167,133 @@ describe('reduce', () => {
     reduceAll([started, { type: 'checkCompleted', update }]);
 
     assert.deepStrictEqual(initialState, before);
+  });
+
+  describe('download', () => {
+    it('downloadStarted sets isDownloading, and downloadCompleted clears it', () => {
+      const downloading = reduce(initialState, downloadStarted);
+      assert.strictEqual(downloading.snapshot.isDownloading, true);
+
+      const done = reduce(downloading, { type: 'downloadCompleted' });
+      assert.strictEqual(done.snapshot.isDownloading, false);
+      assert.strictEqual(done.snapshot.installError, undefined);
+    });
+
+    it('downloadFailed clears isDownloading and sets installError, and keeps the available update', () => {
+      const error = new Error('network');
+      const { snapshot } = reduceAll([
+        started,
+        { type: 'checkCompleted', update },
+        downloadStarted,
+        { type: 'downloadFailed', error },
+      ]);
+
+      assert.strictEqual(snapshot.isDownloading, false);
+      assert.strictEqual(snapshot.installError, error);
+      assert.strictEqual(snapshot.availableUpdate, update, 'so the user can retry');
+    });
+
+    it('a new download clears installError, whether the download or the install failed', () => {
+      const failures: UpdateEvent[] = [
+        { type: 'downloadFailed', error: new Error('network') },
+        { type: 'installFailed', error: new Error('disk') },
+      ];
+      for (const failure of failures) {
+        const failed = reduceAll([downloadStarted, failure]);
+        assert.notStrictEqual(failed.snapshot.installError, undefined);
+        assert.strictEqual(reduce(failed, downloadStarted).snapshot.installError, undefined);
+      }
+    });
+
+    it('a new check keeps installError', () => {
+      const error = new Error('network');
+      const { snapshot } = reduceAll([
+        downloadStarted,
+        { type: 'downloadFailed', error },
+        started,
+        { type: 'checkCompleted', update },
+      ]);
+
+      assert.strictEqual(snapshot.installError, error);
+    });
+
+    it('isDownloading stays true until every overlapping download ends', () => {
+      const two = reduceAll([downloadStarted, downloadStarted]);
+      assert.strictEqual(two.runningDownloads, 2);
+
+      const one = reduce(two, { type: 'downloadCompleted' });
+      assert.strictEqual(one.snapshot.isDownloading, true);
+
+      const none = reduce(one, {
+        type: 'downloadFailed',
+        error: new Error('network'),
+      });
+      assert.strictEqual(none.snapshot.isDownloading, false);
+    });
+
+    it('progress changes only downloadProgress, not the snapshot', () => {
+      const downloading = reduce(initialState, downloadStarted);
+      const progress = { receivedBytes: 10, totalBytes: 100 };
+      const progressed = reduce(downloading, {
+        type: 'downloadProgressed',
+        progress,
+      });
+
+      assert.strictEqual(progressed.downloadProgress, progress);
+      assert.strictEqual(progressed.snapshot, downloading.snapshot);
+    });
+
+    it('a new or failed download clears the progress, and a completed one keeps it at its last value', () => {
+      const progress = { receivedBytes: 100, totalBytes: 100 };
+      const progressed = reduceAll([downloadStarted, { type: 'downloadProgressed', progress }]);
+
+      assert.strictEqual(reduce(progressed, downloadStarted).downloadProgress, undefined);
+      assert.strictEqual(
+        reduce(progressed, {
+          type: 'downloadFailed',
+          error: new Error('network'),
+        }).downloadProgress,
+        undefined,
+      );
+      assert.strictEqual(reduce(progressed, { type: 'downloadCompleted' }).downloadProgress, progress);
+    });
+  });
+
+  describe('install', () => {
+    it('installFailed sets installError, and a successful install clears it', () => {
+      const error = new Error('disk');
+      const failed = reduce(initialState, { type: 'installFailed', error });
+      assert.strictEqual(failed.snapshot.installError, error);
+
+      assert.strictEqual(
+        reduce(failed, { type: 'updateInstalled', update: installed }).snapshot.installError,
+        undefined,
+      );
+    });
+
+    it('an installed update is pending', () => {
+      const { snapshot } = reduce(initialState, {
+        type: 'updateInstalled',
+        update: installed,
+      });
+
+      assert.strictEqual(snapshot.pendingUpdate, installed);
+    });
+
+    it('a check keeps the pending update, as only a restart applies it', () => {
+      const { snapshot } = reduceAll([
+        { type: 'updateInstalled', update: installed },
+        started,
+        { type: 'checkCompleted', update: null },
+      ]);
+
+      assert.strictEqual(snapshot.pendingUpdate, installed);
+    });
+
+    it('clearing the updates removes the pending update', () => {
+      const { snapshot } = reduceAll([{ type: 'updateInstalled', update: installed }, { type: 'updatesCleared' }]);
+
+      assert.strictEqual(snapshot.pendingUpdate, undefined);
+    });
   });
 });

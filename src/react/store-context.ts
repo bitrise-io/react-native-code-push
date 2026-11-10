@@ -8,7 +8,7 @@ export type UpdateActions = Pick<UseCodePushResult, 'checkForUpdate' | 'sync' | 
 // The actions travel through the context, not an import, because they are implemented in the root CodePush.js, which
 // src/ cannot import.
 export interface CodePushContextValue {
-  store: Pick<UpdateStore, 'getSnapshot' | 'subscribe'>;
+  store: Pick<UpdateStore, 'getSnapshot' | 'getDownloadProgress' | 'subscribe'>;
   actions: UpdateActions;
 }
 

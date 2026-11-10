@@ -68,12 +68,16 @@ If a prop changes after the first render, the next check on resume and the next 
 ```tsx
 import { useCodePush } from "@bitrise/code-push-sdk";
 
-const { isChecking, isUpdateAvailable, availableUpdate, incompatibleUpdate, checkError, checkForUpdate, sync, restartApp } = useCodePush();
+const {
+  isChecking, isUpdateAvailable, availableUpdate, incompatibleUpdate, checkError,
+  isDownloading, installError, pendingUpdate,
+  checkForUpdate, sync, restartApp,
+} = useCodePush();
 ```
 
 Returns the update state, and re-renders the component when it changes. Call it in any component inside [`CodePushProvider`](#codepushprovider). It throws outside the Provider, because without the Provider nothing calls [`notifyAppReady`](#codepushnotifyappready), and every update rolls back.
 
-The state shows every update check: the Provider's, and those of [`checkForUpdate`](#codepushcheckforupdate), [`sync`](#codepushsync) and the `codePush()` higher-order component. It starts empty each time the app starts.
+The state shows every update check, download and install: the Provider's, and those of [`checkForUpdate`](#codepushcheckforupdate), [`sync`](#codepushsync), [`RemotePackage.download`](#remotepackage), [`LocalPackage.install`](#localpackage) and the `codePush()` higher-order component. It starts empty each time the app starts.
 
 * __isChecking__ *(Boolean)* - A check for an update runs.
 
@@ -85,13 +89,19 @@ The state shows every update check: the Provider's, and those of [`checkForUpdat
 
 * __checkError__ *(Error)* - Why the last check failed. A new check clears it.
 
+* __isDownloading__ *(Boolean)* - An update downloads. Read its progress with [`useDownloadProgress`](#usedownloadprogress).
+
+* __installError__ *(Error)* - Why the last attempt to install an update failed, in its download or in its install. A new download, or a successful install, clears it. The update stays in `availableUpdate`, so the user can try again.
+
+* __pendingUpdate__ *([LocalPackage](#localpackage), without `install`)* - An update that this app session installed, but that runs only after the app restarts. Show a "Restart to update" prompt, and apply it with `restartApp(true)`. An install with `InstallMode.IMMEDIATE` also sets it, for the time until the restart (longer, while [`disallowRestart`](#codepushdisallowrestart) is in effect).
+
 * __checkForUpdate__ *(options?: { deploymentKey?: String })* - Like [`codePush.checkForUpdate`](#codepushcheckforupdate).
 
 * __sync__ *(options?: [SyncOptions](#codepushoptions))* - Like [`codePush.sync`](#codepushsync).
 
 * __restartApp__ *(onlyIfUpdateIsPending?)* - The same as [`codePush.restartApp`](#codepushrestartapp).
 
-The `sync` and `checkForUpdate` of the hook use the props of the Provider, such as `deploymentKey`, for every option that you do not pass. They take no callbacks. If you need a status or progress callback, call `codePush.sync` directly: its checks show in the state too.
+The `sync` and `checkForUpdate` of the hook use the props of the Provider, such as `deploymentKey`, for every option that you do not pass. They take no callbacks: the state reports the check, the download and the install. If you still need a status callback, call `codePush.sync` directly: it updates the state too.
 
 Example: a "Check for updates" button on a settings screen.
 
@@ -115,6 +125,18 @@ function CheckForUpdatesButton() {
   );
 }
 ```
+
+#### useDownloadProgress
+
+```tsx
+import { useDownloadProgress } from "@bitrise/code-push-sdk";
+
+const progress = useDownloadProgress(); // { receivedBytes, totalBytes } or undefined
+```
+
+Returns the progress (`{ receivedBytes, totalBytes }`) of the running download, or `undefined` before the first progress event of a download, and after a download fails. After a successful download, it keeps the last progress until the next download starts. Check `isDownloading` of [`useCodePush`](#usecodepush) to know whether a download runs. `totalBytes` is -1 when the server does not send the size, for example for a compressed response: show a spinner instead of a percentage then.
+
+It is separate from `useCodePush`, because it changes many times per second during a download: only the components that call it re-render that often. Like `useCodePush`, it throws outside [`CodePushProvider`](#codepushprovider).
 
 #### codePush
 
