@@ -70,4 +70,19 @@ describe('createUpdateStore', () => {
     first.dispatch({ type: 'checkStarted' });
     assert.strictEqual(second.getSnapshot().isChecking, false);
   });
+
+  it('notifies subscribers of download progress, without changing the snapshot', () => {
+    const store = createUpdateStore();
+    store.dispatch({ type: 'downloadStarted' });
+    let calls = 0;
+    store.subscribe(() => calls++);
+    const snapshot = store.getSnapshot();
+    const progress = { receivedBytes: 1, totalBytes: 2 };
+
+    store.dispatch({ type: 'downloadProgressed', progress });
+
+    assert.strictEqual(calls, 1);
+    assert.strictEqual(store.getDownloadProgress(), progress);
+    assert.strictEqual(store.getSnapshot(), snapshot);
+  });
 });

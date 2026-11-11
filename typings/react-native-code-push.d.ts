@@ -14,7 +14,8 @@ export interface CodePushOptions extends SyncOptions {
 
 export interface DownloadProgress {
     /**
-     * The total number of bytes expected to be received for this update.
+     * The total number of bytes expected to be received for this update, or -1 when the server does not send the size
+     * (for example, a compressed response without a Content-Length).
      */
     totalBytes: number;
 
@@ -519,6 +520,23 @@ export interface CodePushState {
      * Why the last check failed. A new check clears it.
      */
     checkError?: Error;
+
+    /**
+     * Whether an update is currently downloading. Read the progress with `useDownloadProgress()`.
+     */
+    isDownloading: boolean;
+
+    /**
+     * Why the last attempt to install an update failed, in its download or in its install. A new download, or a
+     * successful install, clears it. The update stays in `availableUpdate`, so the user can try again.
+     */
+    installError?: Error;
+
+    /**
+     * An update that this app session installed, but that runs only after the app restarts. Use it to show a
+     * "Restart to update" prompt, and call `restartApp(true)` to apply it. `clearUpdates()` removes it.
+     */
+    pendingUpdate?: Omit<LocalPackage, "install">;
 }
 
 export interface IncompatibleUpdate {
@@ -551,5 +569,15 @@ export interface UseCodePushResult extends CodePushState {
  * Returns the update state, and re-renders the component when it changes. Throws outside `CodePushProvider`.
  */
 export function useCodePush(): UseCodePushResult;
+
+/**
+ * Returns the progress of the last download. It is `undefined` until a download reports progress, and after a download
+ * fails. After a successful download, it keeps the last progress until the next download starts, so check
+ * `isDownloading` of `useCodePush()` to know whether a download runs. `totalBytes` is -1 when the size is unknown.
+ *
+ * Separate from `useCodePush()`, because it changes many times per second during a download: only the components
+ * that call it re-render that often. Throws outside `CodePushProvider`.
+ */
+export function useDownloadProgress(): DownloadProgress | undefined;
 
 export default CodePush;

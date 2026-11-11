@@ -1,8 +1,11 @@
 import { AcquisitionManager as Sdk, DownloadStatus } from "./lib/commonjs/acquisition-sdk/acquisition-sdk";
 import { createCodePushProvider } from "./lib/commonjs/react/code-push-provider";
 import { useCodePush } from "./lib/commonjs/react/use-code-push";
+import { useDownloadProgress } from "./lib/commonjs/react/use-download-progress";
 import { createUpdateStore } from "./lib/commonjs/update-state/update-store";
+import { trackDownload, trackInstall } from "./lib/commonjs/update-state/track-update";
 import { onceUntilRejected } from "./lib/commonjs/once-until-rejected";
+import { packageMetadata } from "./lib/commonjs/package-metadata";
 import { Alert } from "./AlertAdapter";
 import requestFetchAdapter from "./request-fetch-adapter";
 import { AppState, NativeEventEmitter, Platform } from "react-native";
@@ -30,20 +33,20 @@ async function withTimeout(promise, timeoutMs) {
 
 // Downloads a remote package, augmenting it with a bound install() method
 // beyond what's included in the metadata sent by the server.
-async function downloadUpdate(remotePackage, downloadProgressCallback, reportStatusDownload) {
+function downloadUpdate(remotePackage, downloadProgressCallback, reportStatusDownload) {
+  return trackDownload(updateStore, () => downloadUpdateInternal(remotePackage, downloadProgressCallback, reportStatusDownload));
+}
+
+async function downloadUpdateInternal(remotePackage, downloadProgressCallback, reportStatusDownload) {
   if (!remotePackage.downloadUrl) {
     throw new Error("Cannot download an update without a download url");
   }
 
-  let downloadProgressSubscription;
-  if (downloadProgressCallback) {
-    const codePushEventEmitter = new NativeEventEmitter(NativeCodePush);
-    // Use event subscription to obtain download progress.
-    downloadProgressSubscription = codePushEventEmitter.addListener(
-      "CodePushDownloadProgress",
-      downloadProgressCallback
-    );
-  }
+  const codePushEventEmitter = new NativeEventEmitter(NativeCodePush);
+  const downloadProgressSubscription = codePushEventEmitter.addListener("CodePushDownloadProgress", (progress) => {
+    updateStore.dispatch({ type: "downloadProgressed", progress });
+    downloadProgressCallback && downloadProgressCallback(progress);
+  });
 
   log.info(`Downloading update. ${logFields({ ...packageLogFields(remotePackage), packageSize: remotePackage.packageSize, url: redactUrl(remotePackage.downloadUrl) })}`);
   const downloadStartTime = Date.now();
@@ -61,12 +64,12 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
   // Use the downloaded package info. Native code will save the package info
   // so that the client knows what the current package version is.
   try {
-    const updatePackageCopy = Object.assign({}, remotePackage);
-    Object.keys(updatePackageCopy).forEach((key) => (typeof updatePackageCopy[key] === 'function') && delete updatePackageCopy[key]);
+    // Functions cannot cross the bridge.
+    const updatePackageCopy = packageMetadata(remotePackage);
 
     let downloadedPackage;
     try {
-      downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, !!downloadProgressCallback);
+      downloadedPackage = await NativeCodePush.downloadUpdate(updatePackageCopy, true);
     } catch (err) {
       await reportDownloadStatus(DownloadStatus.Failed, undefined, err?.userInfo?.updateType);
       throw err;
@@ -78,7 +81,7 @@ async function downloadUpdate(remotePackage, downloadProgressCallback, reportSta
 
     return attachLocalPackageMethods({ ...downloadedPackage, isPending: false }); // A freshly downloaded package hasn't been installed yet
   } finally {
-    downloadProgressSubscription && downloadProgressSubscription.remove();
+    downloadProgressSubscription.remove();
   }
 }
 
@@ -246,9 +249,8 @@ async function getCurrentPackage() {
 async function installUpdate(localPackage, installMode = NativeCodePush.codePushInstallModeOnNextRestart, minimumBackgroundDuration = 0, updateInstalledCallback) {
   const localPackageCopy = Object.assign({}, localPackage); // In dev mode, React Native deep freezes any object queued over the bridge
   log.info(`Installing update. ${logFields({ ...packageLogFields(localPackage), installMode: installModeName(installMode), minimumBackgroundDuration })}`);
-  await NativeCodePush.installUpdate(localPackageCopy, installMode, minimumBackgroundDuration);
+  await trackInstall(updateStore, localPackage, () => NativeCodePush.installUpdate(localPackageCopy, installMode, minimumBackgroundDuration));
   log.info(`Installed update. ${installedUpdateNextStep(installMode, minimumBackgroundDuration)}`);
-  updateStore.dispatch({ type: "updateInstalled", packageHash: localPackage.packageHash });
   updateInstalledCallback && updateInstalledCallback();
   if (installMode == NativeCodePush.codePushInstallModeImmediate) {
     NativeCodePush.restartApp(false);
@@ -478,6 +480,11 @@ function setUpTestDependencies(testSdk, providedTestConfig, testNativeBridge) {
   if (testSdk) module.exports.AcquisitionSdk = testSdk;
   if (providedTestConfig) testConfig = providedTestConfig;
   if (testNativeBridge) NativeCodePush = testNativeBridge;
+}
+
+function clearUpdates() {
+  NativeCodePush.clearUpdates();
+  updateStore.dispatch({ type: "updatesCleared" });
 }
 
 async function restartApp(onlyIfUpdateIsPending = false) {
@@ -762,7 +769,7 @@ if (NativeCodePush) {
     sync,
     disallowRestart: NativeCodePush.disallow,
     allowRestart: NativeCodePush.allow,
-    clearUpdates: NativeCodePush.clearUpdates,
+    clearUpdates,
     InstallMode: {
       IMMEDIATE: NativeCodePush.codePushInstallModeImmediate, // Restart the app immediately
       ON_NEXT_RESTART: NativeCodePush.codePushInstallModeOnNextRestart, // Don't artificially restart the app. Allow the update to be "picked up" on the next app restart
@@ -836,4 +843,5 @@ if (NativeCodePush) {
     },
   });
   module.exports.useCodePush = useCodePush;
+  module.exports.useDownloadProgress = useDownloadProgress;
 }
