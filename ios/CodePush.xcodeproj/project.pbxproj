@@ -56,7 +56,7 @@
 		D23322E9E8EFBE01F1FACFB1 /* CodePushSha256Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodePushSha256Tests.swift; sourceTree = "<group>"; };
 		E74D80ECD8DD03C4C0772B7B /* Fixtures */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = Fixtures; sourceTree = "<group>"; };
 		E9FA144425AE78B97AD6C870 /* CodePushTests-Bridging-Header.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "CodePushTests-Bridging-Header.h"; sourceTree = "<group>"; };
-		FF90DEF92C5A808600CA8692 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		FF90DEF92C5A808600CA8692 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = CodePush/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

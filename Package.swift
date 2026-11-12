@@ -43,6 +43,7 @@ let package = Package(
                 .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"),
             ],
             path: "ios/CodePush",
+            resources: [.copy("PrivacyInfo.xcprivacy")],
             publicHeadersPath: "include"
         ),
         .target(
