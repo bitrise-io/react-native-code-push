@@ -758,11 +758,7 @@ class RNProjectManager extends ProjectManager {
   /**
    * Creates a CodePush update package zip for a project.
    */
-  public createUpdateArchive(
-    projectDirectory: string,
-    targetPlatform: Platform.IPlatform,
-    isDiff?: boolean,
-  ): Q.Promise<string> {
+  public createUpdateArchive(projectDirectory: string, targetPlatform: Platform.IPlatform): Q.Promise<string> {
     const t0 = Date.now();
     const bundleFolder: string = path.join(projectDirectory, TestConfig.TestAppName, 'CodePush/');
     const bundleName: string = (targetPlatform as unknown as RNPlatform).getBundleName();
@@ -797,14 +793,13 @@ class RNProjectManager extends ProjectManager {
               { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true },
             ),
           )
-          .then(() => signAndRecordUpdateArchive(bundleFolder, isDiff))
+          .then(() => signAndRecordUpdateArchive(bundleFolder))
           .then<string>(
             TestUtil.archiveFolder.bind(
               undefined,
               bundleFolder,
               '',
               path.join(projectDirectory, TestConfig.TestAppName, 'update.zip'),
-              isDiff,
             ),
           )
           .then((result) => {
@@ -825,14 +820,13 @@ class RNProjectManager extends ProjectManager {
             { cwd: path.join(projectDirectory, TestConfig.TestAppName), noLogStdOut: true },
           ),
         )
-        .then(() => signAndRecordUpdateArchive(bundleFolder, isDiff))
+        .then(() => signAndRecordUpdateArchive(bundleFolder))
         .then<string>(
           TestUtil.archiveFolder.bind(
             undefined,
             bundleFolder,
             '',
             path.join(projectDirectory, TestConfig.TestAppName, 'update.zip'),
-            isDiff,
           ),
         )
         .then((result) => {
@@ -1374,35 +1368,6 @@ PluginTestingFramework.initializeTests(
 
         //         projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
         //     }, false),
-
-        TestBuilder.it('localPackage.install.handlesDiff.againstBinary', false, (done: Mocha.Done) => {
-          ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };
-
-          /* create an update */
-          setupUpdateScenario(projectManager, targetPlatform, UpdateNotifyApplicationReady, 'Diff Update 1')
-            .then<void>((updatePath: string) => {
-              ServerUtil.updatePackagePath = updatePath;
-              projectManager.runApplication(TestConfig.testRunDirectory, targetPlatform);
-              return ServerUtil.expectTestMessages([
-                ServerUtil.TestMessage.CHECK_UPDATE_AVAILABLE,
-                ServerUtil.TestMessage.DOWNLOAD_SUCCEEDED,
-                ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE,
-              ]);
-            })
-            .then<void>(() => {
-              /* run the app again to ensure it was not reverted */
-              targetPlatform.getEmulatorManager().restartApplication(TestConfig.TestNamespace);
-              return ServerUtil.expectTestMessages([ServerUtil.TestMessage.DEVICE_READY_AFTER_UPDATE]);
-            })
-            .done(
-              () => {
-                done();
-              },
-              (e) => {
-                done(e);
-              },
-            );
-        });
 
         TestBuilder.it('localPackage.install.immediately', false, (done: Mocha.Done) => {
           ServerUtil.updateResponse = { update_info: ServerUtil.createUpdateResponse(false, targetPlatform) };

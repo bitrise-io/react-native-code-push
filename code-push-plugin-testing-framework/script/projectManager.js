@@ -38,7 +38,7 @@ var ProjectManager = (function () {
      *
      * Overwrite this in your implementation!
      */
-    ProjectManager.prototype.createUpdateArchive = function (projectDirectory, targetPlatform, isDiff) { throw ProjectManager.NOT_IMPLEMENTED_ERROR_MSG; };
+    ProjectManager.prototype.createUpdateArchive = function (projectDirectory, targetPlatform) { throw ProjectManager.NOT_IMPLEMENTED_ERROR_MSG; };
     /**
      * Prepares a specific platform for tests.
      *
